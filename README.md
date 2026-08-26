@@ -7,7 +7,7 @@
 - Sherjeel Shabih
 - Christoph T. Koch
 - 
-**EDMA** stands for **Event-Driven Multi-Agent**, a workflow framework built on top of **FastMCP** for structured and robust orchestration of tool-based tasks. Unlike traditional **prompt-driven systems**, where the interaction between the user, the LLM, and external tools is organized as a sequence of prompts and responses, EDMA adopts an **event-driven architecture** that enables dynamic coordination between agents, tools, and the user interface.
+**EDMORE** stands for **Event Driven Multi-agent Orchestrated Research Engine**, a workflow framework built on top of **FastMCP** for structured and robust orchestration of tool-based tasks. Unlike traditional **prompt-driven systems**, where the interaction between the user, the LLM, and external tools is organized as a sequence of prompts and responses, EDMA adopts an **event-driven architecture** that enables dynamic coordination between agents, tools, and the user interface.
 
 In conventional prompt-driven workflows, each step is typically triggered by a new prompt from the user or by manually chaining prompts within an application. This approach makes complex workflows difficult to manage, as intermediate states, user interactions, and tool outputs must all be encoded within prompts. As the number of steps increases, the workflow becomes fragile, difficult to control, and prone to hallucinations or logical inconsistencies.
 
