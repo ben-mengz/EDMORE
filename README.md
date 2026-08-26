@@ -1,4 +1,4 @@
-# EDMA (Event-Driven Multi-Agent MCP)
+# EDMORE (Event driven multi-agent orchestrated research engine)
 
 ## Authors
 
