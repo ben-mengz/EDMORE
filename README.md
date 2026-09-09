@@ -51,7 +51,8 @@ To run the full `demo_client.py` capabilities (which showcase Multi-Agent networ
 pip install openai-agents
 ```
 
-*(Ensure you have an `OPENAI_API_KEY` present in your environment variables before testing LLM integrations).*
+By default the demos use the HU OpenAI-compatible endpoint:
+`OPENAI_BASE_URL=https://llm3-compute.cms.hu-berlin.de/v1`, `OPENAI_API_KEY=required-but-not-used`, and `model=llm3`.
 
 ---
 
@@ -101,7 +102,7 @@ class MyDataAgent(BaseMCP):
             name="data_agent", 
             introduction="I analyze and process data.", 
             prompt="You are a data processing assistant.", 
-            model="gpt-4o", 
+            model="llm3", 
             event_mcp=event_mcp
         )
 
@@ -177,7 +178,7 @@ async def run_client_llm(user_message: str):
     
     # 1. Dynamically build OpenAI Agents from the remote EDMAServer
     triage_agent, sub_agents = await bridge.build_openai_system_via_fastmcp(
-        model="gpt-4o",
+        model="llm3",
         triage_name="MainRouter",
         triage_instructions="Forward the request to the specialist."
     )

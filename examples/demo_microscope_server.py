@@ -13,7 +13,7 @@ class SEMAgent(BaseMCP):
             name="sem_agent",
             introduction="I manage SEM image and 4D-STEM data acquisition.",
             prompt="You are a microscope control assistant specializing in SEM.",
-            model="gpt-4o",
+            model="llm3",
             event_mcp=event_mcp
         )
 
@@ -43,7 +43,7 @@ class PtychographyAgent(BaseMCP):
             name="ptychography_agent",
             introduction="I handle ptychography reconstruction workflows and parameters.",
             prompt="You are a ptychography reconstruction specialist.",
-            model="gpt-4o",
+            model="llm3",
             event_mcp=event_mcp
         )
 

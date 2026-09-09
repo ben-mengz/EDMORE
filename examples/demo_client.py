@@ -134,6 +134,7 @@ class EDMAChatApp:
             return
 
         os.environ["OPENAI_API_KEY"] = api_key
+        os.environ.setdefault("OPENAI_BASE_URL", "https://llm3-compute.cms.hu-berlin.de/v1")
         # Reuse the exact same async function we use for Remote triggers
         self.thread_helper.submit_async(self.run_agents_framework(msg))
 
@@ -292,6 +293,7 @@ class EDMAChatApp:
             
             # Start the OpenAI Swarm agent loop in the background!
             os.environ["OPENAI_API_KEY"] = api_key
+            os.environ.setdefault("OPENAI_BASE_URL", "https://llm3-compute.cms.hu-berlin.de/v1")
             self.thread_helper.submit_async(self.run_agents_framework(msg))
 
         @self.dispatcher.set_default

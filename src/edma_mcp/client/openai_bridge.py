@@ -1,11 +1,18 @@
 import json
 import os
+import re
 from typing import Any, Dict, List, Optional, Tuple
 
 from edma_mcp.client.bridge import MCPBridgeManager
 from fastmcp.client import Client as FastMCPClient
 from edma_mcp.client.orchestrator import OrchestratorUtils, get_orchestrator_instructions
 from edma_mcp.client.models import PlanReview
+
+HU_LLM_BASE_URL = os.getenv("HU_LLM_BASE_URL", "https://llm3-compute.cms.hu-berlin.de/v1")
+HU_LLM_MODEL = os.getenv("HU_LLM_MODEL", "llm3")
+HU_LLM_API_KEY = os.getenv("HU_LLM_API_KEY") or os.getenv("OPENAI_API_KEY") or "required-but-not-used"
+if os.getenv("OPENAI_BASE_URL", "").startswith("https://llm3-compute.cms.hu-berlin.de/"):
+    os.environ.setdefault("OPENAI_AGENTS_DISABLE_TRACING", "1")
 
 # Attempt to import OpenAI-specific agent framework libraries
 try:
@@ -26,9 +33,12 @@ class OpenAIMCPBridge(MCPBridgeManager):
 
     def _build_reasoning_settings(
         self,
+        model: Optional[Any] = None,
         reasoning_effort: Optional[str] = None,
         reasoning_summary: Optional[str] = "auto",
     ) -> Dict[str, Any]:
+        if not self._supports_reasoning_settings(model):
+            return {}
         settings_kwargs: Dict[str, Any] = {}
         reasoning: Dict[str, Any] = {}
         if reasoning_effort:
@@ -39,12 +49,21 @@ class OpenAIMCPBridge(MCPBridgeManager):
             settings_kwargs["reasoning"] = reasoning
         return settings_kwargs
 
+    def _supports_reasoning_settings(self, model: Optional[Any]) -> bool:
+        if os.getenv("OPENAI_BASE_URL", "").startswith("https://llm3-compute.cms.hu-berlin.de/"):
+            return False
+        model_name = str(model or "").lower()
+        if not model_name:
+            return False
+        return model_name.startswith(("gpt-5", "o1", "o3", "o4"))
+
     async def build_openai_sub_agents_from_fastmcp(
         self,
         *,
         exclude_agents: Optional[List[str]] = None,
         include_resource_list_tool: bool = True,
         tool_name_style: str = "plain",
+        agent_model_override: Optional[Any] = None,
     ) -> Dict[str, "Agent"]:
         """
         Build one OpenAI Agent per MCP agent, using FastMCP bridge as transport.
@@ -83,16 +102,17 @@ class OpenAIMCPBridge(MCPBridgeManager):
                 "Report the failing tool name and exact error message back to the caller. Do not claim success."
             )
             
+            agent_model = agent_model_override or await self._read_agent_model(agent_name)
             reasoning_str = await self._read_agent_reasoning_effort(agent_name)
             settings_kwargs = {}
-            if reasoning_str:
+            if reasoning_str and self._supports_reasoning_settings(agent_model):
                 settings_kwargs["reasoning"] = {"effort": reasoning_str}
                 
             kwargs: Dict[str, Any] = {
                 "name": agent_name,
                 "instructions": instructions,
                 "tools": tools,
-                "model": await self._read_agent_model(agent_name),
+                "model": agent_model,
                 "model_settings": ModelSettings(**settings_kwargs) if settings_kwargs else ModelSettings()
             }
 
@@ -269,7 +289,8 @@ class OpenAIMCPBridge(MCPBridgeManager):
         entries = entries[:max_tools]
         tools: List[FunctionTool] = []
         for res_name, uri in entries:
-            tool_name = f"{agent_name}__read_resource__{res_name}"
+            safe_res_name = self._resource_tool_suffix(res_name, uri)
+            tool_name = f"{agent_name}__read_resource__{safe_res_name}"
 
             async def _invoke(ctx, args_json: str, _uri=uri):
                 try:
@@ -314,6 +335,18 @@ class OpenAIMCPBridge(MCPBridgeManager):
             except Exception:
                 continue
         return result
+
+    def _resource_tool_suffix(self, resource_name: str, uri: str) -> str:
+        uri_tail = str(uri or "").rstrip("/").rsplit("/", 1)[-1]
+        candidate = uri_tail or str(resource_name or "")
+        candidate = re.sub(r"[^0-9A-Za-z_]+", "_", candidate).strip("_")
+        if not candidate:
+            candidate = re.sub(r"[^0-9A-Za-z_]+", "_", str(resource_name or "")).strip("_")
+        if not candidate:
+            candidate = "resource"
+        if candidate[0].isdigit():
+            candidate = f"resource_{candidate}"
+        return candidate
 
     def _extract_resource_text(self, res: Any) -> str:
         if res is None:
@@ -461,7 +494,10 @@ class OpenAIMCPBridge(MCPBridgeManager):
             if not skill_id:
                 return "Error: skill_id is required."
             self.planner_discovery_log.append(f"read_skill_content:{skill_id}")
-            return OrchestratorUtils.read_skill_content(abs_playbooks_dir, str(skill_id))
+            try:
+                return OrchestratorUtils.read_skill_content(abs_playbooks_dir, str(skill_id))
+            except Exception as exc:
+                return json.dumps({"ok": False, "error": str(exc), "skill_id": skill_id}, ensure_ascii=False)
 
         async def get_skill_manifest_tool(ctx, args_json: str) -> str:
             args = json.loads(args_json) if args_json else {}
@@ -469,10 +505,11 @@ class OpenAIMCPBridge(MCPBridgeManager):
             if not skill_id:
                 return "Error: skill_id is required."
             self.planner_discovery_log.append(f"get_skill_manifest:{skill_id}")
-            return json.dumps(
-                OrchestratorUtils.get_skill_manifest(abs_playbooks_dir, str(skill_id)),
-                ensure_ascii=False,
-            )
+            try:
+                manifest = OrchestratorUtils.get_skill_manifest(abs_playbooks_dir, str(skill_id))
+                return json.dumps(manifest, ensure_ascii=False)
+            except Exception as exc:
+                return json.dumps({"ok": False, "error": str(exc), "skill_id": skill_id}, ensure_ascii=False)
 
         async def list_skill_resources_tool(ctx, args_json: str) -> str:
             args = json.loads(args_json) if args_json else {}
@@ -480,10 +517,11 @@ class OpenAIMCPBridge(MCPBridgeManager):
             if not skill_id:
                 return "Error: skill_id is required."
             self.planner_discovery_log.append(f"list_skill_resources:{skill_id}")
-            return json.dumps(
-                OrchestratorUtils.list_skill_resources(abs_playbooks_dir, str(skill_id)),
-                ensure_ascii=False,
-            )
+            try:
+                resources = OrchestratorUtils.list_skill_resources(abs_playbooks_dir, str(skill_id))
+                return json.dumps(resources, ensure_ascii=False)
+            except Exception as exc:
+                return json.dumps({"ok": False, "error": str(exc), "skill_id": skill_id}, ensure_ascii=False)
 
         async def read_skill_resource_tool(ctx, args_json: str) -> str:
             args = json.loads(args_json) if args_json else {}
@@ -492,7 +530,13 @@ class OpenAIMCPBridge(MCPBridgeManager):
             if not skill_id or not resource_path:
                 return "Error: skill_id and resource_path are required."
             self.planner_discovery_log.append(f"read_skill_resource:{skill_id}:{resource_path}")
-            return OrchestratorUtils.read_skill_resource(abs_playbooks_dir, str(skill_id), str(resource_path))
+            try:
+                return OrchestratorUtils.read_skill_resource(abs_playbooks_dir, str(skill_id), str(resource_path))
+            except Exception as exc:
+                return json.dumps(
+                    {"ok": False, "error": str(exc), "skill_id": skill_id, "resource_path": resource_path},
+                    ensure_ascii=False,
+                )
 
         async def list_agents_capabilities_tool(ctx, args_json: str) -> str:
             self.planner_discovery_log.append("list_agents_capabilities")
@@ -504,8 +548,12 @@ class OpenAIMCPBridge(MCPBridgeManager):
             "CRITICAL OUTPUT RULES:\n"
             "- Return a PlanReview object only. Do not execute MCP tools.\n"
             "- Every step must name an existing agent and exact MCP tool_name.\n"
+            "- PlanStep.agent must be the specialist MCP agent from the selected skill's Required Tools, such as agent_sem or agent_ptychography. Never use planner, system, orchestrator, or triage as a PlanStep.agent.\n"
             "- Every step arguments field must be a JSON object, even when empty.\n"
             "- Read the relevant skill manifest and skill content before choosing tool names.\n"
+            "- Mandatory sequence before final output: call list_skills, then get_skill_manifest for the selected skill id, then read_skill_content for the selected skill id. Do not output PlanReview before those calls.\n"
+            "- Never put planner discovery tools such as list_skills, read_skill_content, get_skill_manifest, list_skill_resources, read_skill_resource, or list_agents_capabilities into PlanReview.steps. Use them internally before output.\n"
+            "- on_success must be either another exact step_id from this PlanReview or done. on_failure must be another exact step_id, stop, or ask_user. Never use labels such as proceed, continue, next, escalate, or retry.\n"
             "- Treat the selected skill as the workflow contract. Plan steps must come from the skill's ## Steps and ## Required Tools.\n"
             "- If the selected skill references another skill/playbook, call read_skill_content for every referenced skill and expand those concrete steps into the plan.\n"
             "- Do not invent bridge/check steps between compound-skill sections unless a referenced skill explicitly lists them.\n"
@@ -523,7 +571,11 @@ class OpenAIMCPBridge(MCPBridgeManager):
             "- Structured tool status is authoritative: success=completed, started=in_progress, blocked=ask_user, failed=address error before later steps.\n"
         )
 
-        settings_kwargs = self._build_reasoning_settings(reasoning_effort=reasoning_effort, reasoning_summary="auto")
+        settings_kwargs = self._build_reasoning_settings(
+            model=model,
+            reasoning_effort=reasoning_effort,
+            reasoning_summary="auto",
+        )
 
         return Agent(
             name=planner_name,
@@ -665,7 +717,11 @@ class OpenAIMCPBridge(MCPBridgeManager):
             "4. If a planning tool returns JSON, return that JSON to the caller without rewriting it."
         )
 
-        settings_kwargs = self._build_reasoning_settings(reasoning_effort=reasoning_effort, reasoning_summary="auto")
+        settings_kwargs = self._build_reasoning_settings(
+            model=model,
+            reasoning_effort=reasoning_effort,
+            reasoning_summary="auto",
+        )
 
         return Agent(
             name=triage_name,
@@ -695,6 +751,7 @@ class OpenAIMCPBridge(MCPBridgeManager):
         orchestrator_reasoning_effort: Optional[str] = None,
         enable_specialist_handoffs: bool = False,
         include_planner_tool_on_triage: bool = True,
+        agent_model_override: Optional[Any] = None,
     ) -> Tuple["Agent", Dict[str, "Agent"]]:
         """
         Build a multi-agent system where Triage uses Planner as a tool for plans.
@@ -712,6 +769,7 @@ class OpenAIMCPBridge(MCPBridgeManager):
             exclude_agents=exclude_agents,
             include_resource_list_tool=include_resource_list_tool,
             tool_name_style=tool_name_style,
+            agent_model_override=agent_model_override,
         )
 
         # 2. Build Planner as a callable tool, not a handoff target.
@@ -787,7 +845,10 @@ class OpenAIMCPBridge(MCPBridgeManager):
                     agent=ag,
                     tool_description_override=(
                         f"Hand off to {ag.name} for direct specialist execution/control requests, "
-                        "single-step actions, or specialist questions. Do not use this handoff to pass a full PlanReview."
+                        "single-step actions, specialist questions, or exactly one approved PlanReview step packet. "
+                        "Do not use this handoff to pass a full PlanReview. When executing an approved PlanReview, "
+                        "pass only the current step_id, tool_name, arguments, required_inputs, expected_output, "
+                        "on_success, and on_failure, then wait for the specialist result before continuing."
                     )
                 ))
             triage.handoffs = triage_handoffs
@@ -796,7 +857,11 @@ class OpenAIMCPBridge(MCPBridgeManager):
             for ag in sub_agents.values():
                 ag.handoffs = [handoff(
                     agent=triage,
-                    tool_description_override="Return control to the Triage Agent after completing a task or if input is needed."
+                    tool_description_override=(
+                        "Return control to the Triage Agent only after completing the requested specialist task, "
+                        "or when required user input is needed. Include the exact tool result, status, and any "
+                        "missing input or error message so Triage can continue the approved plan."
+                    )
                 )]
         else:
             triage.handoffs = []

@@ -14,7 +14,7 @@ class SearchAgent(BaseMCP):
             name="search_agent",
             introduction="I provide search information for different cities.",
             prompt="You are a search assistant.",
-            model="gpt-4o",
+            model="llm3",
             event_mcp=event_mcp
         )
 
@@ -36,7 +36,7 @@ class FFTAgent(BaseMCP):
             name="fft_agent",
             introduction="I can perform 2D FFT on uploaded images.",
             prompt="You process images.",
-            model="gpt-4o",
+            model="llm3",
             event_mcp=event_mcp
         )
         

@@ -17,7 +17,7 @@ class DefaultTestAgent(BaseMCP):
             name="test_agent", 
             introduction="I am a test agent.",
             prompt="You are a helpful assistant.",
-            model="gpt-4o",
+            model="llm3",
             event_mcp=event_mcp
         )
 
