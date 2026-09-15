@@ -1,0 +1,28 @@
+{
+  "name": "edmore-desktop",
+  "version": "0.3.0",
+  "description": "EDMORE client desktop controller and MCP status panel",
+  "private": true,
+  "type": "module",
+  "main": "main.mjs",
+  "scripts": {
+    "start": "electron .",
+    "test": "node --test tests/*.test.mjs",
+    "package:mac": "electron-builder --mac dmg --publish never",
+    "package:win": "electron-builder --win nsis --x64 --publish never"
+  },
+  "devDependencies": {
+    "electron": "^44.0.0",
+    "electron-builder": "^26.15.3"
+  },
+  "build": {
+    "asar": false,
+    "appId": "org.edmore.desktop",
+    "productName": "EDMORE",
+    "directories": { "output": "release" },
+    "files": ["*.mjs", "*.cjs", "renderer/**", "assets/**"],
+    "mac": { "category": "public.app-category.developer-tools", "target": ["dmg"], "identity": "-" },
+    "win": { "target": ["nsis"] },
+    "nsis": { "oneClick": false, "allowToChangeInstallationDirectory": true }
+  }
+}

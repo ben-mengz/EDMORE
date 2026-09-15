@@ -1,0 +1,36 @@
+{
+  "id": "recommend_4d_stem_parameters",
+  "name": "Recommend 4D-STEM Calculator Parameters",
+  "description": "Use the Nion Swift 4D-STEM recommendation calculator to load q_spec, calculate constraints, apply fixes, optimize defocus, and write results back to the UI. For SEM-started recommendation runs, call check_required_constraints with from_sem=true to read SEM UI values such as max_ht_kV, fov_A, and current_pA first, and do not ask the user for those values before trying the SEM UI/context path.",
+  "version": "3.1.3",
+  "kind": "codegen",
+  "agents": [
+    "agent_suggestion"
+  ],
+  "required_tools": [
+    "agent_suggestion.load_q_spec",
+    "agent_suggestion.check_required_constraints",
+    "agent_suggestion.find_material_ids_by_elements",
+    "agent_suggestion.find_material_ids_by_formula",
+    "agent_suggestion.recalculate_defaults",
+    "agent_suggestion.find_defocus",
+    "agent_suggestion.apply_fix",
+    "agent_suggestion.update_parameters"
+  ],
+  "ordered_tools": [
+    "agent_suggestion.load_q_spec",
+    "agent_suggestion.check_required_constraints",
+    "agent_suggestion.recalculate_defaults",
+    "agent_suggestion.update_parameters",
+    "agent_suggestion.find_defocus",
+    "agent_suggestion.apply_fix",
+    "agent_suggestion.find_defocus"
+  ],
+  "references": [],
+  "resources": {
+    "templates": [],
+    "snippets": [],
+    "examples": [],
+    "assets": []
+  }
+}

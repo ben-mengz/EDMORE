@@ -1,0 +1,27 @@
+{
+  "name": "@deepseek-ai/dsh",
+  "description": "dsh CLI: profile boot, plugin management, and the browser UI alias",
+  "version": "0.1.5-rc.1",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/deepseek-ai/deepseek-harness.git",
+    "directory": "apps/cli"
+  },
+  "type": "module",
+  "files": [
+    "lib/*.js"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@deepseek-ai/dsh-app-boot": "0.1.5-rc.1",
+    "@deepseek-ai/dsh-home-paths": "0.1.5-rc.1",
+    "@deepseek-ai/dsh-http-proxy": "0.1.5-rc.1",
+    "@deepseek-ai/dsh-launch-environment": "0.1.5-rc.1",
+    "@deepseek-ai/dsh-cmdline": "0.1.5-rc.1",
+    "commander": "^15.0.0"
+  },
+  "private": true
+}

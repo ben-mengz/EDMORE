@@ -1,0 +1,26 @@
+{
+  "id": "ptychography",
+  "name": "Ptychography Parameter Preparation And Submission",
+  "description": "Prepare ptychography reconstruction parameters, append experimental parameters, save them, and submit reconstruction to the server.",
+  "version": "1.1.0",
+  "kind": "workflow",
+  "agents": ["agent_ptychography"],
+  "required_tools": [
+    "agent_ptychography.prepare_parameters",
+    "agent_ptychography.append_exp_params",
+    "agent_ptychography.save_params",
+    "agent_ptychography.start_server_ptychography"
+  ],
+  "optional_tools": [
+    "agent_ptychography.load_preset",
+    "agent_ptychography.search_RAG_for_parameters",
+    "agent_ptychography.change_pypty_parameters"
+  ],
+  "ordered_tools": [
+    "agent_ptychography.prepare_parameters",
+    "agent_ptychography.append_exp_params",
+    "agent_ptychography.save_params",
+    "agent_ptychography.start_server_ptychography"
+  ],
+  "references": []
+}

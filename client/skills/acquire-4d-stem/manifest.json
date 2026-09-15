@@ -1,0 +1,25 @@
+{
+  "id": "acquire_4d_stem",
+  "name": "Acquire 4D-STEM on SEM",
+  "description": "Workflow for starting BF preview, waiting for preview stabilization, synchronizing pixel size, confirming ROI, stopping preview, waiting, and acquiring 4D-STEM data.",
+  "version": "1.3.0",
+  "kind": "workflow",
+  "agents": ["agent_sem"],
+  "required_tools": [
+    "agent_sem.play_bf",
+    "agent_sem.sync_pixel_size",
+    "agent_sem.wait",
+    "agent_sem.stop_playing_detector",
+    "agent_sem.acquire_4d_stem"
+  ],
+  "ordered_tools": [
+    "agent_sem.play_bf",
+    "agent_sem.wait",
+    "agent_sem.sync_pixel_size",
+    "agent_sem.wait",
+    "agent_sem.stop_playing_detector",
+    "agent_sem.wait",
+    "agent_sem.acquire_4d_stem"
+  ],
+  "references": []
+}

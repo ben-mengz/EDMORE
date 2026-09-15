@@ -1,0 +1,17 @@
+{
+  "id": "idpc_visualization",
+  "name": "iDPC Visualization",
+  "description": "Calibrate 4D-STEM iDPC inputs and generate an iDPC-style image from the selected dataset.",
+  "version": "1.1.0",
+  "kind": "workflow",
+  "agents": ["agent_visulization"],
+  "required_tools": [
+    "agent_visulization.idpc_calibration",
+    "agent_visulization.idpc_generate"
+  ],
+  "ordered_tools": [
+    "agent_visulization.idpc_calibration",
+    "agent_visulization.idpc_generate"
+  ],
+  "references": []
+}

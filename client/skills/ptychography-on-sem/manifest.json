@@ -1,0 +1,11 @@
+{
+  "id": "ptychography_on_sem",
+  "name": "Ptychography on SEM",
+  "description": "A compound skill that first acquires data on the SEM and then processes it using the ptychography workflow.",
+  "version": "1.0.0",
+  "kind": "compound_workflow",
+  "agents": ["agent_sem", "agent_ptychography"],
+  "required_tools": [],
+  "ordered_tools": [],
+  "references": ["acquire_4d_stem", "ptychography"]
+}

@@ -1,0 +1,26 @@
+{
+  "name": "@deepseek-ai/dsh-edmore-workspace",
+  "description": "EDMORE Harness workspace plugin: local projects and conversation metadata index",
+  "version": "0.1.5-rc.1",
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./package.json": "./package.json",
+    "./src/*": "./src/*"
+  },
+  "files": [
+    "lib/index.js",
+    "lib/types/**/*.d.ts"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@deepseek-ai/schemastery": "3.18.2"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "4.0.2",
+    "@deepseek-ai/dsh-host-webserver": "0.1.5-rc.1"
+  },
+  "private": true
+}

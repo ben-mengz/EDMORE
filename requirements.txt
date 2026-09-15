@@ -52,7 +52,7 @@ email-validator==2.3.0
 exceptiongroup==1.3.1
     # via fastmcp
 fastmcp==3.1.0
-    # via edma-mcp (pyproject.toml)
+    # via edmore-mcp (pyproject.toml)
 h11==0.16.0
     # via
     #   httpcore
@@ -61,7 +61,7 @@ httpcore==1.0.9
     # via httpx
 httpx==0.28.1
     # via
-    #   edma-mcp (pyproject.toml)
+    #   edmore-mcp (pyproject.toml)
     #   fastmcp
     #   mcp
 httpx-sse==0.4.3
@@ -117,7 +117,7 @@ pycparser==3.0
     # via cffi
 pydantic==2.12.5
     # via
-    #   edma-mcp (pyproject.toml)
+    #   edmore-mcp (pyproject.toml)
     #   fastmcp
     #   mcp
     #   openapi-pydantic
@@ -162,7 +162,7 @@ sse-starlette==3.3.2
     # via mcp
 starlette==0.52.1
     # via
-    #   edma-mcp (pyproject.toml)
+    #   edmore-mcp (pyproject.toml)
     #   mcp
     #   sse-starlette
 typing-extensions==4.15.0
@@ -186,7 +186,7 @@ uncalled-for==0.2.0
     # via fastmcp
 uvicorn==0.41.0
     # via
-    #   edma-mcp (pyproject.toml)
+    #   edmore-mcp (pyproject.toml)
     #   fastmcp
     #   mcp
 watchfiles==1.1.1
@@ -195,4 +195,3 @@ websockets==16.0
     # via fastmcp
 zipp==3.23.0
     # via importlib-metadata
-networkx

@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EDMORE Conversation</title>
+    <link rel="stylesheet" href="/edmore/style.css">
+  </head>
+  <body>
+    <main class="app-shell">
+      <aside class="project-rail">
+        <div class="rail-section">
+          <div class="panel-header">
+            <h2>Projects</h2>
+            <button type="button" id="newProject">New</button>
+            <button type="button" id="deleteProject">Delete</button>
+          </div>
+          <div id="projectList" class="nav-list"></div>
+        </div>
+        <div class="rail-section grow">
+          <div class="panel-header">
+            <h2>Conversations</h2>
+            <button type="button" id="newConversation">New</button>
+            <button type="button" id="deleteConversation">Delete</button>
+          </div>
+          <div id="conversationList" class="nav-list"></div>
+        </div>
+      </aside>
+      <header class="window-bar">
+        <div>
+          <h1>Conversation</h1>
+          <p id="runtime">Connecting to EDMORE Harness...</p>
+        </div>
+        <div class="status-row">
+          <span id="providerBadge" class="badge">Provider: unknown</span>
+          <span id="mcpStatus" class="badge">MCP: unknown</span>
+        </div>
+      </header>
+
+      <section class="workspace">
+        <section class="conversation-card">
+          <div id="chatHistory" class="chat-history" aria-live="polite"></div>
+          <div id="processStatus" class="process-status" hidden></div>
+          <form id="triggerForm" class="composer">
+            <input id="prompt" placeholder="Type in your request, I'm always here to help you" autocomplete="off">
+            <button type="submit">send</button>
+            <button type="button" id="clearChat">clear</button>
+          </form>
+        </section>
+
+        <aside class="side-panel">
+          <section class="panel">
+            <div class="panel-header">
+              <h2>LLM Providers</h2>
+              <button type="button" id="newProvider">+</button>
+            </div>
+            <form id="providerForm" class="provider-form">
+              <label>
+                Profile
+                <select id="providerSelect"></select>
+              </label>
+              <label>
+                Name
+                <input id="providerId" placeholder="openai">
+              </label>
+              <label>
+                Endpoint
+                <input id="providerBaseUrl" placeholder="empty for OpenAI">
+              </label>
+              <label>
+                API key
+                <input id="providerApiKey" type="password" autocomplete="new-password" placeholder="leave blank to keep existing key">
+              </label>
+              <label>
+                Model
+                <input id="providerModel" placeholder="gpt-5-mini">
+              </label>
+              <label>
+                Embedder
+                <input id="providerEmbeddingModel" placeholder="optional embedding model">
+              </label>
+              <input id="providerName" type="hidden">
+              <div class="actions">
+                <button type="button" id="loadProvider">Load</button>
+                <button type="submit">Save</button>
+                <button type="button" id="selectProvider">Use</button>
+              </div>
+            </form>
+            <div id="providerStatus" class="small-status">Loading providers...</div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-header">
+              <h2>Plan</h2>
+              <div class="actions compact">
+                <button type="button" id="approve" disabled>Approve</button>
+                <button type="button" id="reject" disabled>Reject</button>
+                <button type="button" id="confirmWorkflow" disabled hidden>Confirm</button>
+              </div>
+            </div>
+            <div id="pending" class="plan-section empty">No plan in this conversation</div>
+          </section>
+
+          <section class="panel">
+            <h2>NionSwift MCP</h2>
+            <div id="agents" class="chips"></div>
+            <pre id="tools">No agent selected</pre>
+          </section>
+
+          <section class="panel">
+            <div class="panel-header">
+              <h2>Harness Tools</h2>
+              <button type="button" id="refreshHarnessTools">Refresh</button>
+            </div>
+            <pre id="harnessTools">Loading Harness tool registry...</pre>
+          </section>
+
+          <section class="panel">
+            <div class="panel-header">
+              <h2>Agent Roles</h2>
+              <button type="button" id="refreshAgentRoles">Refresh</button>
+            </div>
+            <pre id="agentRoles">Loading EDMORE agent roles...</pre>
+          </section>
+
+          <section class="panel">
+            <div class="panel-header">
+              <h2>Skills</h2>
+              <button type="button" id="refreshSkills">Refresh</button>
+            </div>
+            <pre id="skills">Loading EDMORE skills...</pre>
+          </section>
+
+          <section class="panel">
+            <h2>Event Stream</h2>
+            <ol id="events" class="event-list"></ol>
+          </section>
+        </aside>
+      </section>
+    </main>
+    <script src="/edmore/app.js"></script>
+  </body>
+</html>

@@ -3,9 +3,9 @@ import threading
 import asyncio
 from typing import Optional, Dict, Any
 
-from edma_mcp.server.base import BaseMCP, mcp_tool
-from edma_mcp.server.server import EDMAServer
-from edma_mcp.server.event import EventMCP
+from edmore_mcp.server.base import BaseMCP, mcp_tool
+from edmore_mcp.server.server import EDMOREServer
+from edmore_mcp.server.event import EventMCP
 
 class SEMAgent(BaseMCP):
     def __init__(self, event_mcp: Optional[EventMCP] = None):
@@ -75,7 +75,7 @@ class MicroscopeServerUI:
         self.root.geometry("600x400")
         
         # 1. Initialize Server & Agents
-        self.server = EDMAServer(host="127.0.0.1", port=7300)
+        self.server = EDMOREServer(host="127.0.0.1", port=7300)
         self.sem_agent = SEMAgent(event_mcp=self.server.event_hub)
         self.ptychography_agent = PtychographyAgent(event_mcp=self.server.event_hub)
         

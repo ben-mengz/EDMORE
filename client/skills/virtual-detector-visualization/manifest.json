@@ -1,0 +1,17 @@
+{
+  "id": "virtual_detector_visualization",
+  "name": "Virtual Detector Visualization",
+  "description": "Calibrate 4D-STEM virtual detector inputs and generate a BF, ABF, or ADF virtual detector image from the selected dataset.",
+  "version": "1.1.0",
+  "kind": "workflow",
+  "agents": ["agent_visulization"],
+  "required_tools": [
+    "agent_visulization.virtual_detector_calibration",
+    "agent_visulization.virtual_detector_generate"
+  ],
+  "ordered_tools": [
+    "agent_visulization.virtual_detector_calibration",
+    "agent_visulization.virtual_detector_generate"
+  ],
+  "references": []
+}

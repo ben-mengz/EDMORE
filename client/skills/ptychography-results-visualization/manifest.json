@@ -1,0 +1,17 @@
+{
+  "id": "ptychography_results_visualization",
+  "name": "Ptychography Results Visualization",
+  "description": "Query recent ptychography slurm IDs and visualize reconstruction results such as object, probe, positions, or loss curve.",
+  "version": "1.1.0",
+  "kind": "workflow",
+  "agents": ["agent_visulization"],
+  "required_tools": [
+    "agent_visulization.list_ptychography_result_ids",
+    "agent_visulization.visualize_ptychography_results"
+  ],
+  "ordered_tools": [
+    "agent_visulization.list_ptychography_result_ids",
+    "agent_visulization.visualize_ptychography_results"
+  ],
+  "references": []
+}

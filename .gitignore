@@ -1,4 +1,10 @@
 test*
+!client/tests/
+!client/tests/**
+!client/packages/*/tests/
+!client/packages/*/tests/**
+!desktop/tests/
+!desktop/tests/**
 .vscode/
 .venv/
 *.egg-info/

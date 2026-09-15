@@ -3,9 +3,9 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "edma_mcp"
+name = "edmore-mcp"
 version = "0.1.0"
-description = "Event-driven Multi-agent MCP package"
+description = "Event-Driven Multi-agent Orchestration for Research Microscopy"
 authors = [
     { name = "Meng Zhao", email = "zhaomenq@physik.hu-berlin.de" }
 ]
@@ -17,10 +17,8 @@ dependencies = [
     "uvicorn==0.41.0",
     "httpx==0.28.1",
     "pydantic==2.12.5",
-    "openai-agents>=0.12.0",
-    "networkx>=3.4.2",
 ]
 
 [project.scripts]
-edma-server = "edma_mcp.server.main:main"
-edma-client = "edma_mcp.client.main:main"
+edmore-server = "edmore_mcp.server.main:main"
+edmore-client = "edmore_mcp.client_launcher:main"

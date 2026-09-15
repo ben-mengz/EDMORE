@@ -3,9 +3,9 @@ import threading
 import asyncio
 from typing import Optional
 
-from edma_mcp.server.base import BaseMCP, mcp_tool
-from edma_mcp.server.server import EDMAServer
-from edma_mcp.server.event import EventMCP
+from edmore_mcp.server.base import BaseMCP, mcp_tool
+from edmore_mcp.server.server import EDMOREServer
+from edmore_mcp.server.event import EventMCP
 
 # 1. Provide a Search Agent
 class SearchAgent(BaseMCP):
@@ -48,14 +48,14 @@ class FFTAgent(BaseMCP):
         return f"FFT processed successfully for image at: {image_path}. Saved as /tmp/fft_result.png"
 
 
-class EDMAServerUI:
+class EDMOREServerUI:
     def __init__(self, root):
         self.root = root
-        self.root.title("EDMA Server UI (Agent Apps)")
+        self.root.title("EDMORE Server UI (Agent Apps)")
         self.root.geometry("550x350")
         
         # 1. Initialize Server & Agents
-        self.server = EDMAServer(host="127.0.0.1", port=7300)
+        self.server = EDMOREServer(host="127.0.0.1", port=7300)
         self.search_agent = SearchAgent(event_mcp=self.server.event_hub)
         self.fft_agent = FFTAgent(event_mcp=self.server.event_hub)
         
@@ -66,7 +66,7 @@ class EDMAServerUI:
         threading.Thread(target=self.server.run, daemon=True).start()
 
         # 3. Build UI
-        lbl = tk.Label(root, text="EDMA App GUI - Publish Events to LLM Client", font=("Arial", 14, "bold"))
+        lbl = tk.Label(root, text="EDMORE App GUI - Publish Events to LLM Client", font=("Arial", 14, "bold"))
         lbl.pack(pady=10)
 
         # ---- Search Agent GUI Panel ----
@@ -124,7 +124,7 @@ class EDMAServerUI:
 
 def main():
     root = tk.Tk()
-    app = EDMAServerUI(root)
+    app = EDMOREServerUI(root)
     root.mainloop()
 
 if __name__ == "__main__":
