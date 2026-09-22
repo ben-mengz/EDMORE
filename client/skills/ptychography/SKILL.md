@@ -3,6 +3,8 @@ name: ptychography
 description: "Prepare ptychography reconstruction parameters, append experimental parameters, save them, and submit reconstruction to the server."
 whenToUse: "Prepare ptychography reconstruction parameters, append experimental parameters, save them, and submit reconstruction to the server."
 metadata:
+  edmore:
+    authority: workflow
   legacy_id: "ptychography"
   display_name: "Ptychography Parameter Preparation And Submission"
   version: "1.2.0"
@@ -79,11 +81,14 @@ When this skill is expanded from `ptychography_on_sem` after SEM acquisition, us
 - Use support tools only when the user explicitly asks to explain or modify parameters.
 
 ## Success Criteria
+- Evaluate each executed step separately using its actual output. MCP transport success alone is not evidence that parameters were prepared.
+- The legacy response "You didn't select the data properly, please select a 4d-stem data--ptychography agent job" means preparation failed. Do not proceed to parameter review or append.
 - Parameters are prepared.
 - Experimental parameters are appended.
 - Parameters are saved.
 - The reconstruction job is submitted.
 
 ## Failure Policy
+- If no valid dataset is selected, ask the user to select the acquired 4D-STEM dataset in NionSwift, then retry the failed preparation step. Do not offer a parameter-recommendation subplan for a missing dataset, and do not invent a dataset path.
 - If required reconstruction inputs are missing, put them in the relevant step's `required_inputs` and use `on_failure: ask_user`.
 - If preparation, append, save, or submission fails, stop and report the exact failing tool and error.

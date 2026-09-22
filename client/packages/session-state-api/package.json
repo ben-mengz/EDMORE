@@ -1,0 +1,12 @@
+{
+  "name": "@deepseek-ai/dsh-edmore-session-state-api",
+  "version": "0.0.0",
+  "type": "module",
+  "private": true,
+  "exports": { ".": "./src/index.ts" },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "4.0.2",
+    "@deepseek-ai/dsh-host-webserver": "0.1.5-rc.1",
+    "@deepseek-ai/dsh-edmore-session-state": "0.0.0"
+  }
+}

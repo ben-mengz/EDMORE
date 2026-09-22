@@ -3,6 +3,8 @@ name: idpc-visualization
 description: "Calibrate 4D-STEM iDPC inputs and generate an iDPC-style image from the selected dataset."
 whenToUse: "Calibrate 4D-STEM iDPC inputs and generate an iDPC-style image from the selected dataset."
 metadata:
+  edmore:
+    authority: workflow
   legacy_id: "idpc_visualization"
   display_name: "iDPC Visualization"
   version: "1.2.0"

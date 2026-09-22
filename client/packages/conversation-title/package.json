@@ -8,7 +8,9 @@
   "peerDependencies": {
     "@deepseek-ai/cordis": "4.0.2",
     "@deepseek-ai/dsh-edmore-workspace": "0.1.5-rc.1",
-    "@deepseek-ai/schemastery": "3.18.2"
+    "@deepseek-ai/schemastery": "3.18.2",
+    "@deepseek-ai/dsh-edmore-contracts": "0.0.0",
+    "@deepseek-ai/dsh-edmore-runtime": "0.0.0"
   },
   "exports": {
     ".": "./src/index.ts",

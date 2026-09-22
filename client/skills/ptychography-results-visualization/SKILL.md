@@ -3,6 +3,8 @@ name: ptychography-results-visualization
 description: "Query recent ptychography slurm IDs and visualize reconstruction results such as object, probe, positions, or loss curve."
 whenToUse: "Query recent ptychography slurm IDs and visualize reconstruction results such as object, probe, positions, or loss curve."
 metadata:
+  edmore:
+    authority: workflow
   legacy_id: "ptychography_results_visualization"
   display_name: "Ptychography Results Visualization"
   version: "1.2.0"

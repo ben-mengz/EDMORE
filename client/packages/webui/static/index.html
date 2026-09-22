@@ -34,18 +34,34 @@
         <div class="status-row">
           <span id="providerBadge" class="badge">Provider: unknown</span>
           <span id="mcpStatus" class="badge">MCP: unknown</span>
+          <button id="openSettings" type="button" aria-label="Settings" title="Settings">Settings</button>
         </div>
       </header>
 
       <section class="workspace">
         <section class="conversation-card">
+          <div class="session-view-tabs" role="tablist" aria-label="Session view">
+            <button id="conversationTab" role="tab" aria-selected="true" aria-controls="conversationView">Conversation</button>
+            <button id="sessionStateTab" role="tab" aria-selected="false" aria-controls="sessionStateView" tabindex="-1">Session State</button>
+          </div>
+          <div id="conversationView" role="tabpanel" aria-labelledby="conversationTab">
           <div id="chatHistory" class="chat-history" aria-live="polite"></div>
           <div id="processStatus" class="process-status" hidden></div>
           <form id="triggerForm" class="composer">
             <input id="prompt" placeholder="Type in your request, I'm always here to help you" autocomplete="off">
             <button type="submit">send</button>
-            <button type="button" id="clearChat">clear</button>
+            <label class="conversation-model">Model<select id="conversationModel" aria-label="Conversation model"><option value="">Default</option></select></label>
+            <span id="modelStatus" role="status"></span>
           </form>
+          </div>
+          <div id="sessionStateView" role="tabpanel" aria-labelledby="sessionStateTab" hidden>
+            <div class="panel-header"><strong id="sessionStateStatus">Not connected</strong><a id="sessionStateExport">Export JSONL</a></div>
+            <p id="sessionStateError" role="status"></p>
+            <h2>Overview</h2><div id="sessionStateOverview"></div>
+            <details class="state-raw"><summary>Raw state</summary><pre id="sessionStateData">No session selected</pre></details>
+            <h2>Activity</h2><div id="sessionStateEvents"></div>
+            <button id="sessionStateMore" type="button" hidden>Load more events</button>
+          </div>
         </section>
 
         <aside class="side-panel">
@@ -91,14 +107,15 @@
 
           <section class="panel">
             <div class="panel-header">
-              <h2>Plan</h2>
+              <h2>Workflow</h2>
               <div class="actions compact">
                 <button type="button" id="approve" disabled>Approve</button>
                 <button type="button" id="reject" disabled>Reject</button>
                 <button type="button" id="confirmWorkflow" disabled hidden>Confirm</button>
               </div>
             </div>
-            <div id="pending" class="plan-section empty">No plan in this conversation</div>
+            <div id="pending" class="plan-section empty">No workflow in this conversation</div>
+            <details class="paused-workflows" open><summary>Paused workflows &amp; instrument reservations</summary><div id="instrumentOccupancy" aria-live="polite"></div></details>
           </section>
 
           <section class="panel">
@@ -120,6 +137,13 @@
               <h2>Agent Roles</h2>
               <button type="button" id="refreshAgentRoles">Refresh</button>
             </div>
+            <form id="roleModelForm" class="provider-form">
+              <label>Agent<select id="roleSelect" required></select></label>
+              <label>Model profile<select id="roleModelSelect" required></select></label>
+              <button type="submit">Save agent model</button>
+              <button type="button" id="resetRoleModel">Use inherited model</button>
+              <span id="roleModelStatus" role="status"></span>
+            </form>
             <pre id="agentRoles">Loading EDMORE agent roles...</pre>
           </section>
 
@@ -138,6 +162,10 @@
         </aside>
       </section>
     </main>
+    <dialog id="settingsDialog" aria-labelledby="settingsTitle">
+      <header class="settings-header"><h2 id="settingsTitle">Settings</h2><button id="closeSettings" type="button" aria-label="Close settings" title="Close settings">×</button></header>
+      <div class="settings-layout"><nav id="settingsNavigation" aria-label="Settings sections"></nav><div id="settingsContent"></div></div>
+    </dialog>
     <script src="/edmore/app.js"></script>
   </body>
 </html>

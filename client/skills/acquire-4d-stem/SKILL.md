@@ -1,30 +1,14 @@
 ---
 name: acquire-4d-stem
 description: "Workflow for starting BF preview, synchronizing pixel size, confirming ROI, and acquiring 4D-STEM data."
-whenToUse: "Workflow for starting BF preview, synchronizing pixel size, confirming ROI, and acquiring 4D-STEM data."
 metadata:
+  edmore:
+    authority: workflow
   legacy_id: "acquire_4d_stem"
   display_name: "Acquire 4D-STEM on SEM"
-  version: "1.4.0"
+  version: "1.5.0"
   kind: "workflow"
-  agents:
-    - "agent_sem"
-  required_tools:
-    - "agent_sem.play_bf"
-    - "agent_sem.sync_pixel_size"
-    - "agent_sem.wait"
-    - "agent_sem.stop_playing_detector"
-    - "agent_sem.acquire_4d_stem"
-  ordered_tools:
-    - "agent_sem.play_bf"
-    - "agent_sem.wait"
-    - "agent_sem.sync_pixel_size"
-    - "agent_sem.wait"
-    - "agent_sem.stop_playing_detector"
-    - "agent_sem.wait"
-    - "agent_sem.acquire_4d_stem"
-  references:
-    []
+  workflow: "references/workflow.yaml"
   source: "nionswift_plugin"
 ---
 ## When To Use
@@ -40,6 +24,11 @@ Do not use this skill for parameter recommendation, visualization-only tasks, or
 - `agent_sem.acquire_4d_stem`
 
 ## Steps
+Read [the structured workflow](references/workflow.yaml) for exact step IDs,
+parameter bindings, confirmation gates and completion conditions. This YAML file
+is an EDMORE execution extension, not part of the Agent Skills execution standard.
+
+<!-- edmore:steps:start -->
 1. Start BF preview with `agent_sem.play_bf`.
 2. Wait exactly 10 seconds with `agent_sem.wait` using arguments `{"seconds": 10}`.
 3. Synchronize pixel size with `agent_sem.sync_pixel_size`.
@@ -47,6 +36,7 @@ Do not use this skill for parameter recommendation, visualization-only tasks, or
 5. Stop BF preview with `agent_sem.stop_playing_detector`.
 6. Wait exactly 10 seconds with `agent_sem.wait` using arguments `{"seconds": 10}`.
 7. Acquire data with `agent_sem.acquire_4d_stem`.
+<!-- edmore:steps:end -->
 
 ## Recommendation Fallback
 - If step 7 is blocked because defocus, dwell, or scan-grid parameters are missing, explicitly tell the user they have two options:
@@ -80,14 +70,18 @@ Treat these as evidence of progress:
 - `acquire_4d_stem` started/finished means step 7 has started or completed.
 
 ## Success Criteria
+- Evaluate the executed step against its own criteria below, not the completion of all seven steps.
+- A no-content return from `stop_playing_detector` is its legacy successful return when no tool error is present.
+- A missing defocus, dwell, or scan-grid error is a failed acquisition even if MCP reports transport success.
 - BF preview starts.
 - The two mandatory 10-second waits occur in the correct places.
 - Pixel size is synchronized.
 - The user confirms the ROI.
 - BF preview is stopped.
-- 4D-STEM acquisition returns a saved data path or success message.
+- 4D-STEM acquisition returns a saved data path or an explicit completion message establishing that the acquired dataset is available. A started-only response is uncertain and must not advance to reconstruction preparation.
 
 ## Failure Policy
 - If pixel size synchronization, ROI confirmation, defocus, dwell, or scan-grid values are missing, put them in the relevant step's `required_inputs` and use `on_failure: ask_user`.
 - If a microscope tool fails, stop unless the user provides recovery instructions.
 - In step 7, if tool returns an error message about missing parameters, follow the Recommendation Fallback above. If the user does not need recommendations for those parameters, ask them to provide the values manually.
+- Proactively offer the recommendation child workflow when this fallback applies, alongside manual input. Ask for agreement before creating its plan; require approval of that plan before execution. Preserve the failed acquisition step as the return point and retry it with the supplied/recommended values, never skip to reconstruction preparation.

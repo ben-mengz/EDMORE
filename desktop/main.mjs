@@ -5,6 +5,7 @@ import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { Supervisor } from './supervisor.mjs'
 import { PluginManager } from './plugins.mjs'
+import { SkillManager } from './skills.mjs'
 import { messages } from './locale.mjs'
 import { trayTemplate } from './menus.mjs'
 import { loadDesktopConfig, isClientRoot } from './config.mjs'
@@ -127,17 +128,29 @@ async function main() {
   ipcMain.handle('edmore:plugins', async (event, operation, value) => {
     assertSender(event)
     if (operation === 'list') return plugins.list()
+    if (operation === 'previewToggle') return plugins.previewToggle(value?.id, value?.enabled)
     if (mutationBusy) throw new Error(t('pluginBusy'))
     mutationBusy = true
     try {
       if (supervisor.busy) throw new Error(t('lifecycleBusy'))
-      if (operation === 'toggle') return await plugins.toggle(value?.id, value?.enabled)
+      if (operation === 'toggle') return await plugins.toggle(value?.id, value?.enabled, value?.changes)
       if (!['install', 'remove'].includes(operation)) throw new Error('Unknown plugin operation')
       await supervisor.refresh()
       if (supervisor.child || supervisor.busy || !['stopped', 'error'].includes(supervisor.state.phase)) throw new Error(t('packageStopped'))
       return operation === 'install' ? await plugins.install(value?.spec, value?.config) : await plugins.remove(value?.id)
     } catch (error) { throw new Error(t(error.message)) }
     finally { mutationBusy = false }
+  })
+  ipcMain.handle('edmore:skills', async (event, operation, value) => {
+    assertSender(event)
+    const skills = new SkillManager(supervisor.config)
+    if (operation === 'list') return skills.list()
+    if (operation === 'tools') return skills.tools()
+    if (operation === 'parse-support') return skills.parseSupport(value)
+    if (operation !== 'save') throw new Error('Unknown skill operation')
+    if (mutationBusy) throw new Error(t('pluginBusy'))
+    mutationBusy = true
+    try { return await skills.save(value) } finally { mutationBusy = false }
   })
   ipcMain.handle('edmore:configure', async (event, value) => {
     assertSender(event)

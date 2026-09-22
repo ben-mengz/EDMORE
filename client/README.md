@@ -35,4 +35,39 @@ npm run test:smoke
 npm run test:portable
 ```
 
-Tests use isolated data and do not operate real hardware or send LLM requests.
+Tests use isolated data and never operate real hardware or call external model
+providers. The smoke suite runs the native Harness loop against a local mock
+OpenAI-compatible HTTP server, including cancellation and session restoration.
+
+## Core and Optional Features
+
+`edmore-core` is the mandatory entry. It initializes events, action receipts,
+tasks, policy/connection registries, capability diagnostics and the internal
+`packages/runtime` module. That module adapts native Harness agents, models,
+sessions and skills; it is not a replacement agent loop. The upstream code in
+`client/runtime` is unchanged by this refactor.
+
+Optional profile entries retain independent lifecycle boundaries:
+
+- `edmore-plan-judge`: owns workflow creation, planning, judging and execution policy.
+- `edmore-session-state`: workflow evidence; `edmore-session-state-api`: its HTTP view.
+- `edmore-mcp-bridge`: MCP discovery, tool registration and connection lifecycle.
+- `edmore-workspace`: project/conversation metadata; `edmore-workspace-api`: HTTP access.
+- `edmore-conversation-title`: model-generated titles.
+- `edmore-backend`: HTTP commands, queries and SSE, with no agent ownership.
+- `edmore-webui`: the page and assets, now in `packages/webui/static`.
+
+The profile wraps optional entries with `edmore-optional-feature`. Failed starts
+are isolated through Cordis and reported by `/api/edmore/capabilities`. Missing
+workflow policy blocks controlled MCP execution, while disabling workflow does
+not disable ordinary native agent conversations. Desktop changes are applied on
+restart, with dependency previews and mandatory-Core protection.
+
+Core model settings are under `edmore-core.config.runtime`; workflow settings
+are under the plan-judge feature's `config.options`. Existing data paths and HTTP
+paths are preserved. Evidence migration creates `before-core-refs` and
+`before-evidence` backups before replacing duplicate records with references.
+Keep Core event logs and workflow evidence together when moving or restoring data.
+
+See [the refactoring plan and verification record](../docs/plugin-decoupling-plan.zh.md)
+for current deployment status and real-hardware acceptance limits.

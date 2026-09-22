@@ -16,6 +16,7 @@ if (operation !== 'list') {
   const { resolveDshHome } = await import(pathToFileURL(require.resolve('@deepseek-ai/dsh-home-paths')).href)
   const anchor = join(root, 'runtime/cli/package.json')
   const loaded = boot.loadProfile('edmore-desktop', profile, anchor)
+  const { features } = await import(pathToFileURL(join(root, 'packages/core/features.mjs')).href)
   const rows = boot.composeEntries([
     ...loaded.layers.map(layer => layer.patches), loaded.patches,
     boot.loadOptionalPatches('edmore-desktop', join(resolveDshHome(), 'cordis.patch.yml')) ?? [],
@@ -23,8 +24,10 @@ if (operation !== 'list') {
   // Expose metadata only; config values and !!js expressions never reach the renderer.
   const walk = (entries, parent = '') => entries.flatMap((row, index) => {
     const id = typeof row.id === 'string' ? row.id : null
-    const name = typeof row.name === 'string' ? row.name : ''
+    const name = row.name === '@deepseek-ai/dsh-edmore-optional-feature' && typeof row.config?.module === 'string'
+      ? row.config.module : typeof row.name === 'string' ? row.name : ''
     return [{ id, name, parent, disabled: row.disabled === true,
+      required: features[id]?.required ?? false, requires: features[id]?.requires ?? [],
       conditional: row.disabled !== undefined && typeof row.disabled !== 'boolean', index },
     ...(Array.isArray(row.config) ? walk(row.config, id ?? parent) : [])]
   })

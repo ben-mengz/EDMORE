@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import { mkdtemp, readFile, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { PluginManager, packageName } from '../plugins.mjs'
+import { PluginManager, packageName, validatePluginDependencies, planPluginToggle } from '../plugins.mjs'
 import { en, zh } from '../locale.mjs'
 import { trayTemplate } from '../menus.mjs'
 
@@ -18,6 +18,16 @@ async function fixture(t, command) {
   })
   return { manager, operations }
 }
+
+test('plans dependency closures and refuses to disable a mandatory Core dependency', () => {
+  const rows = [{ id: 'native', disabled: false }, { id: 'core', required: true, requires: ['native'], disabled: false },
+    { id: 'state', requires: ['core'], disabled: false }, { id: 'workflow', requires: ['state'], disabled: false },
+    { id: 'view', requires: ['state'], disabled: false }]
+  assert.deepEqual(planPluginToggle(rows, 'state', false).map(row => row.id), ['state', 'workflow', 'view'])
+  assert.throws(() => planPluginToggle(rows, 'native', false), /required Core/)
+  const disabled = rows.map(row => ['state', 'workflow', 'view'].includes(row.id) ? { ...row, disabled: true } : row)
+  assert.deepEqual(planPluginToggle(disabled, 'workflow', true).map(row => row.id), ['state', 'workflow'])
+})
 
 test('saves enable overrides in its own patch and restores the original setting', async t => {
   const { manager } = await fixture(t)
@@ -60,6 +70,18 @@ test('does not double-register a bundle and permits removing the installed bundl
 test('rejects shell flags and metacharacters in package specs', () => {
   for (const value of ['--global', 'x;touch /tmp/x', 'x$(echo y)', 'x&calc', 'x|y', '../x', 'x@1 2']) assert.throws(() => packageName(value))
   assert.equal(packageName('@scope/plugin@next'), '@scope/plugin')
+})
+
+test('preflights dependencies and protects Core without blocking independent viewers', () => {
+  const rows = [
+    { id: 'core', required: true, disabled: false },
+    { id: 'state', requires: ['core'], disabled: false },
+    { id: 'workflow', requires: ['state'], disabled: false },
+    { id: 'view', requires: ['state'], disabled: false },
+  ]
+  assert.doesNotThrow(() => validatePluginDependencies(rows.map(row => row.id === 'view' ? { ...row, disabled: true } : row)))
+  assert.throws(() => validatePluginDependencies(rows.map(row => row.id === 'state' ? { ...row, disabled: true } : row)), /workflow requires state/)
+  assert.throws(() => validatePluginDependencies(rows.map(row => row.id === 'core' ? { ...row, disabled: true } : row)), /required Core/)
 })
 
 test('English and Chinese cover the same controls and tray exit keeps background distinct', () => {

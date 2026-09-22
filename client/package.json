@@ -3,14 +3,24 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "engines": { "node": "^22.19.0 || >=24.0.0" },
-  "workspaces": ["packages/*", "runtime/*"],
+  "engines": {
+    "node": "^22.19.0 || >=24.0.0"
+  },
+  "workspaces": [
+    "packages/*",
+    "runtime/*"
+  ],
   "scripts": {
     "start": "node --import tsx/esm start.mjs",
-    "test": "vitest run packages/plan-judge/tests",
+    "test": "vitest run packages/plan-judge/tests packages/core/tests",
     "test:smoke": "node tests/smoke.mjs",
     "test:portable": "node tests/portable.mjs"
   },
-  "dependencies": { "tsx": "4.22.4" },
-  "devDependencies": { "vitest": "4.1.8" }
+  "dependencies": {
+    "tsx": "4.22.4",
+    "yaml": "2.8.3"
+  },
+  "devDependencies": {
+    "vitest": "4.1.8"
+  }
 }

@@ -1,0 +1,13 @@
+{
+  "name": "@deepseek-ai/dsh-edmore-contracts",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./content": "./src/content.ts"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/dsh-llm": "0.1.5-rc.1"
+  }
+}

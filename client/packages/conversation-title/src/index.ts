@@ -18,32 +18,13 @@ export const Config: z<Config> = z.object({
   minAssistantChars: z.number().min(0).default(20),
 })
 
-interface EdmoreEvent {
-  event_id: string
-  cursor: number
-  timestamp: string
-  source: string
-  type: string
-  scope: string
-  session_id?: string
-  workflow_id?: string
-  correlation_id?: string
-  payload: unknown
-}
-
-interface EdmoreEventHub {
-  append(input: Omit<Partial<EdmoreEvent>, 'event_id' | 'cursor' | 'timestamp'> & Pick<EdmoreEvent, 'type'>): Promise<EdmoreEvent>
-  subscribe(listener: (event: EdmoreEvent) => void): () => void
-}
-
-interface EdmoreAgentLoop {
-  runRoleOnce(sessionId: string, role: string, prompt: string, event: EdmoreEvent, options?: { source?: string; hidden?: boolean }): Promise<string>
-}
+import type { EdmoreEvent } from '@deepseek-ai/dsh-edmore-contracts'
+import type {} from '@deepseek-ai/dsh-edmore-core'
+import type {} from '@deepseek-ai/dsh-edmore-runtime/services'
 
 declare module '@deepseek-ai/cordis' {
   interface Context {
-    edmoreEvents: EdmoreEventHub
-    edmoreAgentLoop: EdmoreAgentLoop
+    edmoreConversationTitle: boolean
   }
 }
 
@@ -210,4 +191,5 @@ export async function apply(ctx: Context, config: Config): Promise<void> {
       })
     }
   }), 'edmore.conversation-title')
+  ctx.provide('edmoreConversationTitle', true)
 }

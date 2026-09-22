@@ -1,19 +1,20 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:">
-<title>EDMORE</title><link rel="stylesheet" href="style.css"></head>
+<title>EDMORE</title><link rel="stylesheet" href="style.css"><link rel="stylesheet" href="skills.css"></head>
 <body><header><strong>EDMORE</strong><span data-i18n="control">EDMORE client Control</span><select id="language" aria-label="Language"><option value="zh">中文</option><option value="en">English</option></select><button id="open" data-action="open" data-i18n="open">Open Workspace</button></header>
-<nav role="tablist"><button role="tab" data-tab="overview" aria-selected="true" data-i18n="overview">Overview</button><button role="tab" data-tab="plugins" aria-selected="false" data-i18n="plugins">Plugins</button><button role="tab" data-tab="settings" aria-selected="false" data-i18n="settings">Settings</button></nav>
+<nav role="tablist"><button role="tab" data-tab="overview" aria-selected="true" data-i18n="overview">Overview</button><button role="tab" data-tab="plugins" aria-selected="false" data-i18n="plugins">Plugins</button><button role="tab" data-tab="skills" aria-selected="false">Skills</button><button role="tab" data-tab="settings" aria-selected="false" data-i18n="settings">Settings</button></nav>
 <main><p id="error" role="alert" hidden></p>
 <div id="view-overview" role="tabpanel"><section class="runtime"><div><h1>EDMORE client</h1><p><span id="dot"></span><strong id="phase">...</strong><span id="pid"></span></p></div>
 <div class="actions"><button id="start" data-action="start" data-i18n="start">Start</button><button id="stop" data-action="stop" data-i18n="stop">Stop</button><button id="restart" data-action="restart" data-i18n="restart">Restart</button></div></section>
 <p id="external" data-i18n="externalNote" hidden></p>
-<section><div class="section-title"><h2>MCP / NionSwift</h2><button data-action="probeMcp" id="probe" data-i18n="probe">Check Connections</button></div>
+<section><div class="section-title"><h2>MCP Services</h2><button data-action="probeMcp" id="probe" data-i18n="probe">Check Connections</button></div>
 <table><thead><tr><th data-i18n="service">Service</th><th data-i18n="status">Status</th><th data-i18n="tools">Tools</th></tr></thead><tbody id="mcp"></tbody></table><p id="empty" data-i18n="empty"></p></section>
 <details><summary data-i18n="logs">Process Logs</summary><pre id="logs"></pre></details></div>
 <div id="view-plugins" role="tabpanel" hidden><div class="section-title"><h1 data-i18n="plugins">Plugins</h1><button id="plugins-refresh" data-i18n="refresh">Refresh</button></div>
 <p id="plugins-message" role="status"></p>
 <table class="plugins-table"><thead><tr><th data-i18n="pluginName">Plugin</th><th data-i18n="enabled">Enabled on Next Start</th><th data-i18n="source">Source</th><th></th></tr></thead><tbody id="plugin-rows"></tbody></table>
 <details><summary data-i18n="install">Install Plugin</summary><form id="plugin-install"><label><span data-i18n="package">npm Package</span><input name="spec" placeholder="@scope/plugin@version" required autocomplete="off"></label><label><span data-i18n="pluginConfig">Configuration (JSON)</span><textarea name="config" rows="4" spellcheck="false">{}</textarea></label><button type="submit" data-i18n="install">Install Plugin</button></form></details></div>
+<div id="view-skills" role="tabpanel" hidden></div>
 <div id="view-settings" role="tabpanel" hidden><h1 data-i18n="runtimeSettings">Runtime Settings</h1><form id="settings"><label><span data-i18n="root">EDMORE client Directory</span><input name="root" required></label><label><span data-i18n="node">Node Executable</span><input name="node" required></label><div class="fields"><label><span data-i18n="profile">Profile</span><input name="profile" required readonly></label><label><span data-i18n="endpoint">Local Service URL</span><input name="baseUrl" required type="url"></label></div><button type="submit" data-i18n="save">Save Settings</button><span id="saved"></span></form></div>
 </main><footer><span id="endpoint"></span><span id="updated"></span><button data-action="background" data-i18n="background">Close Interface (Keep Menu Bar)</button></footer><script type="module" src="app.js"></script></body></html>

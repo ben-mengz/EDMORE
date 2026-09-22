@@ -7,7 +7,7 @@ import z from '@deepseek-ai/schemastery'
 import type {} from '@deepseek-ai/dsh-host-webserver'
 
 export const name = 'edmore-workspace'
-export const inject = ['webServer']
+export const inject = []
 
 export interface Config {
   storePath: string
@@ -72,28 +72,28 @@ function nowIso(): string {
   return new Date().toISOString()
 }
 
-function sendJson(res: ServerResponse, statusCode: number, data: unknown): void {
+export function sendJson(res: ServerResponse, statusCode: number, data: unknown): void {
   res.writeHead(statusCode, { 'content-type': 'application/json; charset=utf-8' })
   res.end(JSON.stringify(data))
 }
 
-function sendError(res: ServerResponse, error: unknown): void {
+export function sendError(res: ServerResponse, error: unknown): void {
   sendJson(res, 400, { ok: false, error: error instanceof Error ? error.message : String(error) })
 }
 
-async function readJsonBody(req: IncomingMessage): Promise<Record<string, unknown>> {
+export async function readJsonBody(req: IncomingMessage): Promise<Record<string, unknown>> {
   const chunks: Buffer[] = []
   for await (const chunk of req) chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk))
   if (chunks.length === 0) return {}
   return JSON.parse(Buffer.concat(chunks).toString('utf8')) as Record<string, unknown>
 }
 
-function stringField(value: unknown, name: string): string {
+export function stringField(value: unknown, name: string): string {
   if (typeof value !== 'string' || value.trim() === '') throw new Error(`${name} is required`)
   return value.trim()
 }
 
-function optionalString(value: unknown): string | undefined {
+export function optionalString(value: unknown): string | undefined {
   return typeof value === 'string' && value.trim() !== '' ? value.trim() : undefined
 }
 
@@ -102,7 +102,7 @@ function previewTitle(value: string): string {
   return text.length > 56 ? `${text.slice(0, 53)}...` : text || 'New conversation'
 }
 
-function putOptional(target: Record<string, unknown>, key: string, value: string | undefined): void {
+export function putOptional(target: Record<string, unknown>, key: string, value: string | undefined): void {
   if (value !== undefined) target[key] = value
 }
 
@@ -275,72 +275,4 @@ export async function apply(ctx: Context, config: Config): Promise<void> {
   await store.ready()
   ctx.provide('edmoreWorkspace', store)
 
-  ctx.effect(() => ctx.webServer.register({
-    kind: 'prefix',
-    path: '/api/edmore-workspace',
-    handler: async (req: IncomingMessage, res: ServerResponse) => {
-      try {
-        const url = new URL(req.url ?? '/', 'http://x')
-        if (req.method === 'GET' && url.pathname === '/api/edmore-workspace/projects') {
-          sendJson(res, 200, { ok: true, projects: store.listProjects() })
-          return
-        }
-        if (req.method === 'POST' && url.pathname === '/api/edmore-workspace/projects') {
-          const body = await readJsonBody(req)
-          const input = {
-            name: stringField(body.name, 'name'),
-            cwd: stringField(body.cwd, 'cwd'),
-          } as Record<string, unknown>
-          putOptional(input, 'id', optionalString(body.id))
-          const project = await store.upsertProject(input as { id?: string; name: string; cwd: string })
-          sendJson(res, 200, { ok: true, project })
-          return
-        }
-        if (req.method === 'DELETE' && url.pathname === '/api/edmore-workspace/projects') {
-          const id = stringField(url.searchParams.get('id'), 'id')
-          await store.deleteProject(id)
-          sendJson(res, 200, { ok: true })
-          return
-        }
-        if (req.method === 'GET' && url.pathname === '/api/edmore-workspace/conversations') {
-          const projectId = optionalString(url.searchParams.get('project_id'))
-          sendJson(res, 200, { ok: true, conversations: store.listConversations(projectId) })
-          return
-        }
-        if (req.method === 'POST' && url.pathname === '/api/edmore-workspace/conversations') {
-          const body = await readJsonBody(req)
-          const input = {
-            project_id: stringField(body.project_id, 'project_id'),
-          } as { project_id: string; title?: string; session_id?: string; harness_session_id?: string }
-          putOptional(input, 'title', optionalString(body.title))
-          putOptional(input, 'session_id', optionalString(body.session_id))
-          putOptional(input, 'harness_session_id', optionalString(body.harness_session_id))
-          const conversation = await store.createConversation(input)
-          sendJson(res, 200, { ok: true, conversation })
-          return
-        }
-        if (req.method === 'POST' && url.pathname === '/api/edmore-workspace/conversations/touch') {
-          const body = await readJsonBody(req)
-          const input = {} as { id?: string; session_id?: string; title?: string; last_message_preview?: string }
-          putOptional(input, 'id', optionalString(body.id ?? body.conversation_id))
-          putOptional(input, 'session_id', optionalString(body.session_id))
-          putOptional(input, 'title', optionalString(body.title))
-          putOptional(input, 'last_message_preview', optionalString(body.last_message_preview))
-          const conversation = await store.touchConversation(input)
-          sendJson(res, 200, { ok: true, conversation })
-          return
-        }
-        if (req.method === 'DELETE' && url.pathname === '/api/edmore-workspace/conversations') {
-          const id = stringField(url.searchParams.get('id'), 'id')
-          await store.archiveConversation(id)
-          sendJson(res, 200, { ok: true })
-          return
-        }
-        res.writeHead(404)
-        res.end()
-      } catch (error) {
-        sendError(res, error)
-      }
-    },
-  }), 'edmore.workspace-api')
 }

@@ -2,8 +2,31 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { spawn } from 'node:child_process'
 import { once } from 'node:events'
+import { createServer } from 'node:http'
 import { fileURLToPath } from 'node:url'
 import { Supervisor, readHealth } from '../supervisor.mjs'
+
+test('shows generic MCP registrations beside NionSwift and removes stale entries', async t => {
+  let tools = [{ name: 'mcp__asyncroscopy__acquire' }, { name: 'mcp__asyncroscopy__stage' }, { name: 'mcp__nionswift_sem__scan' }]
+  const server = createServer((req, res) => {
+    res.setHeader('content-type', 'application/json')
+    res.end(JSON.stringify({ ok: true, tools: req.url.includes('/harness/') ? tools : [{}] }))
+  })
+  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve))
+  t.after(() => server.close())
+  const supervisor = new Supervisor({ baseUrl: `http://127.0.0.1:${server.address().port}` }, {
+    health: async () => ({ nionswift: { ok: true, agents: ['sem'] } }),
+  })
+  await supervisor.refresh()
+  await supervisor.probeMcp()
+  assert.equal(supervisor.state.mcp.find(r => r.name === 'sem').status, 'reachable')
+  assert.equal(supervisor.state.mcp.find(r => r.name === 'asyncroscopy').tools, 2)
+  await supervisor.refresh()
+  assert.equal(supervisor.state.mcp.find(r => r.name === 'asyncroscopy').status, 'registered')
+  tools = []
+  await supervisor.probeMcp()
+  assert.equal(supervisor.state.mcp.length, 1)
+})
 
 function fixture(t) {
   let port, launches = 0

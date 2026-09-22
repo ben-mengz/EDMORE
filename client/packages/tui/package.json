@@ -1,0 +1,9 @@
+{
+  "name": "@deepseek-ai/dsh-edmore-tui",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": "./index.mjs",
+  "bin": { "edmore-tui": "./cli.mjs" },
+  "scripts": { "start": "node cli.mjs", "test": "node --test test.mjs" }
+}

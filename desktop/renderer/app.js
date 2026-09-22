@@ -1,4 +1,5 @@
 import { messages } from '../locale.mjs'
+import { skillsView } from './skills.js'
 const $ = id => document.getElementById(id)
 let busy = false, current, language = 'en', inventory, pluginBusy = false, pluginNotice = ''
 const t = key => messages(language)[key] ?? key
@@ -11,6 +12,7 @@ function translate(id) {
   document.querySelectorAll('[data-i18n]').forEach(node => { node.textContent = t(node.dataset.i18n) })
   if (current) render(current)
   renderPlugins()
+  skillsView.translate(id)
 }
 function render(state) {
   current = state
@@ -55,7 +57,7 @@ function renderPlugins() {
     const enabled = document.createElement('td')
     const toggle = document.createElement('input'); toggle.type = 'checkbox'; toggle.checked = !row.disabled
     toggle.indeterminate = row.conditional && !row.overridden
-    toggle.disabled = pluginBusy || !row.id || Boolean(row.parent) || row.kind === 'package'
+    toggle.disabled = pluginBusy || !row.id || Boolean(row.parent) || row.kind === 'package' || row.required === true
     toggle.setAttribute('aria-label', `${t('enabled')}: ${row.name || row.id}`)
     toggle.addEventListener('change', () => pluginAction('toggle', { id: row.id, enabled: toggle.checked }, 'pluginPending'))
     enabled.append(toggle)
@@ -80,15 +82,27 @@ function renderPlugins() {
 async function pluginAction(operation, value, notice = '') {
   if (pluginBusy) return
   pluginBusy = true; pluginNotice = 'working'; renderPlugins(); if (current) render(current)
-  try { inventory = await window.edmore.plugins(operation, value); pluginNotice = inventory.notice || notice || (inventory.rows.length ? '' : 'noPlugins') }
+  try {
+    if (operation === 'toggle') {
+      const preview = await window.edmore.plugins('previewToggle', value)
+      if (preview.changes.some(change => change.id !== value.id)) {
+        const heading = language === 'zh' ? '以下插件将一起调整，是否继续？' : 'Apply these related plugin changes?'
+        const details = preview.changes.map(change => `${change.disabled ? '-' : '+'} ${change.id}`).join('\n')
+        if (!window.confirm(`${heading}\n\n${details}`)) return
+      }
+      value = { ...value, changes: preview.changes }
+    }
+    inventory = await window.edmore.plugins(operation, value); pluginNotice = inventory.notice || notice || (inventory.rows.length ? '' : 'noPlugins')
+  }
   catch (error) { pluginNotice = error.message.replace(/^Error invoking remote method '[^']+': Error: /, ''); showError(error) }
   finally { pluginBusy = false; renderPlugins(); if (current) render(current) }
 }
 function selectTab(name) {
-  if (!['overview', 'plugins', 'settings'].includes(name)) return
+  if (!['overview', 'plugins', 'skills', 'settings'].includes(name)) return
   document.querySelectorAll('[data-tab]').forEach(button => { button.setAttribute('aria-selected', String(button.dataset.tab === name)) })
-  document.querySelectorAll('[role=tabpanel]').forEach(view => { view.hidden = view.id !== `view-${name}` })
+  document.querySelectorAll('main > [role=tabpanel]').forEach(view => { view.hidden = view.id !== `view-${name}` })
   if (name === 'plugins') void pluginAction('list')
+  if (name === 'skills') void skillsView.open()
 }
 document.querySelectorAll('[data-tab]').forEach(button => button.addEventListener('click', () => selectTab(button.dataset.tab)))
 document.querySelectorAll('[data-action]').forEach(button => button.addEventListener('click', async () => {

@@ -3,9 +3,49 @@ name: recommend-4d-stem-parameters
 description: "Use the Nion Swift 4D-STEM recommendation calculator to load sample frequencies, calculate constraints, apply fixes, optimize defocus, and write results back to the recommendation UI."
 whenToUse: "Use the Nion Swift 4D-STEM recommendation calculator to load sample frequencies, calculate constraints, apply fixes, optimize defocus, and write results back to the recommendation UI."
 metadata:
+  edmore:
+    authority: workflow
   legacy_id: "recommend_4d_stem_parameters"
   display_name: "Recommend 4D-STEM Calculator Parameters"
-  version: "3.1.3"
+  version: "3.3.0"
+  confirmation_steps:
+    - id: accept-settings
+      scope: initial
+      title: Confirm the displayed recommendation Settings
+      before_tool: agent_suggestion.find_defocus
+      source_tools: [agent_suggestion.recalculate_defaults, agent_suggestion.update_parameters, agent_suggestion.apply_fix, agent_suggestion.find_defocus]
+      result_field: settings
+      fields: [ht_kV, alpha_mrad, scan_step_A, detector_pitch_mrad, n_steps, defocus_A, current_pA, dwell_ms]
+      edit_tool: agent_suggestion.update_parameters
+      names_argument: param_names
+      values_argument: param_values
+  recovery_loops:
+    - id: diagnostic-fixes
+      tool: agent_suggestion.find_defocus
+      fix_tool: agent_suggestion.apply_fix
+      choice_argument: fix_name
+      success_field: evaluation.passed
+      failures_field: evaluation.failed_checks
+      details_field: evaluation.checks
+      options:
+        - {id: fix_ht, when: [max_ht], description: "Reduce HT to the declared maximum."}
+        - {id: fix_alpha, when: [abbe], description: "Adjust alpha to meet the Abbe-resolution requirement."}
+        - {id: lower_abbe, when: [abbe], description: "Relax the Abbe-resolution target while preserving alpha."}
+        - {id: fix_scan_step, when: [scan_step], description: "Reduce scan step to the allowed maximum."}
+        - {id: fix_step_alpha, when: [scan_step], description: "Adjust alpha to accommodate the scan step."}
+        - {id: fix_step_ht, when: [scan_step], description: "Search HT values that accommodate the scan step."}
+        - {id: fix_pitch, when: [detector_pitch], description: "Adjust detector pitch to meet the resolution requirement."}
+        - {id: lower_ultimate, when: [detector_pitch], description: "Relax the ultimate-resolution target while preserving pitch."}
+        - {id: fix_fov, when: [fov], description: "Adjust calculator FOV and point count to satisfy the minimum sampling extent."}
+        - {id: fix_noise_current, when: [gaussianity], description: "Adjust current to increase electrons per detector pixel; recheck dose."}
+        - {id: fix_noise_pitch, when: [gaussianity], description: "Adjust detector pitch to improve electrons per pixel."}
+        - {id: fix_noise_dwell, when: [gaussianity], description: "Adjust dwell to increase electrons per pixel; recheck dose."}
+        - {id: fix_dose_dwell, when: [dose], description: "Reduce dwell to meet the dose limit; recheck signal statistics."}
+        - {id: fix_dose_current, when: [dose], description: "Reduce current to meet the dose limit; recheck signal statistics."}
+        - {id: fix_dose_step, when: [dose], description: "Increase scan step to reduce dose; recheck scan sampling."}
+        - {id: fix_thickness_pitch, when: [thickness], description: "Adjust detector pitch for the specimen thickness."}
+        - {id: fix_thickness_alpha, when: [thickness], description: "Adjust alpha for the specimen thickness."}
+        - {id: fix_thickness_ht, when: [thickness], description: "Search HT values compatible with the specimen thickness."}
   kind: "codegen"
   agents:
     - "agent_suggestion"
@@ -16,15 +56,13 @@ metadata:
     - "agent_suggestion.find_material_ids_by_formula"
     - "agent_suggestion.recalculate_defaults"
     - "agent_suggestion.find_defocus"
+  optional_tools:
     - "agent_suggestion.apply_fix"
     - "agent_suggestion.update_parameters"
   ordered_tools:
     - "agent_suggestion.load_q_spec"
     - "agent_suggestion.check_required_constraints"
     - "agent_suggestion.recalculate_defaults"
-    - "agent_suggestion.update_parameters"
-    - "agent_suggestion.find_defocus"
-    - "agent_suggestion.apply_fix"
     - "agent_suggestion.find_defocus"
   references:
     []
@@ -79,12 +117,12 @@ If this skill was entered from a blocked `acquire_4d_stem` step inside a larger 
    - For SEM-started recommendation runs, call this with `from_sem=true`.
 3. `agent_suggestion.recalculate_defaults`
    - Run this only after q-spec is available and required constraints pass.
-4. `agent_suggestion.update_parameters`
+4. Independent confirmation: `accept-settings`
    - This is the required settings-confirmation gate after defaults are recalculated and before defocus optimization.
    - The user may reply `confirm` / `no changes`, or provide specific editable parameter changes.
-   - In plan review and execution, this step must always include explicit tool arguments `param_names` and `param_values`.
-   - For the pure confirmation gate before the user edits anything, use `param_names=[]` and `param_values=[]`.
-   - If the user provides setting edits, call the same tool again with only the changed fields in `param_names` and their values in `param_values`.
+   - Harness displays the verified Settings snapshot and binds acceptance to its workflow, step and observation version. This step has no tool call.
+   - Accepting existing values must not call `update_parameters([], [])` or require a UI write acknowledgement.
+   - If the user provides edits, show the exact changes for approval, then call `update_parameters` with only those fields and values. Verify the returned Settings and request acceptance of the new version.
 5. `agent_suggestion.find_defocus`
    - Run defocus optimization only after the settings-confirmation gate.
 6. `agent_suggestion.apply_fix`
@@ -93,6 +131,11 @@ If this skill was entered from a blocked `acquire_4d_stem` step inside a larger 
    - After each applied fix, re-run defocus and re-check diagnostics.
 
 ## Planning Contract
+- The initial plan includes the normal calculator sequence and the initial Settings confirmation. `recovery_loops` is a reviewed conditional branch, not speculative executable steps. Never insert an `apply_fix` placeholder into the initial steps.
+- The `diagnostic-fixes` branch stays within this approved workflow. Failed diagnostics pause for ONE explicit option from the current result's Fix Map; Harness runs `apply_fix(fix_name)` then reruns the same `find_defocus` step. Do not rerun `recalculate_defaults` or the initial Settings confirmation inside this branch.
+- User selection authorizes only that specific fix for that diagnostic version. Re-evaluate all checks after every fix; if another check fails, show fresh applicable options. Never queue fixes from stale diagnostics or choose a fix from generic approve/confirm replies.
+- `find_defocus.ok=true` means the calculator call completed, not that the recommendation is ready. Completion requires `evaluation.passed=true`, an empty `evaluation.failed_checks`, and a selected defocus solution. Judge must also review the returned Settings and diagnostics.
+- Missing inputs, missing/malformed evaluation, tool errors and no defocus maximum are not ordinary mapped diagnostic failures. Explain the blocker and ask for the necessary input or revised plan; do not invent a fix. A stopped or rejected fix loop must not return a successful acquisition handoff.
 - In initial plan review, you may show a future conditional user-facing step such as "If diagnostics fail, choose one allowed fix name", but do not schedule an executable `agent_suggestion.apply_fix` step until diagnostics have actually failed and the user has chosen one concrete `fix_name`.
 - The user-facing plan should explicitly list the allowed fix names whenever it mentions the possible fix-choice step: `fix_ht`, `fix_alpha`, `lower_abbe`, `fix_scan_step`, `fix_step_alpha`, `fix_step_ht`, `fix_pitch`, `lower_ultimate`, `fix_fov`, `fix_noise_current`, `fix_noise_pitch`, `fix_noise_dwell`, `fix_dose_current`, `fix_dose_step`, `fix_dose_dwell`, `fix_thickness_pitch`, `fix_thickness_alpha`, `fix_thickness_ht`.
 - If the plan includes a future conditional fix-choice step before diagnostics have failed, represent that step as a paused user-decision step in plan review text only. Do not attach `agent_suggestion.apply_fix` with a placeholder `fix_name`, template value, dummy value, or unresolved required input in the executable PlanStep list.
@@ -134,12 +177,12 @@ If this skill was entered from a blocked `acquire_4d_stem` step inside a larger 
    - `dwell_ms` as **dwell (ms)**
    If `sample.fov_A` is set, explain that **# steps** is calculated from `fov_A / scan_step_A`; changing the scan step or ROI/FOV changes # steps automatically.
    This is a user-input gate in the current approved recommendation workflow. Ask whether the user has microscope limits or preferences that must change any of these values, and wait for the reply before `find_defocus`. The prompt must explicitly include both options: reply `confirm` / `no changes` to accept the displayed Settings, or reply with specific parameter changes. The prompt must also explicitly say: `scan step (A) is the maximum recommended scan step; you can choose a smaller scan step based on desired FOV.`
-   The workflow step that represents this confirmation gate must still be an explicit `update_parameters` tool step with `param_names=[]` and `param_values=[]` in its arguments, plus confirmation-oriented `required_inputs`.
+   This is an independent Harness confirmation step, not an `update_parameters` call. Accept the displayed version without writing unchanged values. A Settings change invalidates prior acceptance and requires review of the new snapshot.
 5. After the user responds:
    - If they give parameter changes, call `update_parameters` for only those values.
    - Then call `find_defocus`. A recommendation is incomplete until `defocus_A` is selected or the tool reports why no defocus curve is available.
-6. This is a user-input gate in the current approved recommendation workflow, not the end of the workflow. Tell the user which diagnostic failed, quote the failing status/metric from diagnostics, and present the allowed fix choices from the Fix Map below. Ask the user which fix to apply and wait for the reply. Only after the user chooses a concrete fix name, call `apply_fix` with that exact `fix_name`, then call `find_defocus` again and re-check diagnostics. This `apply_fix -> find_defocus` re-check is part of the declared tool order contract. If the user chooses multiple concrete fix names in one reply, apply them in the stated order without creating a new plan: call `apply_fix` for the first `fix_name`, call `find_defocus` and re-check diagnostics, then continue with the next requested `fix_name` only if that diagnostic still applies or the fix remains valid. Repeat this user-choice loop as needed. In initial plan review, mention this only as a future conditional user-facing step with the allowed fix names; do not use placeholders in the executable plan.
-7. When all diagnostics pass or the user chooses to stop, report the final diagnostic summary values:
+6. If diagnostics fail, enter the declared `diagnostic-fixes` loop in the current approved workflow. Quote the failing values and limits and show applicable Fix Map options. Wait for ONE exact fix name, call `apply_fix`, then rerun `find_defocus` and judge all diagnostics again. If the user requests several fixes, ask which single fix to apply first; subsequent choices must use the new diagnostic version. Do not create a new recommendation plan or repeat the initial Settings confirmation for this declared loop.
+7. When all diagnostics pass, report the final diagnostic summary values. If the user stops, report the unresolved diagnostics and remain paused; do not treat stopping as success or resume acquisition:
    - **Abbe resolution (A)** from `diagnostics.abbe_resolution_A`
    - **Footprint overlap (%)** from `diagnostics.footprint_overlap_percent`
    - **Ultimate resolution (A)** from `diagnostics.ultimate_resolution_A`
@@ -174,13 +217,13 @@ If this skill was entered from a blocked `acquire_4d_stem` step inside a larger 
 - Use `check_required_constraints` as the only required-constraint gate: user/handoff values go into that tool as arguments; otherwise it checks UI; if UI is missing a required value it returns `ok=false`.
 - Never proceed to `recalculate_defaults` until all four required constraints are present from the UI, explicit SEM UI context, or user chat.
 - For SEM-started recommendation runs, do not ask the user in advance for `max_ht_kV`, `fov_A`, or `current_pA` when `check_required_constraints(from_sem=True)` and the SEM UI/context path can provide them. Ask only for values that remain unresolved after that attempt.
-- Do not include an `apply_fix` step in the initial recommendation plan unless the user already chose a concrete fix name. Diagnostics must be shown to the user first, with allowed fix choices, and the user must choose before `apply_fix` runs.
+- Do not include an `apply_fix` step in the initial recommendation plan. The reviewed runtime branch requires fresh failed diagnostics and one applicable user choice before `apply_fix` runs.
 - Do not invent or placeholder a `fix_name` during planning. `apply_fix.fix_name` must be one concrete value chosen by the user from the Fix Map.
 - If you want the initial plan review to show that a fix step may happen later, do so only in the user-facing explanation and explicitly list the allowed fix names there. Do not use placeholders such as `{{fix_name}}` in the executable plan.
-- If the user has already been shown failed diagnostics and replies with one or more concrete fix names, this is a continuation of the fix loop, not a new recommendation plan. Apply the chosen fixes in order inside the current workflow.
+- If the user has already been shown failed diagnostics and replies with one concrete allowed fix name, continue the declared fix loop, not a new recommendation plan. Ask for one choice if the reply contains multiple names.
 - When asking the user for a fix choice, make the response clearly look like a paused input gate by including wording such as `Allowed fix choice(s)` and `reply with <fix_name>`.
 - After `recalculate_defaults`, stop for user confirmation before `find_defocus` unless the user already provided explicit confirmation or parameter changes in the latest message. When stopping, make the response clearly look like a paused input gate by including wording such as `reply confirm`, `no changes`, or `reply with specific setting changes`.
-- The settings-confirmation gate must always use `agent_suggestion.update_parameters` with explicit arguments `param_names` and `param_values`. If no edits have been supplied yet, those arguments must be empty arrays: `param_names=[]`, `param_values=[]`.
+- The settings-confirmation gate is the independent `accept-settings` step. It succeeds on explicit acceptance of the displayed verified Settings version. Only requested edits use `update_parameters`, with nonempty `param_names` and corresponding `param_values`. Do not propose rewriting unchanged defaults as recovery for missing confirmation evidence.
 - When asking for missing q-source input, always include element symbols/names and chemical formula as accepted choices, not only mp-id/manual q.
 - Use `update_parameters` only for direct user-specified values or small edits not covered by a calculator tool.
 - If a tool returns `ok=false`, report the exact tool error and ask for the missing input or relaxation.
@@ -192,6 +235,6 @@ If this skill was entered from a blocked `acquire_4d_stem` step inside a larger 
 ## Success Criteria
 - q_spec source is loaded or the missing source is requested.
 - Defaults are recalculated and the Settings values are shown to the user for confirmation.
-- `find_defocus` has been called after user confirmation or requested setting updates.
+- `find_defocus` has been called after the initial user confirmation or requested setting updates, and its evaluation confirms a selected defocus solution and all diagnostics passing. Merely calling the tool or receiving `ok=true` is insufficient.
 - The final response includes the diagnostic summary values from step 6.
 - If started from acquisition, the final response/handoff includes `defocus_A`, `dwell_time`, scan step arguments, and scan point arguments when available.

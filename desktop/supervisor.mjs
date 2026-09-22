@@ -33,8 +33,9 @@ export class Supervisor extends EventEmitter {
       if (this.busy || generation !== this.child || endpoint !== this.config.baseUrl) return this.state
       this.publish({ phase: this.child ? 'running' : 'external', owned: Boolean(this.child),
         error: '', nionswift: data.nionswift?.ok === true,
-        mcp: (data.nionswift?.agents ?? []).filter(name => typeof name === 'string').map(name =>
-          this.state.mcp.find(row => row.name === name) ?? { name, status: 'discovered' }) })
+        mcp: [...(data.nionswift?.agents ?? []).filter(name => typeof name === 'string').map(name =>
+          this.state.mcp.find(row => row.name === name && row.source !== 'harness') ?? { name, status: 'discovered' }),
+          ...this.state.mcp.filter(row => row.source === 'harness')] })
     } catch (error) {
       if (this.busy || generation !== this.child || endpoint !== this.config.baseUrl) return this.state
       this.publish({ phase: this.child ? 'unresponsive' : this.state.phase === 'error' ? 'error' : 'stopped',
@@ -46,7 +47,8 @@ export class Supervisor extends EventEmitter {
 
   async probeMcp() {
     const generation = this.child
-    const result = await Promise.all(this.state.mcp.map(async row => {
+    const endpoint = this.config.baseUrl
+    const result = await Promise.all(this.state.mcp.filter(row => row.source !== 'harness').map(async row => {
       try {
         const response = await fetch(`${this.config.baseUrl}/api/edmore/nionswift/tools?agent=${encodeURIComponent(row.name)}`,
           { signal: AbortSignal.timeout(6000) })
@@ -55,7 +57,25 @@ export class Supervisor extends EventEmitter {
         return { name: row.name, status: 'reachable', tools: data.tools.length, checkedAt: Date.now() }
       } catch (error) { return { name: row.name, status: 'unavailable', error: error.message } }
     }))
-    if (generation === this.child && ['running', 'external'].includes(this.state.phase)) this.publish({ mcp: result })
+    try {
+      const response = await fetch(`${endpoint}/api/edmore/harness/tools`,
+        { signal: AbortSignal.timeout(6000) })
+      const data = await response.json()
+      if (!response.ok || data.ok !== true || !Array.isArray(data.tools)) throw new Error('Harness tool registry unavailable')
+      const counts = new Map()
+      for (const tool of data.tools) {
+        const match = /^mcp__(.+?)__/.exec(tool.name ?? '')
+        if (!match || match[1].startsWith('nionswift_')) continue
+        counts.set(match[1], (counts.get(match[1]) ?? 0) + 1)
+      }
+      for (const [name, tools] of counts) {
+        result.push({ name, source: 'harness', status: 'registered', tools, checkedAt: Date.now() })
+      }
+    } catch (error) {
+      result.push(...this.state.mcp.filter(row => row.source === 'harness')
+        .map(row => ({ name: row.name, source: 'harness', status: 'unavailable', error: error.message })))
+    }
+    if (generation === this.child && endpoint === this.config.baseUrl && ['running', 'external'].includes(this.state.phase)) this.publish({ mcp: result })
     return this.state
   }
 

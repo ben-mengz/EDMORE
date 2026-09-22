@@ -1,8 +1,8 @@
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { afterEach, describe, expect, it } from 'vitest'
-import { EdmoreWorkflow } from '../src/index.ts'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { EdmoreWorkflow } from './workflow-fixture.ts'
 
 const temporaryDirectories: string[] = []
 
@@ -64,6 +64,7 @@ describe('EDMORE workflow recovery', () => {
     }, directory, statePath)
     await workflow.ready()
     workflow.bindHarnessSession('harness-session', 'session-1')
+
 
     await workflow.beforeLoopToolCall('harness-session', 'agent_sem', 'play_bf', {}, 'call-1')
     await workflow.handleLoopToolError('harness-session', 'agent_sem', 'play_bf', 'call-1', new Error('connection reset'))
@@ -127,6 +128,8 @@ describe('EDMORE workflow recovery', () => {
     await workflow.ready()
     workflow.bindHarnessSession('harness-session', 'session-1')
 
+    workflow.bindRoleRunner({ async runRoleOnce() { return '{"status":"success","reason":"Tool returned the expected ok output."}' } })
+    vi.spyOn(workflow as any, 'renderSkillInstructions').mockResolvedValue('Success criteria: the current tool returns ok.')
     await workflow.beforeLoopToolCall('harness-session', 'agent_sem', 'deepest_tool', {}, 'call-deepest')
     await workflow.afterLoopToolResult('harness-session', 'agent_sem', 'deepest_tool', 'call-deepest', { content: [{ type: 'text', text: 'ok' }] })
     expect((workflow.state() as { active: Array<{ workflow_id: string }> }).active[0]?.workflow_id).toBe('middle')

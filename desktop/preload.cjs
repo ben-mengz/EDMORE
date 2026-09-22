@@ -5,6 +5,7 @@ contextBridge.exposeInMainWorld('edmore', {
   configure: value => ipcRenderer.invoke('edmore:configure', value),
   language: value => ipcRenderer.invoke('edmore:language', value),
   plugins: (operation, value) => ipcRenderer.invoke('edmore:plugins', operation, value),
+  skills: (operation, value) => ipcRenderer.invoke('edmore:skills', operation, value),
   onLanguage: listener => {
     const handler = (_event, value) => listener(value)
     ipcRenderer.on('edmore:language', handler)

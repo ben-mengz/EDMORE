@@ -19,6 +19,51 @@ export function pluginPatch(state) {
   ]
 }
 
+export function validatePluginDependencies(rows) {
+  const byId = new Map(rows.map(row => [row.id, row]))
+  for (const row of rows) {
+    if (row.required && row.disabled) throw new Error(`${row.id}: required Core service cannot be disabled`)
+    if (row.disabled) continue
+    const missing = (row.requires ?? []).filter(id => !byId.has(id) || byId.get(id).disabled)
+    if (missing.length) throw new Error(`${row.id} requires ${missing.join(', ')}. Enable the dependency or disable its dependent features first.`)
+  }
+}
+
+export function planPluginToggle(rows, id, enabled) {
+  const original = new Map(rows.map(row => [row.id, row]))
+  const target = original.get(id)
+  if (!target || target.parent || target.kind === 'package') throw new Error('Unknown plugin id')
+  if (enabled !== null && typeof enabled !== 'boolean') throw new Error('Invalid enabled value')
+  const next = new Map(rows.map(row => [row.id, { ...row }]))
+  const disabled = enabled === null ? Boolean(target.base_disabled) : !enabled
+  next.get(id).disabled = disabled
+  if (!disabled) {
+    const visited = new Set()
+    const enable = key => {
+      if (visited.has(key)) return
+      visited.add(key)
+      const row = next.get(key)
+      if (!row) throw new Error(`Missing plugin dependency: ${key}`)
+      row.disabled = false
+      for (const dependency of row.requires ?? []) enable(dependency)
+    }
+    enable(id)
+  } else {
+    let changed = true
+    while (changed) {
+      changed = false
+      for (const row of next.values()) {
+        if (!row.disabled && (row.requires ?? []).some(key => next.get(key)?.disabled)) {
+          row.disabled = true
+          changed = true
+        }
+      }
+    }
+  }
+  validatePluginDependencies([...next.values()])
+  return [...next.values()].filter(row => Boolean(row.disabled) !== Boolean(original.get(row.id).disabled)).map(row => ({ id: row.id, disabled: row.disabled }))
+}
+
 export class PluginManager {
   constructor(config, dataDir, run = exec) {
     this.config = config
@@ -35,6 +80,8 @@ export class PluginManager {
   }
 
   async save(state) {
+    const inventory = JSON.parse(await this.command('list'))
+    validatePluginDependencies(inventory.rows.map(row => ({ ...row, disabled: Object.hasOwn(state.disabled, row.id) ? state.disabled[row.id] : row.disabled })))
     await mkdir(this.directory, { recursive: true })
     // The patch is derived on launch as well, so interrupted metadata writes cannot activate a partial edit.
     const temporary = `${this.statePath}.${randomUUID()}.tmp`
@@ -44,9 +91,13 @@ export class PluginManager {
   }
 
   async writePatch(state = undefined) {
+    state ??= await this.read()
+    const inventory = JSON.parse(await this.command('list'))
+    validatePluginDependencies(inventory.rows.map(row => ({ ...row,
+      disabled: Object.hasOwn(state.disabled, row.id) ? state.disabled[row.id] : row.disabled })))
     await mkdir(this.directory, { recursive: true })
     const temporary = `${this.path}.${randomUUID()}.tmp`
-    await writeFile(temporary, JSON.stringify(pluginPatch(state ?? await this.read()), null, 2))
+    await writeFile(temporary, JSON.stringify(pluginPatch(state), null, 2))
     await rename(temporary, this.path)
     return this.path
   }
@@ -65,6 +116,7 @@ export class PluginManager {
     const state = await this.read()
     const inventory = JSON.parse(await this.command('list'))
     return { rows: [...inventory.rows.map(row => ({ ...row, source: 'base',
+      base_disabled: row.disabled,
       overridden: Object.hasOwn(state.disabled, row.id),
       disabled: Object.hasOwn(state.disabled, row.id) ? state.disabled[row.id] : row.disabled })),
     ...state.added.map(row => ({ id: row.id, name: row.name, source: 'desktop', removable: true,
@@ -74,13 +126,20 @@ export class PluginManager {
     }))], bundles: inventory.bundles }
   }
 
-  async toggle(id, enabled) {
+  async previewToggle(id, enabled) {
+    return { changes: planPluginToggle((await this.list()).rows, id, enabled) }
+  }
+
+  async toggle(id, enabled, expectedChanges) {
     if (this.busy) throw new Error('pluginBusy')
     this.busy = true
     try {
       const inventory = await this.list()
       if (!inventory.rows.some(row => row.id === id && !row.parent && row.kind !== 'package')) throw new Error('Unknown plugin id')
       const state = await this.read()
+      const changes = planPluginToggle(inventory.rows, id, enabled)
+      if (expectedChanges && JSON.stringify(changes) !== JSON.stringify(expectedChanges)) throw new Error('Plugin dependencies changed; review the changes again')
+      for (const change of changes) state.disabled[change.id] = change.disabled
       if (enabled === null) delete state.disabled[id]
       else if (typeof enabled === 'boolean') state.disabled[id] = !enabled
       else throw new Error('Invalid enabled value')

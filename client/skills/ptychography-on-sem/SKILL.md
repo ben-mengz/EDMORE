@@ -3,6 +3,8 @@ name: ptychography-on-sem
 description: "Compound workflow that acquires 4D-STEM data on the SEM and then runs the ptychography preparation/submission workflow."
 whenToUse: "Compound workflow that acquires 4D-STEM data on the SEM and then runs the ptychography preparation/submission workflow."
 metadata:
+  edmore:
+    authority: workflow
   legacy_id: "ptychography_on_sem"
   display_name: "Ptychography on SEM"
   version: "1.1.0"

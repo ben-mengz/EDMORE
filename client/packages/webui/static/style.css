@@ -2,6 +2,35 @@
   box-sizing: border-box;
 }
 
+[hidden] { display: none !important; }
+#settingsDialog { width: min(960px, calc(100vw - 32px)); max-height: calc(100vh - 48px); padding: 0; border: 1px solid #d4d4d8; border-radius: 8px; color: #242424; background: #fff; }
+#settingsDialog::backdrop { background: #0005; }
+.settings-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid #e5e5e5; }
+.settings-header h2 { margin: 0; font-size: 18px; }
+.settings-layout { display: grid; grid-template-columns: 150px minmax(0, 1fr); min-height: 440px; }
+#settingsNavigation { display: flex; flex-direction: column; gap: 4px; padding: 12px; background: #f7f7f7; }
+#settingsNavigation button { text-align: left; border: 0; background: transparent; }
+#settingsNavigation button[aria-pressed="true"] { background: #e8e8e8; }
+#settingsContent { overflow: auto; max-height: calc(100vh - 140px); min-width: 0; }
+#settingsContent > .panel { border: 0; border-radius: 0; box-shadow: none; padding: 20px; }
+.conversation-model { display: flex; align-items: center; gap: 8px; grid-column: 1; font-size: 12px; color: #666; min-width: 0; }
+.conversation-model select { width: auto; max-width: 100%; font-size: 12px; padding: 5px 8px; }
+#modelStatus { font-size: 12px; grid-column: 1 / -1; color: #666; overflow-wrap: anywhere; }
+.workspace > .side-panel { display: flex; flex-direction: column; min-width: 0; border-left: 1px solid #dedede; background: #fff; overflow: hidden; }
+.workspace > .side-panel > .panel { display: flex; flex-direction: column; flex: 1; min-height: 0; min-width: 0; border: 0; border-radius: 0; box-shadow: none; }
+.workspace > .side-panel .panel-header { flex: 0 0 auto; flex-wrap: wrap; gap: 8px; }
+.workspace > .side-panel .actions { flex-wrap: wrap; }
+.workspace > .side-panel .plan-section { flex: 1; min-height: 0; max-height: none; min-width: 0; overflow-y: auto; overflow-x: hidden; overflow-wrap: anywhere; }
+.workspace > .side-panel .plan-steps > * { min-width: 0; }
+@media (max-width: 980px) { .workspace > .side-panel { height: 75dvh; } }
+.workspace > .conversation-card { border: 0; border-radius: 0; box-shadow: none; }
+@media (max-width: 620px) {
+  .settings-layout { grid-template-columns: 1fr; }
+  #settingsNavigation { flex-direction: row; overflow-x: auto; }
+  #settingsNavigation button { flex: 0 0 auto; }
+  #settingsContent { max-height: calc(100vh - 210px); }
+}
+
 html,
 body {
   height: 100%;
@@ -191,12 +220,13 @@ h2 {
 }
 
 .conversation-card {
-  display: grid;
-  grid-template-rows: 1fr auto auto;
+  display: flex;
+  flex-direction: column;
   min-height: 0;
 }
 
 .chat-history {
+  flex: 1;
   min-height: 0;
   padding: 26px 24px 12px;
   overflow: auto;
@@ -451,6 +481,27 @@ pre {
   color: #697586;
 }
 
+.workflow-description { margin-bottom: 10px; }
+.workflow-description summary { cursor: pointer; }
+.workflow-preview { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-weight: 600; overflow-wrap: anywhere; }
+.workflow-expand { display: inline-block; margin-top: 4px; color: #2463a5; font-size: 12px; }
+.workflow-description[open] .workflow-preview { display: block; }
+.workflow-description p { font-weight: 400; overflow-wrap: anywhere; }
+.plan-replan summary { cursor: pointer; font-weight: 600; }
+.paused-workflows { flex: 0 1 auto; min-height: 32px; max-height: 35%; overflow: auto; border-top: 1px solid #ddd; margin-top: 10px; padding-top: 8px; font-size: 12px; }
+.paused-workflows > summary { cursor: pointer; font-weight: 600; }
+.paused-workflows:has(#instrumentOccupancy:empty) { display: none; }
+.state-workflow { padding: 14px 0; border-bottom: 1px solid #e5e5e5; }
+.state-workflow header { display: flex; justify-content: space-between; gap: 10px; text-transform: capitalize; }
+.state-reference, .state-event-meta { font-size: 12px; color: #737373; overflow-wrap: anywhere; margin-top: 6px; }
+.state-workflow dl { display: flex; flex-wrap: wrap; gap: 24px; margin: 12px 0 0; }
+.state-workflow dt { font-size: 12px; color: #737373; }
+.state-workflow dd { margin: 4px 0 0; font-size: 20px; font-weight: 600; }
+.state-raw { margin: 16px 0; }
+.state-raw summary, #sessionStateEvents summary { cursor: pointer; }
+#sessionStateEvents details { border-left: 2px solid #c9d8ce; border-bottom: 1px solid #eee; padding: 12px; margin: 0; }
+#sessionStateView h2 { font-size: 15px; margin-top: 20px; }
+
 .plan-title {
   font-weight: 650;
   color: #24292f;
@@ -686,3 +737,14 @@ code {
     max-width: 94%;
   }
 }
+ .session-view-tabs { display: flex; gap: 6px; padding: 10px; border-bottom: 1px solid #d7dce3; flex-shrink: 0; }
+ .session-view-tabs [aria-selected="true"] { background: #e8f0f5; color: #173e55; border-color: #517991; }
+ #conversationView { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+ #conversationView[hidden], #sessionStateView[hidden] { display: none; }
+ #sessionStateView { flex: 1; min-height: 0; overflow: auto; padding: 16px; }
+ #sessionStateView pre { white-space: pre-wrap; overflow-wrap: anywhere; max-height: none; }
+ #sessionStateView details { border-bottom: 1px solid #d7dce3; padding: 10px 0; }
+ #sessionStateView summary { cursor: pointer; overflow-wrap: anywhere; }
+ #sessionStateView h2 { font-size: 15px; margin-top: 18px; }
+ #sessionStateView .panel-header { flex-wrap: wrap; }
+ #sessionStateStatus { overflow-wrap: anywhere; min-width: 0; }

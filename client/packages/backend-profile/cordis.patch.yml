@@ -38,6 +38,39 @@
     - id: session-projection
       name: '@deepseek-ai/dsh-session-projection'
 
+    - id: jobs
+      name: '@deepseek-ai/dsh-jobs-local'
+
+    - id: subprocess
+      name: '@deepseek-ai/dsh-subprocess-local'
+
+    - id: sandbox
+      name: '@deepseek-ai/dsh-sandbox-local'
+
+    - id: sandbox-policy
+      name: '@deepseek-ai/dsh-sandbox-policy'
+      config:
+        mode: workspace-write
+        workspaceRoot: !!js process.env.EDMORE_WORKSPACE ?? process.cwd()
+
+    - id: approval
+      name: '@deepseek-ai/dsh-user-approval'
+      config:
+        policy: never
+
+    - id: shell-env
+      name: '@deepseek-ai/dsh-shell-env'
+
+    - id: bash-sandbox
+      name: '@deepseek-ai/dsh-bash-sandbox'
+      config:
+        cwd: !!js process.env.EDMORE_WORKSPACE ?? process.cwd()
+
+    - id: fs-sandbox
+      name: '@deepseek-ai/dsh-fs-sandbox'
+      config:
+        cwd: !!js process.env.EDMORE_WORKSPACE ?? process.cwd()
+
     - id: agent
       name: '@deepseek-ai/dsh-agent'
 
@@ -52,25 +85,53 @@
       config:
         mode: native
 
+    - id: fs-observation-policy
+      name: '@deepseek-ai/dsh-fs-observation-policy'
+
+    - id: tool-fs
+      name: '@deepseek-ai/dsh-tool-fs'
+
+    - id: tool-bash
+      name: '@deepseek-ai/dsh-tool-bash'
+      config:
+        enableRunInBackground: false
+
     - id: skills
       name: '@deepseek-ai/dsh-skill'
 
     - id: skill-filesystem
       name: '@deepseek-ai/dsh-skill-filesystem'
       config:
-        includeDefaultRoots: false
+        includeDefaultRoots: true
         customSkillDirs:
           - !!js process.env.EDMORE_CLIENT_ROOT + '/skills'
+          - !!js dshHomePath('edmore/skills')
 
     - id: tool-skill
       name: '@deepseek-ai/dsh-tool-skill'
 
     - id: edmore-workspace
-      name: '@deepseek-ai/dsh-edmore-workspace'
+      name: '@deepseek-ai/dsh-edmore-optional-feature'
       config:
-        storePath: !!js dshHomePath('edmore/workspace.json')
-        defaultProjectName: SEM
-        defaultProjectCwd: !!js process.env.EDMORE_WORKSPACE ?? process.cwd()
+        id: edmore-workspace
+        module: '@deepseek-ai/dsh-edmore-workspace'
+        options:
+            storePath: !!js dshHomePath('edmore/workspace.json')
+            defaultProjectName: SEM
+            defaultProjectCwd: !!js process.env.EDMORE_WORKSPACE ?? process.cwd()
+
+    - id: edmore-core
+      name: '@deepseek-ai/dsh-edmore-core'
+      config:
+        eventLogPath: !!js dshHomePath('edmore/events.jsonl')
+        runtime:
+          llmProviderStorePath: !!js dshHomePath('edmore/llm-providers.json')
+          agentRoleStorePath: !!js dshHomePath('edmore/agent-roles.json')
+          assistantProvider: openai
+          assistantModel: gpt-5-mini
+          assistantReasoningEffort: low
+          assistantMaxTokens: 2048
+          assistantTimeoutMs: 60000
 
     - id: webserver
       name: '@deepseek-ai/dsh-host-webserver'
@@ -79,29 +140,65 @@
         port: !!js Number(process.env.EDMORE_CLIENT_PORT ?? 7380)
         compression: none
 
+    - id: edmore-session-state
+      name: '@deepseek-ai/dsh-edmore-optional-feature'
+      config:
+        id: edmore-session-state
+        module: '@deepseek-ai/dsh-edmore-session-state'
+        options:
+            root: !!js dshHomePath('edmore/session-state')
+
     - id: edmore-plan-judge
-      name: '@deepseek-ai/dsh-edmore-plan-judge'
+      name: '@deepseek-ai/dsh-edmore-optional-feature'
+      config:
+        id: edmore-plan-judge
+        module: '@deepseek-ai/dsh-edmore-plan-judge'
+        options:
+            skillsRoot: !!js process.env.EDMORE_CLIENT_ROOT + '/skills'
+            statePath: !!js dshHomePath('edmore/plan-judge-state.json')
+            autoRepairMaxAttempts: 2
+
+    - id: edmore-session-state-api
+      name: '@deepseek-ai/dsh-edmore-optional-feature'
+      config:
+        id: edmore-session-state-api
+        module: '@deepseek-ai/dsh-edmore-session-state-api'
+
+    - id: edmore-mcp-bridge
+      name: '@deepseek-ai/dsh-edmore-optional-feature'
+      config:
+        id: edmore-mcp-bridge
+        module: '@deepseek-ai/dsh-edmore-mcp-bridge'
+        options:
+            baseUrl: !!js process.env.EDMORE_NIONSWIFT_BASE_URL ?? 'http://127.0.0.1:7300'
+            pollMs: 3000
 
     - id: edmore-backend
-      name: '@deepseek-ai/dsh-edmore-backend'
+      name: '@deepseek-ai/dsh-edmore-optional-feature'
       config:
-        eventLogPath: !!js dshHomePath('edmore/events.jsonl')
-        nionSwiftBaseUrl: !!js process.env.EDMORE_NIONSWIFT_BASE_URL ?? 'http://127.0.0.1:7300'
-        nionSwiftPollMs: 3000
-        validationUiPath: /edmore
-        llmProviderStorePath: !!js dshHomePath('edmore/llm-providers.json')
-        agentRoleStorePath: !!js dshHomePath('edmore/agent-roles.json')
-        planJudgeStatePath: !!js dshHomePath('edmore/plan-judge-state.json')
-        planJudgeAutoRepairMaxAttempts: 2
-        assistantProvider: openai
-        assistantModel: gpt-5-mini
-        assistantReasoningEffort: low
-        assistantMaxTokens: 2048
-        assistantTimeoutMs: 60000
+        id: edmore-backend
+        module: '@deepseek-ai/dsh-edmore-backend'
+
+    - id: edmore-webui
+      name: '@deepseek-ai/dsh-edmore-optional-feature'
+      config:
+        id: edmore-webui
+        module: '@deepseek-ai/dsh-edmore-webui'
+        options:
+            path: /edmore
+
+    - id: edmore-workspace-api
+      name: '@deepseek-ai/dsh-edmore-optional-feature'
+      config:
+        id: edmore-workspace-api
+        module: '@deepseek-ai/dsh-edmore-workspace-api'
 
     - id: edmore-conversation-title
-      name: '@deepseek-ai/dsh-edmore-conversation-title'
+      name: '@deepseek-ai/dsh-edmore-optional-feature'
       config:
-        role: title_generator
-        maxInputChars: 2400
-        minAssistantChars: 20
+        id: edmore-conversation-title
+        module: '@deepseek-ai/dsh-edmore-conversation-title'
+        options:
+            role: title_generator
+            maxInputChars: 2400
+            minAssistantChars: 20

@@ -1,0 +1,55 @@
+schema_version: 1
+id: asyncroscopy_haadf_demo
+version: "1.1.0"
+steps:
+  - id: configure-scan
+    title: Configure simulated scan
+    purpose: Set small demo scan and HDF5 output on the digital twin.
+    tool: agent_mcp_asyncroscopy.UnifiedDigitalTwin_set_scan_settings
+    parameters:
+      settings_json:
+        mode: default
+        value: '{"imsize":128,"dwell_time":0.000002,"scan_region":[0,0,1,1],"output_format":".h5"}'
+        unit: "imsize: px; dwell_time: s; scan_region: normalized fraction"
+        description: User-overridable scan defaults. Preserve these exact JSON field names and SI units.
+    confirm: false
+    confirmation: ''
+    expected_output: Updated simulated scan settings.
+    completion: {type: tool_success}
+    on_success: next
+    on_failure: pause
+  - id: set-fov
+    title: Set 10 nm field of view
+    purpose: Set the digital twin field of view in metres.
+    tool: agent_mcp_asyncroscopy.UnifiedDigitalTwin_set_fov
+    parameters:
+      fov: {mode: default, value: 1.0e-8, unit: m, description: User-overridable field of view in metres; 1.0e-8 m equals 10 nm.}
+    confirm: false
+    confirmation: ''
+    expected_output: Field of view set without tool error.
+    completion: {type: tool_success}
+    on_success: next
+    on_failure: pause
+  - id: focus
+    title: Focus the digital twin
+    purpose: Use the simulated sample-plane autofocus.
+    tool: agent_mcp_asyncroscopy.UnifiedDigitalTwin_auto_focus
+    parameters: {}
+    confirm: false
+    confirmation: ''
+    expected_output: Simulated autofocus completes without tool error.
+    completion: {type: tool_success}
+    on_success: next
+    on_failure: pause
+  - id: acquire
+    title: Acquire HAADF image
+    purpose: Save a HAADF frame for the live notebook viewer.
+    tool: agent_mcp_asyncroscopy.UnifiedDigitalTwin_acquire_scanned_image
+    parameters:
+      detector_list: {mode: fixed, value: [HAADF]}
+    confirm: false
+    confirmation: ''
+    expected_output: A nonempty stem_image_HAADF_*.h5 acquisition key.
+    completion: {type: field_present, field: result}
+    on_success: next
+    on_failure: pause

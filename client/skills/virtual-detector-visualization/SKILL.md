@@ -3,6 +3,8 @@ name: virtual-detector-visualization
 description: "Calibrate 4D-STEM virtual detector inputs and generate a BF, ABF, or ADF virtual detector image from the selected dataset."
 whenToUse: "Calibrate 4D-STEM virtual detector inputs and generate a BF, ABF, or ADF virtual detector image from the selected dataset."
 metadata:
+  edmore:
+    authority: workflow
   legacy_id: "virtual_detector_visualization"
   display_name: "Virtual Detector Visualization"
   version: "1.2.0"
