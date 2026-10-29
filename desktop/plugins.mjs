@@ -4,9 +4,17 @@ import { readFile, writeFile, rename, mkdir } from 'node:fs/promises'
 import { createHash, randomUUID } from 'node:crypto'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { normalizeMcp, publicMcp, mcpPatch } from './mcp-settings.mjs'
 
 const exec = promisify(execFile)
 const packagePattern = /^((?:@[a-z0-9._-]+\/)?[a-z0-9][a-z0-9._-]*)(?:@([a-zA-Z0-9._~^+-]+))?$/
+function mcpInventory(inventory, state) {
+  return [...inventory.rows, ...state.added.map(row => ({ ...row, mcpConfig: row.config, mcpServerName: row.config?.serverName,
+    mcpConnection: row.name === '@deepseek-ai/dsh-mcp-client' && row.config?.transport === 'streamable-http'
+      ? { id: row.config.serverName, kind: 'standard', transport: 'streamable-http', url: row.config.url,
+        enabled: !(state.disabled[row.id] ?? false), secretConfigured: Boolean(Object.keys(row.config.headers ?? {}).length) } : undefined,
+  }))]
+}
 export function packageName(spec) {
   const match = typeof spec === 'string' && packagePattern.exec(spec)
   if (!match) throw new Error('invalidPackage')
@@ -16,6 +24,7 @@ export function pluginPatch(state) {
   return [
     ...(state.added.length ? [{ insert: state.added.map(row => ({ id: row.id, name: row.name, config: row.config })) }] : []),
     ...Object.entries(state.disabled).map(([id, disabled]) => ({ id, disabled })),
+    ...mcpPatch(state.mcp ?? [], 'desktop'),
   ]
 }
 
@@ -79,13 +88,58 @@ export class PluginManager {
     catch (error) { if (error.code === 'ENOENT') return { added: [], disabled: {}, packages: [] }; throw error }
   }
 
+  async mcpList() {
+    const state = await this.read()
+    const inventory = JSON.parse(await this.command('list'))
+    const overrides = state.mcp ?? []
+    const base = mcpInventory(inventory, state).filter(row => row.mcpConnection && !overrides.some(item => item.id === row.mcpConnection.id))
+      .map(row => ({ ...row.mcpConnection, source: 'profile', enabled: !(state.disabled[row.id] ?? row.disabled) }))
+    return { rows: [...base, ...overrides.map(row => ({ ...publicMcp(row), source: row.profileId ? 'profile' : 'desktop' }))] }
+  }
+
+  async localHttpMcp() {
+    const state = await this.read()
+    const inventory = JSON.parse(await this.command('mcp'))
+    const overrides = state.mcp ?? []
+    const base = mcpInventory(inventory, state).filter(row => row.mcpConnection && !overrides.some(item => item.id === row.mcpConnection.id))
+      .map(row => ({ ...row.mcpConnection, headers: row.mcpConfig?.headers ?? {}, enabled: !(state.disabled[row.id] ?? row.disabled) }))
+    return [...base, ...overrides.map(row => ({ ...row, headers: row.preserveHeaders ? row.profileConfig?.headers ?? {} : row.headers }))].filter(row => row.enabled)
+  }
+
+  async saveMcp(input) {
+    if (this.busy) throw new Error('pluginBusy')
+    this.busy = true
+    try {
+      const state = await this.read()
+      const rows = state.mcp ?? []
+      if (input?.remove === true) state.mcp = rows.filter(row => row.id !== input.id)
+      else {
+        const old = rows.find(row => row.id === input?.id)
+        const row = normalizeMcp(input, old)
+        if (!old && rows.length >= 20) throw new Error('Maximum 20 MCP connections')
+        const inventory = JSON.parse(await this.command('mcp'))
+        const existing = mcpInventory(inventory, state).find(item => item.mcpServerName === row.id)
+        if (existing) {
+          if (!existing.mcpConnection || existing.parent) throw new Error('This MCP name belongs to a non-editable profile plugin')
+          row.profileId = existing.id
+          row.profileConfig = existing.mcpConfig
+          row.preserveHeaders = input.secrets === undefined && (old?.preserveHeaders ?? !old)
+          if (row.preserveHeaders) row.secretConfigured = existing.mcpConnection.secretConfigured
+        }
+        state.mcp = [...rows.filter(item => item.id !== row.id), row]
+      }
+      await this.save(state)
+      return this.mcpList()
+    } finally { this.busy = false }
+  }
+
   async save(state) {
     const inventory = JSON.parse(await this.command('list'))
     validatePluginDependencies(inventory.rows.map(row => ({ ...row, disabled: Object.hasOwn(state.disabled, row.id) ? state.disabled[row.id] : row.disabled })))
     await mkdir(this.directory, { recursive: true })
     // The patch is derived on launch as well, so interrupted metadata writes cannot activate a partial edit.
     const temporary = `${this.statePath}.${randomUUID()}.tmp`
-    await writeFile(temporary, JSON.stringify(state, null, 2))
+    await writeFile(temporary, JSON.stringify(state, null, 2), { mode: 0o600 })
     await rename(temporary, this.statePath)
     await this.writePatch(state)
   }
@@ -97,7 +151,7 @@ export class PluginManager {
       disabled: Object.hasOwn(state.disabled, row.id) ? state.disabled[row.id] : row.disabled })))
     await mkdir(this.directory, { recursive: true })
     const temporary = `${this.path}.${randomUUID()}.tmp`
-    await writeFile(temporary, JSON.stringify(pluginPatch(state), null, 2))
+    await writeFile(temporary, JSON.stringify(pluginPatch(state), null, 2), { mode: 0o600 })
     await rename(temporary, this.path)
     return this.path
   }

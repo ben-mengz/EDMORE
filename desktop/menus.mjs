@@ -5,9 +5,9 @@ export function trayTemplate(state, language, commands) {
   const online = ['running', 'external'].includes(state.phase)
   const changing = ['starting', 'stopping'].includes(state.phase)
   return [
-    { label: `EDMORE · ${t[state.phase]}`, enabled: false },
+    { label: `EDMORE · ${state.remote ? t.remoteMode : t.localMode} · ${t[state.phase]}`, enabled: false },
     { id: 'harness-toggle', label: t.harnessSwitch, type: 'checkbox', checked: online || state.owned,
-      enabled: !changing && state.phase !== 'external', click: () => commands.action(state.owned ? 'stop' : 'start') },
+      enabled: !changing && (state.remote || state.phase !== 'external'), click: () => commands.action(state.owned || (state.remote && online) ? 'stop' : 'start') },
     { label: t.restart, enabled: state.owned && !changing, click: () => commands.action('restart') },
     { type: 'separator' },
     { id: 'panel', label: t.panel, click: commands.panel },

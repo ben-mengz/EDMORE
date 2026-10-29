@@ -28,9 +28,9 @@ The application does not bundle Node or the client. Installers are written to
 `release/`. Mac development builds are ad-hoc signed, not notarized releases.
 The lifecycle smoke test uses isolated data and an offline instrument address.
 
-## Skills
+## Workflows And Skills
 
-The Skills tab separates Workflow and Support, each with its own count, filtered
+The Workflows & Skills tab separates Workflows and Skills, each with its own count, filtered
 list and Add action. Switching categories with an unsaved draft asks before
 discarding it. Both categories support duplication and English/Chinese labels.
 
@@ -41,7 +41,7 @@ references, and additional confirmation gates. Success advances to the next step
 failures use the existing pause/review flow. Arbitrary branches and retries are not
 supported. Expected output is a planning description, not an executable predicate.
 
-Add Support opens a Markdown editor with a name, description and standard
+Add Skill opens a Markdown editor with a name, description and standard
 hyphenated skill ID; it requires no MCP connection or executable steps. Import
 SKILL.md fills a new support draft from a single Markdown file, preserving its
 frontmatter and invocation settings. Referenced scripts and other bundle files
@@ -60,3 +60,35 @@ gates. Existing instrument-specific gates cannot be disabled in custom workflows
 Run `node tests/skills-ui-smoke.mjs` with Playwright installed for the native editor
 test. It uses an isolated user-data directory and only reads MCP schemas, never
 executes instrument tools.
+Workflow Engine is the display name of the optional execution plugin; its
+compatibility ID remains `edmore-plan-judge`. With this plugin off, Workflows
+remain readable as reference Skills, but MCP execution requires the engine.
+
+# Presentation Demo
+
+The Overview tab's **Demo** button prepares the Asyncroscopy Digital Twin MCP
+(`127.0.0.1:8010`) and HAADF output viewer (`127.0.0.1:8890`), then starts the
+Harness if it is stopped. It uses the sibling `asyncroscopy/.venv-twin` runtime
+and the existing notebook twin configuration. `EDMORE_DEMO_ROOT` can override
+the sibling checkout location.
+
+Existing services are validated and reused, never adopted or killed. **Stop
+Demo** stops only demo services started by this app; Harness has its own Stop
+button. Closing the window keeps services running; Quit Completely cleans up
+owned services. Demo Logs shows failures. A conflicting port or missing Python
+environment is reported without terminating the existing listener. If Harness
+was started before MCP was available, restart the Harness using its own owner
+to refresh its MCP connection.
+## MCP Connection Settings
+
+The desktop Settings tab manages HTTP MCP connections, including editable native
+connections already present in the profile. Choose Standard MCP (FastMCP) and a
+full endpoint URL, or EDMORE multi-agent and its service root URL. The latter uses
+the existing singleton `nionswift` bridge and preserves its agent identities.
+Names are immutable after creation. URLs include the port; saving a client URL
+does not start a server or change its listening port.
+
+Changes are saved in the desktop patch and take effect on Harness restart.
+Existing profile connections can be disabled but not deleted from this editor.
+Headers are stored in owner-only files and are not returned to the renderer.
+Blank headers keep existing values; `{}` clears them.

@@ -6,6 +6,9 @@
   "type": "module",
   "main": "main.mjs",
   "scripts": {
+    "prepare:features": "node ../client/scripts/package-features.mjs",
+    "prepackage:mac": "npm run prepare:features",
+    "prepackage:win": "npm run prepare:features",
     "start": "electron .",
     "test": "node --test tests/*.test.mjs",
     "package:mac": "electron-builder --mac dmg --publish never",
@@ -20,7 +23,7 @@
     "appId": "org.edmore.desktop",
     "productName": "EDMORE",
     "directories": { "output": "release" },
-    "files": ["*.mjs", "*.cjs", "renderer/**", "assets/**"],
+    "files": ["*.mjs", "*.cjs", "*.py", "renderer/**", "assets/**", "feature-packages/**"],
     "mac": { "category": "public.app-category.developer-tools", "target": ["dmg"], "identity": "-" },
     "win": { "target": ["nsis"] },
     "nsis": { "oneClick": false, "allowToChangeInstallationDirectory": true }

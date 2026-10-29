@@ -11,11 +11,13 @@ export async function readHealth(baseUrl) {
 }
 
 export class Supervisor extends EventEmitter {
-  constructor(config, { launch = spawn, health = readHealth, startupMs = 60000, stopMs = 15000 } = {}) {
+  constructor(config, { launch = spawn, health = readHealth, request = fetch, startupMs = 60000, stopMs = 15000 } = {}) {
     super()
-    Object.assign(this, { config, launch, health, startupMs, stopMs })
+    Object.assign(this, { config, launch, health, request, startupMs, stopMs })
     this.state = { phase: 'stopped', owned: false, mcp: [], error: '', logs: '' }
   }
+
+  get endpoint() { return this.config.baseUrl }
 
   publish(patch) {
     this.state = { ...this.state, ...patch }
@@ -47,10 +49,10 @@ export class Supervisor extends EventEmitter {
 
   async probeMcp() {
     const generation = this.child
-    const endpoint = this.config.baseUrl
+    const endpoint = this.endpoint
     const result = await Promise.all(this.state.mcp.filter(row => row.source !== 'harness').map(async row => {
       try {
-        const response = await fetch(`${this.config.baseUrl}/api/edmore/nionswift/tools?agent=${encodeURIComponent(row.name)}`,
+        const response = await this.request(`${endpoint}/api/edmore/nionswift/tools?agent=${encodeURIComponent(row.name)}`,
           { signal: AbortSignal.timeout(6000) })
         const data = await response.json()
         if (!response.ok || !Array.isArray(data.tools)) throw new Error('MCP tools/list failed')
@@ -58,7 +60,7 @@ export class Supervisor extends EventEmitter {
       } catch (error) { return { name: row.name, status: 'unavailable', error: error.message } }
     }))
     try {
-      const response = await fetch(`${endpoint}/api/edmore/harness/tools`,
+      const response = await this.request(`${endpoint}/api/edmore/harness/tools`,
         { signal: AbortSignal.timeout(6000) })
       const data = await response.json()
       if (!response.ok || data.ok !== true || !Array.isArray(data.tools)) throw new Error('Harness tool registry unavailable')
@@ -75,7 +77,7 @@ export class Supervisor extends EventEmitter {
       result.push(...this.state.mcp.filter(row => row.source === 'harness')
         .map(row => ({ name: row.name, source: 'harness', status: 'unavailable', error: error.message })))
     }
-    if (generation === this.child && endpoint === this.config.baseUrl && ['running', 'external'].includes(this.state.phase)) this.publish({ mcp: result })
+    if (generation === this.child && endpoint === this.endpoint && ['running', 'external'].includes(this.state.phase)) this.publish({ mcp: result })
     return this.state
   }
 
@@ -91,7 +93,7 @@ export class Supervisor extends EventEmitter {
       const child = this.launch(this.config.node, ['--import', 'tsx/esm',
         fileURLToPath(new URL('./backend-runner.mjs', import.meta.url)), this.config.root, this.config.profile, this.config.baseUrl, this.config.pluginPatch ?? ''], {
         cwd: this.config.root,
-        env: Object.fromEntries(Object.entries(process.env).filter(([key]) => key !== 'NODE_OPTIONS' && key !== 'ELECTRON_RUN_AS_NODE')),
+        env: { ...Object.fromEntries(Object.entries(process.env).filter(([key]) => key !== 'NODE_OPTIONS' && key !== 'ELECTRON_RUN_AS_NODE')), ...this.extraEnv },
         stdio: ['ignore', 'pipe', 'pipe', 'ipc'], windowsHide: true,
       })
       this.child = child

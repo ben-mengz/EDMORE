@@ -104,3 +104,33 @@ test('rejects traversal, missing gates, unsupported branches and symlink writes'
     await assert.rejects(manager.save({ ...fixture(), id: 'custom_link' }), /Symbolic/)
   } finally { await rm(home, { recursive: true, force: true }) }
 })
+
+test('saves named branches and rejects unbounded loops', async () => {
+  const home = await mkdtemp(join(tmpdir(), 'edmore-skills-loop-'))
+  try {
+    const manager = new SkillManager({ root: resolve('../client') }, home)
+    const loop = fixture()
+    loop.steps = [
+      { ...loop.steps[0], id: 'measure', confirm: false, confirmation: '', on_success: 'complete', on_failure: 'adjust' },
+      { ...loop.steps[0], id: 'adjust', confirm: false, confirmation: '', on_success: 'measure', on_failure: 'pause' },
+    ]
+    await assert.rejects(manager.save(loop), /requires max_visits/)
+    loop.steps[1].max_visits = 4
+    const saved = await manager.save(loop)
+    assert.equal(saved.steps[0].on_failure, 'adjust')
+    assert.equal(saved.steps[1].on_success, 'measure')
+    assert.equal(saved.steps[1].max_visits, 4)
+  } finally { await rm(home, { recursive: true, force: true }) }
+})
+
+test('round-trips an explicit Jev semantic judgment criterion', async () => {
+  const home = await mkdtemp(join(tmpdir(), 'edmore-skills-jev-'))
+  try {
+    const manager = new SkillManager({ root: resolve('../client') }, home)
+    const skill = fixture()
+    skill.steps[0].completion = { type: 'semantic_judge', criteria: 'Measured beam-centre distance is at most 0.02 field half-widths.' }
+    const saved = await manager.save(skill)
+    assert.equal(saved.steps[0].completion.type, 'semantic_judge')
+    assert.match(saved.steps[0].completion.criteria, /0\.02/)
+  } finally { await rm(home, { recursive: true, force: true }) }
+})
