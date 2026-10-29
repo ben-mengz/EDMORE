@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Administration - EDMORE</title><link rel="stylesheet" href="/admin/style.css"><script src="/admin/app.js" defer></script></head>
+<body>
+<header><a class="brand" href="/edmore/">EDMORE</a><span>Administration</span><a href="/account">Account</a><a href="/edmore/">Open workspace</a></header>
+<main>
+<div class="heading"><h1>Server settings</h1><div class="commands"><span id="revision"></span><button id="reload" type="button">Refresh</button><button id="apply" type="button" class="primary">Apply settings</button></div></div>
+<p id="status" role="status" aria-live="polite"></p>
+<nav aria-label="Settings"><button data-tab="overview" aria-selected="true">Overview</button><button data-tab="skills">Workflows &amp; Skills</button><button data-tab="mcp">MCP</button><button data-tab="plugins">Plugins</button></nav>
+<section id="overview" class="tab"><h2>Active runtimes</h2><div class="table-wrap"><table><thead><tr><th>User</th><th>Status</th><th>Configuration</th><th>Actions</th></tr></thead><tbody id="runtime-rows"></tbody></table></div><dl><dt>Shared models</dt><dd>HU LLM, Bonsai, Jev</dd><dt>Custom workflows and skills</dt><dd>All users</dd><dt>MCP connections</dt><dd>Personal, administrators only, or all users</dd><dt>Package installation</dt><dd>Server maintenance only</dd></dl></section>
+<section id="skills" class="tab" hidden><div class="section-heading"><h2>Workflows &amp; Skills</h2><div class="commands"><button id="import-skill">Import SKILL.md</button><input id="skill-file" type="file" accept=".md,text/markdown" hidden><button id="new-workflow">New workflow</button><button id="new-skill">New skill</button></div></div><label>Show<select id="catalog-category"><option value="workflow">Workflows</option><option value="support">Skills</option></select></label><div class="editor-layout"><div id="skill-list" class="item-list" aria-label="Workflows"></div><form id="skill-form" hidden>
+<div class="section-heading"><h3 id="skill-heading">Custom skill</h3><button id="duplicate-skill" type="button">Duplicate</button></div>
+<label>Category<select name="category"><option value="support">Skill</option><option value="workflow">Workflow</option></select></label>
+<label>ID<input name="id" required maxlength="64" autocomplete="off"></label><label>Name<input name="name" required maxlength="160"></label><label>Description<textarea name="description" rows="3" required maxlength="1024"></textarea></label>
+<label>Instructions<textarea name="content" rows="12" spellcheck="false"></textarea></label>
+<label id="steps-label" hidden>Workflow steps (JSON)<textarea name="steps" rows="14" spellcheck="false"></textarea></label>
+<section id="workflow-children" hidden><h3>Child workflows</h3><ol id="workflow-child-list"></ol></section>
+<div class="commands"><button class="primary" type="submit">Save skill</button><button id="remove-skill" type="button" class="danger">Remove</button></div>
+</form></div></section>
+<section id="mcp" class="tab" hidden><div class="section-heading"><h2>MCP connections</h2><div class="commands"><button id="inspect-mcp">Inspect runtime</button><button id="new-mcp">New connection</button></div></div><p id="connection-status" role="status"></p><div class="editor-layout"><div id="mcp-list" class="item-list" aria-label="MCP connections"></div><form id="mcp-form" hidden>
+<h3>Managed connection</h3><label>Scope<select name="scope"><option value="administrators">Administrators only</option><option value="shared">All users</option></select></label><label>Type<select name="kind"><option value="standard">Standard MCP (FastMCP)</option><option value="edmore">EDMORE multi-agent</option></select></label><label>Name<input name="id" pattern="[a-zA-Z0-9_-]{1,32}" maxlength="32" required autocomplete="off"></label><label>Transport<select name="transport"><option value="streamable-http">Streamable HTTP</option><option value="stdio">Standard input / output</option></select></label>
+<label id="url-label">URL<input name="url" type="url" placeholder="https://example.org/mcp"></label><label id="command-label" hidden>Command<input name="command" placeholder="/usr/bin/example-mcp"></label><label id="args-label" hidden>Arguments (JSON)<textarea name="args" rows="3" spellcheck="false">[]</textarea></label>
+<label><span id="secrets-label">Headers (JSON)</span><textarea name="secrets" rows="4" spellcheck="false" autocomplete="off" placeholder="{}"></textarea></label><span id="secret-state"></span>
+<label class="check"><input name="enabled" type="checkbox">Enabled</label><div class="commands"><button class="primary" type="submit">Save connection</button><button id="remove-mcp" type="button" class="danger">Remove</button></div>
+</form></div></section>
+<section id="plugins" class="tab" hidden><h2>Installed plugins</h2><div id="plugin-list"></div><form id="jev-key-form"><h3>Jev credentials</h3><label>TypeSafe API key<input name="apiKey" type="password" autocomplete="new-password" maxlength="4096"></label><span id="jev-key-state"></span><div class="commands"><button type="submit">Save key</button><button id="clear-jev-key" type="button" class="danger">Clear key</button></div></form></section>
+</main></body></html>

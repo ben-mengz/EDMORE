@@ -1,0 +1,20 @@
+{
+  "name": "@deepseek-ai/dsh-edmore-auth",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "src/index.mjs",
+  "exports": {
+    ".": "./src/index.mjs",
+    "./worker-webserver": "./src/worker-webserver.mjs"
+  },
+  "dependencies": {
+    "@islibaodong/dsh-login": "0.2.4",
+    "@deepseek-ai/dsh-host-webserver": "0.1.7-rc.2",
+    "@deepseek-ai/cordis": "4.0.4",
+    "yaml": "2.8.3",
+    "@edmore/plugin-host": "1.0.0",
+    "@edmore/plugin-wiki": "1.0.0",
+    "@edmore/plugin-tango": "1.0.0"
+  }
+}
