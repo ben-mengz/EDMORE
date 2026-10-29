@@ -1,4 +1,4 @@
-import type { RuntimeScheduler } from '@deepseek-ai/dsh-edmore-contracts'
+import type { RuntimeScheduler, RuntimeDispatch } from '@deepseek-ai/dsh-edmore-contracts'
 import { CapabilityUnavailableError } from '@deepseek-ai/dsh-edmore-contracts'
 
 export class RuntimeScheduling {
@@ -22,5 +22,10 @@ export class RuntimeScheduling {
   next(sessionId: string, workflowId: string) {
     if (!this.provider) throw new CapabilityUnavailableError('edmore-plan-judge', 'Workflow scheduling capability is unavailable; execution cannot continue')
     return this.provider.next(sessionId, workflowId)
+  }
+
+  async pauseEmptyOutput(sessionId: string, dispatch: RuntimeDispatch, correlationId: string, reason: string): Promise<boolean> {
+    if (!this.provider?.pauseEmptyOutput) throw new CapabilityUnavailableError('edmore-plan-judge', 'Workflow pause capability is unavailable')
+    return this.provider.pauseEmptyOutput(sessionId, dispatch, correlationId, reason)
   }
 }

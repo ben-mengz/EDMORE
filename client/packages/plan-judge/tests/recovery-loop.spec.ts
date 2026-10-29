@@ -38,6 +38,66 @@ async function call(workflow: EdmoreWorkflow, tool: string, id: string, result: 
 }
 
 describe('declared recovery loops', () => {
+  it('repairs nested argument spelling without executing or consuming workflow visits', async () => {
+    const { workflow, plan, events } = await fixture()
+    plan.steps[0]!.arguments = { arguments: [{ __type__: 'RunApertureCenteringSettings', maximum_iterations: 8 }] }
+    const active = workflow['activeBySession'].get('s')!
+    const visits = structuredClone(active.stepVisits)
+    const start = workflow.nextLoopDispatch('s')!
+    await expect(workflow.beforeLoopToolCall('h', 'agent_sem', 'check', {
+      arguments: [{ __type: 'RunApertureCenteringSettings', maximum_iterations: 8 }],
+    }, 'typo')).rejects.toThrow('arguments[0].__type__')
+    const retry = workflow.nextLoopDispatch('s')!
+    expect(retry.step.step_id).toBe(start.step.step_id)
+    expect(retry.argumentRepairAttempt).toBe(1)
+    expect(retry.prompt).toContain('"executed":false')
+    expect(retry.prompt).toContain('"issue":"unexpected"')
+    expect(active.stepVisits).toEqual(visits)
+    expect(active.nextStepIndex).toBe(0)
+    expect(workflow['inFlightToolCalls'].size).toBe(0)
+    expect(events.some(e => e.type === 'edmore.workflow.paused')).toBe(false)
+    await workflow.beforeLoopToolCall('h', 'agent_sem', 'check', {
+      arguments: [{ maximum_iterations: 8, __type__: 'RunApertureCenteringSettings' }],
+    }, 'corrected')
+    expect(active.argumentRepair).toBeUndefined()
+    expect(workflow['inFlightToolCalls'].get('s')?.callId).toBe('corrected')
+  })
+
+  it('allows two corrections, then pauses without entering the failure branch', async () => {
+    const { workflow, plan } = await fixture()
+    plan.steps[0]!.arguments = { fixed: 8 }
+    for (let i = 1; i <= 3; i++) {
+      await expect(workflow.beforeLoopToolCall('h', 'agent_sem', 'check', { fixed: '8' }, `bad-${i}`)).rejects.toThrow('ARGUMENT_MISMATCH')
+      expect(workflow['activeBySession'].get('s')!.nextStepIndex).toBe(0)
+      expect(workflow['inFlightToolCalls'].size).toBe(0)
+      if (i < 3) expect(workflow.nextLoopDispatch('s')?.argumentRepairAttempt).toBe(i)
+    }
+    expect(workflow.nextLoopDispatch('s')).toBeUndefined()
+    expect(workflow['pausedBySession'].get('s')!.state.executed).toBe(false)
+    await expect(workflow.beforeLoopToolCall('h', 'agent_sem', 'check', { fixed: 8 }, 'late')).rejects.toThrow('paused')
+  })
+
+  it('preserves dynamic inputs while rejecting changes to fixed array order and types', async () => {
+    const { workflow, plan } = await fixture()
+    plan.steps[0]!.arguments = { dynamic: null, fixed: [1, 2] }
+    await expect(workflow.beforeLoopToolCall('h', 'agent_sem', 'check', { dynamic: 7, fixed: [2, 1] }, 'order')).rejects.toThrow('fixed[0]')
+    await expect(workflow.beforeLoopToolCall('h', 'agent_sem', 'check', { dynamic: 7, fixed: [1, '2'] }, 'type')).rejects.toThrow('fixed[1]')
+    await expect(workflow.beforeLoopToolCall('h', 'agent_sem', 'check', { dynamic: 7, fixed: [1, 2] }, 'valid')).resolves.toBe(true)
+  })
+
+  it('persists the correction budget across backend restarts', async () => {
+    const directory = await mkdtemp(join(tmpdir(), 'argument-repair-'))
+    try {
+      const path = join(directory, 'state.json')
+      const first = await fixture(path)
+      first.plan.steps[0]!.arguments = { fixed: 8 }
+      await expect(first.workflow.beforeLoopToolCall('h', 'agent_sem', 'check', { fixed: 9 }, 'bad')).rejects.toThrow('ARGUMENT_MISMATCH')
+      const second = new EdmoreWorkflow({ append: async (event: any) => event } as never, bridge, '', path)
+      await second.ready()
+      expect(second.nextLoopDispatch('s')?.argumentRepairAttempt).toBe(1)
+    } finally { await rm(directory, { recursive: true, force: true }) }
+  })
+
   it('keeps LLM uncertainty blocked even when structured diagnostics pass', async () => {
     const { workflow } = await fixture()
     workflow.bindRoleRunner({ async runRoleOnce() { return '{"status":"uncertain","reason":"Evidence is incomplete."}' } })

@@ -18,6 +18,7 @@ it('binds the HAADF demo to standard MCP names and keeps executor namespaces iso
   expect(tool).toBe('mcp__asyncroscopy__UnifiedDigitalTwin_acquire_scanned_image')
   const names = [tool, 'mcp__nionswift_agent_sem__acquire_4d_stem', 'mcp__another__acquire', 'skill']
   expect(allowedToolNamesForRole('executor:agent_mcp_asyncroscopy', names)).toEqual(['skill', tool])
+  expect(allowedToolNamesForRole('executor:agent_mcp_asyncroscopy@isolated-step', names)).toEqual(['skill', tool])
   expect(allowedToolNamesForRole('executor:agent_sem', names)).not.toContain(tool)
   expect(completionSatisfied(skill.steps[3].completion, {})).toBe(false)
   expect(completionSatisfied(skill.steps[3].completion, { structuredContent: { result: 'stem_image_HAADF_test.h5' } })).toBe(true)

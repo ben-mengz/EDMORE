@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { mkdtemp, readFile, rm, mkdir, writeFile } from 'node:fs/promises'
+import { mkdtemp, readFile, rm, mkdir, writeFile, stat, open } from 'node:fs/promises'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 import { EdmoreEventHub, EdmoreActionRegistry } from '../src/events.ts'
@@ -16,6 +16,63 @@ async function fixture() {
 }
 
 describe('Core event extraction', () => {
+  it('retrieves only visible earlier conversational replies from the same session', async () => {
+    const { hub } = await fixture()
+    const original = await hub.append({ type: 'edmore.assistant.completed', session_id: 's', payload: { role: 'orchestrator', text: 'Original plan' } })
+    await hub.append({ type: 'edmore.assistant.completed', session_id: 'other', payload: { role: 'orchestrator', text: 'Other plan' } })
+    await hub.append({ type: 'edmore.assistant.completed', session_id: 's', payload: { role: 'planner', text: 'Internal plan' } })
+    await hub.append({ type: 'edmore.assistant.completed', session_id: 's', payload: { role: 'orchestrator', hidden: true, text: 'Hidden' } })
+    expect(hub.latestConversationReply('s', 5)?.event_id).toBe(original.event_id)
+    expect(hub.latestConversationReply('s', original.cursor)).toBeUndefined()
+  })
+  it('appends without replacing the inode or rewriting the existing bytes', async () => {
+    const { hub, path } = await fixture()
+    await hub.append({ type: 'user.test', payload: { text: '中文' } })
+    const before = await readFile(path)
+    const inode = (await stat(path)).ino
+    await hub.append({ type: 'user.test' })
+    expect((await stat(path)).ino).toBe(inode)
+    expect((await readFile(path)).subarray(0, before.length)).toEqual(before)
+  })
+  it('adds a separator to a valid legacy journal without a final newline', async () => {
+    const { hub, path } = await fixture()
+    await hub.append({ type: 'user.test' })
+    await writeFile(path, (await readFile(path, 'utf8')).trimEnd())
+    const restored = new EdmoreEventHub(path)
+    await restored.append({ type: 'user.test' })
+    const reloaded = new EdmoreEventHub(path)
+    await reloaded.ready()
+    expect(reloaded.query().map(e => e.cursor)).toEqual([1, 2])
+  })
+  it('rolls back a partial write without publishing and allows retry', async () => {
+    const { hub, path } = await fixture()
+    await hub.append({ type: 'user.test' })
+    const before = await readFile(path, 'utf8')
+    const handle = await open(path, 'a+')
+    const prototype = Object.getPrototypeOf(handle)
+    const write = prototype.writeFile
+    const spy = vi.spyOn(prototype, 'writeFile').mockImplementationOnce(async function(this: typeof handle) {
+      await write.call(this, '{partial', 'utf8')
+      throw new Error('disk full')
+    })
+    try {
+      await expect(hub.append({ type: 'user.test' })).rejects.toThrow('disk full')
+      expect(await readFile(path, 'utf8')).toBe(before)
+      expect(hub.query()).toHaveLength(1)
+    } finally { spy.mockRestore(); await handle.close() }
+    expect((await hub.append({ type: 'user.test' })).cursor).toBe(2)
+  })
+  it('refuses a stale writer instead of overwriting externally committed events', async () => {
+    const { hub, path } = await fixture()
+    await hub.append({ type: 'user.test' })
+    const other = new EdmoreEventHub(path)
+    await other.ready()
+    await hub.append({ type: 'user.test' })
+    await expect(other.append({ type: 'user.test' })).rejects.toThrow('changed outside')
+    const restored = new EdmoreEventHub(path)
+    await restored.ready()
+    expect(restored.query()).toHaveLength(2)
+  })
   it('checks canonical request fingerprints when an action id is reused', async () => {
     const { hub, path } = await fixture()
     const execute = vi.fn(async () => true)
@@ -133,6 +190,18 @@ describe('Core event extraction', () => {
     expect(restored.query({ after: first.cursor })).toEqual([second])
     expect(restored.query({ session_id: 'one' })).toEqual([first])
     expect(JSON.parse((await readFile(path, 'utf8')).split('\n')[0]!)).toEqual(first)
+  })
+  it('accepts workflow transition events but rejects unknown core event types', async () => {
+    const { hub } = await fixture()
+    const transition = await hub.append({
+      type: 'edmore.workflow.transitioned',
+      session_id: 'one',
+      workflow_id: 'workflow-one',
+      payload: { from_step_id: 'measure', to_step_id: 'adjust', outcome: 'failure' },
+    })
+    expect(transition.type).toBe('edmore.workflow.transitioned')
+    await expect(hub.append({ type: 'edmore.workflow.unknown' })).rejects.toThrow('event type is not allowed')
+    expect(hub.query()).toEqual([transition])
   })
   it('does not execute a completed action again after restart', async () => {
     const { hub, path } = await fixture()

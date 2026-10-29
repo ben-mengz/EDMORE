@@ -2,6 +2,8 @@ import { mkdirSync, existsSync, readFileSync, writeFileSync, symlinkSync, realpa
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { homedir } from 'node:os'
+import { createRequire } from 'node:module'
+import { builtinPackages, featurePackages, resolveFeatures, featureConfiguration } from '@edmore/plugin-host'
 
 export function prepareClientProfile() {
   const root = dirname(fileURLToPath(import.meta.url))
@@ -20,6 +22,22 @@ export function prepareClientProfile() {
     }
   } else {
     writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + '\n', { flag: 'wx' })
+  }
+  const require = createRequire(import.meta.url)
+  const configPath = featureConfiguration()
+  if (process.env.EDMORE_FEATURE_CONFIG && !existsSync(configPath)) throw new Error('Feature configuration is missing')
+  const featureConfig = existsSync(configPath) ? JSON.parse(readFileSync(configPath, 'utf8')) : { version: 1, disabled: [] }
+  if (featureConfig.version !== 1 || !Array.isArray(featureConfig.disabled)) throw new Error('Invalid feature configuration')
+  const features = resolveFeatures(featurePackages().map(name => ({
+    ...JSON.parse(readFileSync(require.resolve(`${name}/plugin.json`), 'utf8')), package: name,
+  })), featureConfig.disabled)
+  const current = JSON.parse(readFileSync(manifestPath, 'utf8'))
+  const previousBundles = current.dsh.profile.bundles ?? []
+  const bundles = [...previousBundles.filter(name => !builtinPackages.includes(name)),
+    ...features.filter(row => row.contributes.cordisBundle).map(row => row.package)]
+  if (JSON.stringify(previousBundles) !== JSON.stringify(bundles)) {
+    current.dsh.profile.bundles = bundles
+    writeFileSync(manifestPath, JSON.stringify(current, null, 2) + '\n')
   }
   const modules = join(root, 'node_modules')
   if (!existsSync(modules)) throw new Error('Run npm ci in EDMORE/client before starting the client')

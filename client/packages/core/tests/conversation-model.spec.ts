@@ -2,12 +2,32 @@ import { it, expect } from 'vitest'
 import { mkdtemp, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { EdmoreAgentRoleManager, providerCompatibleConfig } from '../../runtime/src/services.ts'
+import { EdmoreAgentRoleManager, isSettingsNotReadyError, optionalPositiveInteger, providerCompatibleConfig } from '../../runtime/src/services.ts'
 
-it('omits OpenAI effort levels for HU without changing OpenAI configuration', () => {
+it('omits OpenAI effort levels for compatible custom providers without changing OpenAI configuration', () => {
   const config = { provider: 'llm3-hu', model: 'llm3', reasoningEffort: 'low', maxTokens: 2048, timeoutMs: 60000 }
   expect(providerCompatibleConfig(config).reasoningEffort).toBeUndefined()
+  const bonsai = providerCompatibleConfig({ ...config, provider: 'bonsai-local', model: 'bonsai-2-27b' })
+  expect(bonsai.reasoningEffort).toBeUndefined()
+  expect(bonsai.timeoutMs).toBe(600000)
+  const strata = providerCompatibleConfig({ ...config, provider: 'strata-local', model: 'qwen3.8-flash-next-iq2_xs', reasoningEffort: 'none' })
+  expect(strata.reasoningEffort).toBeUndefined()
+  expect(Object.hasOwn(strata, 'reasoningEffort')).toBe(false)
+  expect(strata.timeoutMs).toBe(600000)
   expect(providerCompatibleConfig({ ...config, provider: 'openai', model: 'gpt-5-mini' }).reasoningEffort).toBe('low')
+})
+
+it('validates provider context-window metadata', () => {
+  expect(optionalPositiveInteger(131072, 'contextWindow')).toBe(131072)
+  expect(optionalPositiveInteger(undefined, 'contextWindow')).toBeUndefined()
+  expect(() => optionalPositiveInteger(0, 'contextWindow')).toThrow('positive integer')
+  expect(() => optionalPositiveInteger(65536.5, 'contextWindow')).toThrow('positive integer')
+})
+
+it('retries LLM provider synchronization while Harness settings are reloading', () => {
+  expect(isSettingsNotReadyError(new Error('settings namespace "llm-pi-ai" is not registered'))).toBe(true)
+  expect(isSettingsNotReadyError(new Error('Configuration entry changed during reload'))).toBe(true)
+  expect(isSettingsNotReadyError(new Error('permission denied'))).toBe(false)
 })
 
 it('applies the conversation model to all roles except MCP-pinned models', async () => {

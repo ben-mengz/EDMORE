@@ -26,6 +26,27 @@ export async function apply(ctx: Context): Promise<void> {
     handler: async (req: IncomingMessage, res: ServerResponse) => {
       try {
         const url = new URL(req.url ?? '/', 'http://x')
+        if (url.pathname === '/api/edmore/extensions' && req.method === 'GET') {
+          sendJson(res, 200, { extensions: ctx.get('edmoreConversationExtensions')?.list() ?? [] })
+          return
+        }
+        const extensionRoute = /^\/api\/edmore\/extensions\/([a-z][a-z0-9-]*)\/(state|panel\.js|panel\.css)$/.exec(url.pathname)
+        if (extensionRoute) {
+          const extension = ctx.get('edmoreConversationExtensions')?.get(extensionRoute[1]!)
+          if (!extension) { sendJson(res, 404, { error: 'Extension unavailable' }); return }
+          if (extensionRoute[2] === 'state' && req.method === 'GET') {
+            sendJson(res, 200, await extension.state(stringField(url.searchParams.get('session_id'), 'session_id')))
+          } else if (extensionRoute[2] === 'state' && req.method === 'POST') {
+            const body = await readJsonBody(req)
+            sendJson(res, 200, await extension.update(stringField(body.session_id, 'session_id'), body))
+          } else if (req.method === 'GET') {
+            const asset = await extension.asset(extensionRoute[2]!)
+            if (!asset) { sendJson(res, 404, { error: 'Asset unavailable' }); return }
+            res.writeHead(200, { 'content-type': asset.type, 'cache-control': 'no-store', 'x-content-type-options': 'nosniff' })
+            res.end(asset.body)
+          } else sendJson(res, 405, { error: 'Unsupported method' })
+          return
+        }
         if (req.method === 'GET' && url.pathname === '/api/edmore/capabilities') {
           sendJson(res, 200, { capabilities: ctx.edmoreCapabilities.list() })
           return
@@ -54,7 +75,7 @@ export async function apply(ctx: Context): Promise<void> {
         }
         if (req.method === 'GET' && url.pathname === '/api/edmore/harness/tools') {
           const tools = ctx.tools.schemas()
-            .filter(tool => tool.name.startsWith('mcp__'))
+            .filter(tool => tool.name.startsWith('mcp__') || (url.searchParams.get('include') === 'wiki' && tool.name.startsWith('weknora_')))
             .map(tool => ({ name: tool.name, description: tool.description, parameters: tool.parameters }))
           sendJson(res, 200, { ok: true, tools })
           return
@@ -183,6 +204,17 @@ export async function apply(ctx: Context): Promise<void> {
           sendJson(res, 200, { ok: true, action_id: result.action_id, replayed: result.replayed, ...result.result })
           return
         }
+        if (req.method === 'POST' && url.pathname === '/api/edmore/actions/cancel-workflow') {
+          const body = await readJsonBody(req)
+          const sessionId = stringField(body.session_id, 'session_id')
+          // Cancellation is repeatable and must run before receipt/LLM queues.
+          // An old failed or indeterminate action receipt cannot veto it.
+          const cancellation = requireWorkflow().cancelSession(sessionId)
+          const cancelled = ctx.edmoreTasks.cancel(sessionId)
+          const state = await cancellation
+          sendJson(res, 200, { ok: true, cancelled, ...state })
+          return
+        }
         if (req.method === 'POST' && url.pathname === '/api/edmore/actions/cancel') {
           const body = await readJsonBody(req)
           const sessionId = stringField(body.session_id, 'session_id')
@@ -193,6 +225,18 @@ export async function apply(ctx: Context): Promise<void> {
             return { cancelled, hardware_stop_verified: false }
           }, body)
           sendJson(res, 200, { ok: true, ...result })
+          return
+        }
+        if (req.method === 'POST' && url.pathname === '/api/edmore/actions/edit-plan') {
+          const body = await readJsonBody(req)
+          if (typeof body.workflow_id !== 'string' || typeof body.session_id !== 'string') throw new Error('workflow_id and session_id are required')
+          const workflow = requireWorkflow()
+          if (!workflow.editTemporaryPlan) throw new Error('Plan editing is unavailable')
+          const actionId = typeof body.action_id === 'string' ? body.action_id : randomUUID()
+          const result = await actions.run(actionId, 'edit-plan', body.session_id, async () => ({
+            plan: await workflow.editTemporaryPlan!(body.workflow_id as string, body.session_id as string, body.draft),
+          }), body)
+          sendJson(res, 200, { ok: true, ...result.result })
           return
         }
         if (req.method === 'POST' && url.pathname === '/api/edmore/actions/approve') {

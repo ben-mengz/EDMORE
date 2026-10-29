@@ -38,8 +38,35 @@ Skill contracts distinguish required tools from optional support tools. Optional
 
 New plans retain only the confirmation gates declared by the bundled skills. Planner-added gates and preview-success text do not introduce additional confirmations. Runtime tool failures still pause execution. Existing persisted plans retain their reviewed gates until revised.
 
+The first gated step pauses in Harness before dispatching an executor. A user
+reply accepted by the workflow intent classifier both resumes the step and
+records its input confirmation; no second generic `confirm` is required. The
+accepted reply is retained in state and supplied to subsequent executor retries.
+
+An executor returning neither text nor any tool call gets at most one automatic
+retry in a fresh session, using the current step, resolved arguments, confirmed
+input and pinned instructions rather than the full plan/history. The retry only
+exposes the current MCP tool plus skill/evidence readers. A reported `max-tokens`
+finish permits a bounded retry budget increase; token counts alone do not. A
+second empty result pauses with a visible retry message, without taking success
+or failure transitions. Any tool call prevents this automatic replay. Finish
+reason and provider usage (including reasoning tokens when supplied) are logged.
+Cancellation and newer workflow requests suppress stale executor responses and
+prevent automatic retries; cancellation never implies a verified hardware stop.
+
 Child workflow completion restores the approved parent plan at its saved step. The resumed event includes the parent plan and step index so subscribers can replace the child display. Outstanding user-input gates pause immediately; ungated steps remain available to the native agent loop through nextLoopDispatch. Returning from a child does not grant user confirmation.
 # Runtime Result Review
+
+Approved-argument mismatches are pre-execution errors, not failed instrument
+operations. The gate returns `ARGUMENT_MISMATCH` with field-level differences and
+`executed: false`. The executor can correct its arguments twice; a new repair
+attempt also permits redispatch of the same step if the LLM ends its turn early.
+The counter is persisted separately from workflow visits and cleared when a
+valid call begins. Exhaustion pauses before execution without taking
+`on_failure`. Fixed values remain locked; existing dynamic inputs remain
+LLM-resolved. Object key order is ignored, but array order and value types are not.
+Actual result failures continue through the skill's failure policy; unknown
+in-flight outcomes are never automatically replayed by argument repair.
 
 Result assessment and recovery proposals run in isolated read-only role sessions
 with the normal role configuration. They consume explicit evidence rather than
@@ -135,6 +162,50 @@ plans retain their snapshots and require explicit replanning to adopt this
 contract. No production experiment is run by the recovery tests.
 
 ## Standard MCP Workflows
+
+### Manual Plan Mode and Temporary Plans
+
+Typing `\plan` (or `/plan`) immediately enables the composer's Plan mode without
+sending a request. The exit control returns to normal chat. Mode is remembered
+per conversation for the browser session. Ordinary queries go directly to the
+LLM with Skills available, including Workflow instructions as reference; they
+do not invoke the Jev entry router or automatically create plans.
+
+The LLM may discuss a draft and call `edmore_request_workflow_mode` to request
+consent. A subsequent explicit user reply `enable workflow mode` or
+`打开 workflow mode` enables the composer and fills the draft without submitting
+it. Requests are conversation-scoped, expire after ten minutes, and are discarded
+on another reply, cancellation or restart. Enabling mode is not plan approval.
+
+Confirmed mode changes retain a persistent, conversation-scoped source draft ID.
+The composer submits that ID with subsequent requests. Manual references such as
+"according to your previous plan" recover the prior visible conversational reply,
+not hidden planner output. Missing references block instead of guessing a workflow.
+An explicitly named workflow is pinned during compilation; tool order and a
+separate translation-fidelity check must preserve the draft's scope and criteria.
+Differences block submission for review. Draft-backed plans are never automatically
+rewritten by plan repair. Mismatch complaints remain discussion, even in Plan mode.
+
+While a plan awaits approval, users may ask the LLM to revise it. The current
+version plus explicit user edits is the revision baseline, not the first draft.
+Requested changes to scope, order, parameters and criteria are allowed subject
+to tool schemas and Workflow contract constraints. Revisions skip the additional
+LLM fidelity/Plan Judge call; deterministic diffs expose changes for human review.
+Initial draft handoffs still use fidelity validation. Execution Result Judge remains unchanged.
+The replacement includes exact before/after differences and a new approval ID. Approval is
+blocked during revision. Failed revisions retain the old version; successful
+revisions invalidate it. Contract confirmation gates cannot silently disappear
+by converting a plan to a temporary no-contract plan.
+
+In Plan mode the planner selects an existing contract or creates an editable
+temporary JSON plan if no contract matches. Reference Skills do not grant
+execution authority. Existing tool permissions remain enforced. Temporary plans
+explicitly have no Workflow Contract and skip semantic Plan Judge, but validate
+live MCP schemas and require human approval. The UI supports JSON edits; saving
+creates a new workflow ID and invalidates the old approval target. Arguments
+must exactly match the approved temporary plan. Execution remains sequential,
+and tool errors, failed result criteria or uncertainty pause the workflow.
+The existing result judge still evaluates explicit per-step criteria.
 
 `agent_mcp_<server>.<tool>` addresses an existing standard MCP registration,
 for example `agent_mcp_asyncroscopy.UnifiedDigitalTwin_acquire_scanned_image`.

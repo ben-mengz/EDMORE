@@ -2,7 +2,7 @@ import { cp, mkdtemp, rm, writeFile } from 'node:fs/promises'
 import { join, resolve } from 'node:path'
 import { tmpdir } from 'node:os'
 import { expect, it, vi } from 'vitest'
-import { loadSkillDirectory, completionSatisfied } from '../../../skill-format.mjs'
+import { loadSkillDirectory, completionSatisfied, validateWorkflow } from '../../../skill-format.mjs'
 import { EdmoreWorkflow } from './workflow-fixture.ts'
 
 const client = resolve(import.meta.dirname, '../../..')
@@ -46,6 +46,88 @@ it('checks structured results conservatively', () => {
   expect(completionSatisfied({ type: 'field_present', field: 'data.path' }, { structuredContent: { data: { path: '/test' } } })).toBe(true)
   expect(completionSatisfied({ type: 'field_equals', field: 'done', value: true }, { structuredContent: { done: false } })).toBe(false)
   expect(completionSatisfied({ type: 'field_present', field: 'path' }, { content: [{ text: 'success' }] })).toBe(false)
+  expect(completionSatisfied({ type: 'semantic_judge', criteria: 'The beam is centered.' }, {})).toBe(true)
+})
+
+it('requires an explicit semantic judge criterion', () => {
+  const workflow = { schema_version: 1, id: 'semantic_test', version: '1', steps: [{
+    id: 'measure', title: 'Measure', purpose: 'Measure alignment', tool: 'agent_sem.wait', parameters: {}, confirm: false,
+    confirmation: '', expected_output: 'Alignment measurement', completion: { type: 'semantic_judge', criteria: '' }, on_success: 'complete', on_failure: 'pause',
+  }] }
+  expect(() => validateWorkflow(workflow)).toThrow('Missing semantic judge criteria')
+  workflow.steps[0].completion.criteria = 'Beam-centre distance is at most 0.02 field half-widths.'
+  expect(validateWorkflow(workflow).steps[0].completion.criteria).toContain('0.02')
+})
+
+it('validates named transitions and requires a bound for loops', () => {
+  const step = (id: string, on_success: string, on_failure: string, max_visits?: number) => ({
+    id, title: id, purpose: id, tool: 'agent_sem.wait', parameters: {}, confirm: false,
+    confirmation: '', expected_output: 'ok', completion: { type: 'tool_success' },
+    on_success, on_failure, ...(max_visits === undefined ? {} : { max_visits }),
+  })
+  const loop = { schema_version: 1, id: 'loop_test', version: '1.0.0', steps: [
+    step('measure', 'complete', 'adjust'), step('adjust', 'measure', 'pause'),
+  ] }
+  expect(() => validateWorkflow(loop)).toThrow('requires max_visits')
+  loop.steps[1].max_visits = 3
+  expect(validateWorkflow(loop).steps[1].on_success).toBe('measure')
+  loop.steps[0].on_failure = 'missing'
+  expect(() => validateWorkflow(loop)).toThrow('Unsupported failure transition')
+})
+
+it('requires every workflow to declare an explicit success transition', () => {
+  const workflow = { schema_version: 1, id: 'missing_success', version: '1.0.0', steps: [{
+    id: 'measure', title: 'Measure', purpose: 'Measure once', tool: 'agent_sem.wait', parameters: {}, confirm: false,
+    confirmation: '', expected_output: 'ok', completion: { type: 'tool_success' }, on_success: 'next', on_failure: 'pause',
+  }] }
+  expect(() => validateWorkflow(workflow)).toThrow('at least one on_success: complete')
+})
+
+it('follows a declared failure transition instead of pausing', async () => {
+  const events: any[] = []
+  const workflow = new EdmoreWorkflow({ append: async (event: any) => { events.push(event); return event } } as never, {} as never, join(client, 'skills')) as any
+  workflow.ensureHydrated = async () => {}
+  workflow.saveState = async () => {}
+  workflow.bindHarnessSession('test-harness', 'test-session')
+  const base = { agent: 'agent_sem', tool_name: 'wait', skill: 'loop_test', goal: 'measure', arguments: {}, required_inputs: [], expected_output: 'ok' }
+  const active = { nextStepIndex: 0, stepVisits: {}, plan: { workflow_id: 'test-workflow', steps: [
+    { ...base, step_id: '1', skill_step_id: 'measure', completion: { type: 'field_equals', field: 'converged', value: true }, on_success: 'complete', on_failure: 'adjust' },
+    { ...base, step_id: '2', skill_step_id: 'adjust', completion: { type: 'tool_success' }, on_success: 'measure', on_failure: 'pause', max_visits: 3 },
+  ] } }
+  workflow.activeBySession.set('test-session', active)
+  workflow.handleRuntimeBlocker = vi.fn(async () => {})
+  await workflow.afterLoopToolResult('test-harness', 'agent_sem', 'wait', 'test-call', { content: [], structuredContent: { converged: false } })
+  expect(active.nextStepIndex).toBe(1)
+  expect(workflow.handleRuntimeBlocker).not.toHaveBeenCalled()
+  expect(events.some(event => event.type === 'edmore.workflow.transitioned' && event.payload.outcome === 'failure')).toBe(true)
+})
+
+it('only completes a workflow through the explicit complete transition', async () => {
+  const events: any[] = []
+  const workflow = new EdmoreWorkflow({ append: async (event: any) => { events.push(event); return event } } as never, {} as never, join(client, 'skills')) as any
+  workflow.saveState = async () => {}
+  const step = { step_id: '1', agent: 'agent_sem', tool_name: 'wait', on_success: 'complete' }
+  const active = { nextStepIndex: 0, plan: { workflow_id: 'test-workflow', steps: [step] } }
+  workflow.activeBySession.set('session', active)
+
+  expect(await workflow.followStepTransition(active, step, 'done', 'success', 'session', 'done-call')).toBe(false)
+  expect(await workflow.followStepTransition(active, step, 'next', 'success', 'session', 'next-call')).toBe(false)
+  expect(events.some(event => event.type === 'edmore.workflow.completed')).toBe(false)
+
+  expect(await workflow.followStepTransition(active, step, 'complete', 'success', 'session', 'complete-call')).toBe(true)
+  expect(events.filter(event => event.type === 'edmore.workflow.completed')).toHaveLength(1)
+})
+
+it('pauses before exceeding a loop step max_visits bound', async () => {
+  const workflow = new EdmoreWorkflow({ append: async (event: unknown) => event } as never, {} as never, join(client, 'skills')) as any
+  workflow.saveState = async () => {}
+  const target = { step_id: '1', skill_step_id: 'measure', agent: 'agent_sem', tool_name: 'wait', skill: 'loop_test', goal: 'measure', arguments: {}, required_inputs: [], expected_output: 'ok', on_success: 'complete', on_failure: 'pause' }
+  const source = { ...target, step_id: '2', skill_step_id: 'adjust', on_success: 'measure', max_visits: 2 }
+  const active = { nextStepIndex: 1, stepVisits: { adjust: 2 }, plan: { workflow_id: 'test-workflow', steps: [target, source] } }
+  workflow.activeBySession.set('session', active)
+  workflow.handleRuntimeBlocker = vi.fn(async () => {})
+  expect(await workflow.followStepTransition(active, source, 'measure', 'success', 'session', 'call')).toBe(true)
+  expect(workflow.handleRuntimeBlocker).toHaveBeenCalledWith(active, target, 0, 'session', 'call', expect.stringContaining('2/2'))
 })
 
 it('pins the acquisition definition and judges fixed values and gates from that snapshot', async () => {

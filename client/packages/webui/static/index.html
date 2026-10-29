@@ -25,6 +25,7 @@
           </div>
           <div id="conversationList" class="nav-list"></div>
         </div>
+        <div id="conversationExtensions" hidden></div>
       </aside>
       <header class="window-bar">
         <div>
@@ -32,6 +33,7 @@
           <p id="runtime">Connecting to EDMORE Harness...</p>
         </div>
         <div class="status-row">
+          <button id="cancelWorkflow" type="button" title="Cancel all workflow activity in this conversation"><span class="stop-icon" aria-hidden="true"></span> Cancel Workflow</button>
           <span id="providerBadge" class="badge">Provider: unknown</span>
           <span id="mcpStatus" class="badge">MCP: unknown</span>
           <button id="openSettings" type="button" aria-label="Settings" title="Settings">Settings</button>
@@ -48,8 +50,12 @@
           <div id="chatHistory" class="chat-history" aria-live="polite"></div>
           <div id="processStatus" class="process-status" hidden></div>
           <form id="triggerForm" class="composer">
+            <div id="planModeIndicator" class="plan-mode-indicator" role="status" hidden><strong>Plan mode</strong><button type="button" id="exitPlanMode" aria-label="Exit plan mode" title="Exit plan mode">&#215;</button></div>
             <input id="prompt" placeholder="Type in your request, I'm always here to help you" autocomplete="off">
             <button type="submit">send</button>
+            <button id="stopGeneration" class="stop-generation" type="button" disabled title="Stop the current response and keep this session">
+              <span class="stop-icon" aria-hidden="true"></span>Stop
+            </button>
             <label class="conversation-model">Model<select id="conversationModel" aria-label="Conversation model"><option value="">Default</option></select></label>
             <span id="modelStatus" role="status"></span>
           </form>
@@ -149,10 +155,10 @@
 
           <section class="panel">
             <div class="panel-header">
-              <h2>Skills</h2>
+              <h2>Workflows &amp; Skills</h2>
               <button type="button" id="refreshSkills">Refresh</button>
             </div>
-            <pre id="skills">Loading EDMORE skills...</pre>
+            <div id="skills">Loading Workflows and Skills...</div>
           </section>
 
           <section class="panel">
@@ -166,6 +172,6 @@
       <header class="settings-header"><h2 id="settingsTitle">Settings</h2><button id="closeSettings" type="button" aria-label="Close settings" title="Close settings">×</button></header>
       <div class="settings-layout"><nav id="settingsNavigation" aria-label="Settings sections"></nav><div id="settingsContent"></div></div>
     </dialog>
-    <script src="/edmore/app.js"></script>
+    <script type="module" src="/edmore/app.js"></script>
   </body>
 </html>

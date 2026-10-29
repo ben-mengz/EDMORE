@@ -1,5 +1,5 @@
 import { createHash, randomUUID } from 'node:crypto'
-import { mkdir, readFile, writeFile, rename, rm } from 'node:fs/promises'
+import { mkdir, readFile, open } from 'node:fs/promises'
 import { dirname } from 'node:path'
 import type { EdmoreEvent, EventFilter } from '@deepseek-ai/dsh-edmore-contracts'
 
@@ -35,6 +35,7 @@ const CORE_EVENTS = new Set([
   'edmore.approval.granted',
   'edmore.approval.rejected',
   'edmore.workflow.started',
+  'edmore.workflow.transitioned',
   'edmore.workflow.paused',
   'edmore.workflow.resumed',
   'edmore.workflow.completed',
@@ -60,6 +61,9 @@ export class EdmoreEventHub {
   private subscribers = new Set<(event: EdmoreEvent) => void>()
   private loadPromise: Promise<void>
   private writeChain: Promise<void> = Promise.resolve()
+  private journalBytes = 0
+  private needsSeparator = false
+  private writeFault?: Error
 
   constructor(private path: string) {
     this.loadPromise = this.load()
@@ -77,6 +81,7 @@ export class EdmoreEventHub {
     await this.ready()
     this.validate(input)
     const operation = this.writeChain.then(async () => {
+    if (this.writeFault) throw this.writeFault
     const event: EdmoreEvent = {
       event_id: randomUUID(),
       cursor: this.nextCursor,
@@ -92,13 +97,30 @@ export class EdmoreEventHub {
     }
     const snapshot = JSON.stringify(event)
     const committed = JSON.parse(snapshot) as EdmoreEvent
-    const temporary = `${this.path}.${randomUUID()}.tmp`
+    const line = `${this.needsSeparator ? '\n' : ''}${snapshot}\n`
+    await mkdir(dirname(this.path), { recursive: true })
+    const file = await open(this.path, 'a+', 0o600)
     try {
-      await mkdir(dirname(this.path), { recursive: true })
-      await writeFile(temporary, `${[...this.events.map(item => JSON.stringify(item)), snapshot].join('\n')}\n`, 'utf8')
-      await rename(temporary, this.path)
+      if ((await file.stat()).size !== this.journalBytes) {
+        throw new Error('Event journal changed outside this writer; restart before appending.')
+      }
+      try {
+        await file.writeFile(line, 'utf8')
+        await file.sync()
+      } catch (error) {
+        // Roll back a partial append before allowing a subsequent commit.
+        try { await file.truncate(this.journalBytes); await file.sync() }
+        catch (rollbackError) {
+          this.writeFault = new AggregateError([error, rollbackError], 'Event journal write and rollback failed; repair the journal before restarting.')
+          throw this.writeFault
+        }
+        throw error
+      }
+      this.journalBytes += Buffer.byteLength(line, 'utf8')
+      this.needsSeparator = false
     } finally {
-      await rm(temporary, { force: true }).catch(() => {})
+      // A close error after fsync must not make a durable action look uncommitted.
+      await file.close().catch(error => console.error('EDMore journal close failed:', error))
     }
     this.events.push(committed)
     this.byId.set(committed.event_id, committed)
@@ -115,6 +137,13 @@ export class EdmoreEventHub {
     // A rejected write is reported to its caller, but must not poison later writes.
     this.writeChain = operation.then(() => {}, () => {})
     return operation
+  }
+
+  latestConversationReply(sessionId: string, before: number): EdmoreEvent | undefined {
+    const event = this.events.findLast(event => event.session_id === sessionId && event.cursor < before
+      && event.type === 'edmore.assistant.completed' && asRecord(event.payload).role === 'orchestrator'
+      && !asRecord(event.payload).hidden && typeof asRecord(event.payload).text === 'string')
+    return event ? structuredClone(event) : undefined
   }
 
   query(filter: EventFilter = {}): EdmoreEvent[] {
@@ -193,6 +222,8 @@ export class EdmoreEventHub {
     this.events = loaded
     this.byId = new Map(loaded.map(event => [event.event_id, event]))
     this.nextCursor = (loaded.at(-1)?.cursor ?? 0) + 1
+    this.journalBytes = Buffer.byteLength(body, 'utf8')
+    this.needsSeparator = body.length > 0 && !body.endsWith('\n')
   }
 }
 

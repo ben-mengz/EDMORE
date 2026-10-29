@@ -39,6 +39,14 @@ export function renderSkillMarkdown(name, description, title, steps, original = 
 const hash = value => createHash('sha256').update(value).digest('hex')
 const identifier = /^[a-z][a-z0-9_-]*$/
 const object = value => value && typeof value === 'object' && !Array.isArray(value)
+function validResultBinding(value) {
+  if (object(value) && Object.hasOwn(value, '$fallback')) return Object.keys(value).length === 1
+    && Array.isArray(value.$fallback) && value.$fallback.length === 2 && value.$fallback.every(validResultBinding)
+  if (typeof value === 'string') return /^\{\{[\w-]+\.[\w.]+\}\}$/.test(value)
+  if (Array.isArray(value)) return value.length > 0 && value.every(validResultBinding)
+  return object(value) && Object.keys(value).length > 0 && Object.entries(value).every(([key, item]) =>
+    !['__proto__', 'constructor', 'prototype'].includes(key) && validResultBinding(item))
+}
 export function validateWorkflow(workflow) {
   if (!object(workflow) || workflow.schema_version !== 1 || !identifier.test(workflow.id) || typeof workflow.version !== 'string') throw new Error('Invalid EDMORE workflow header')
   if (!Array.isArray(workflow.steps) || !workflow.steps.length) throw new Error('Workflow must contain steps')
@@ -48,24 +56,38 @@ export function validateWorkflow(workflow) {
     ids.add(step.id)
     if (!/^agent_\w+\.\w+$/.test(step.tool) || !object(step.parameters)) throw new Error(`Invalid action in ${step.id}`)
     if (typeof step.title !== 'string' || !step.title || typeof step.purpose !== 'string') throw new Error(`Missing step description: ${step.id}`)
-    if (step.on_success !== 'next' || step.on_failure !== 'pause') throw new Error(`Unsupported transition: ${step.id}`)
+    if (step.max_visits !== undefined && (!Number.isInteger(step.max_visits) || step.max_visits < 1 || step.max_visits > 1000)) throw new Error(`Invalid max_visits: ${step.id}`)
     if (step.confirm && !step.confirmation?.trim()) throw new Error(`Missing confirmation: ${step.id}`)
-    if (!object(step.completion) || !['tool_success', 'field_equals', 'field_present'].includes(step.completion.type)) throw new Error(`Invalid completion condition: ${step.id}`)
-    if (step.completion.type !== 'tool_success' && !/^[a-zA-Z0-9_]+(?:\.[a-zA-Z0-9_]+)*$/.test(step.completion.field || '')) throw new Error(`Invalid result field: ${step.id}`)
+    if (!object(step.completion) || !['tool_success', 'field_equals', 'field_present', 'semantic_judge', 'branch'].includes(step.completion.type)) throw new Error(`Invalid completion condition: ${step.id}`)
+    if (['field_equals', 'field_present', 'branch'].includes(step.completion.type) && !/^[a-zA-Z0-9_]+(?:\.[a-zA-Z0-9_]+)*$/.test(step.completion.field || '')) throw new Error(`Invalid result field: ${step.id}`)
     if (step.completion.type === 'field_equals' && !Object.hasOwn(step.completion, 'value')) throw new Error(`Missing expected value: ${step.id}`)
+    if (step.completion.type === 'semantic_judge' && (typeof step.completion.criteria !== 'string' || !step.completion.criteria.trim() || step.completion.criteria.length > 4000)) throw new Error(`Missing semantic judge criteria: ${step.id}`)
     for (const [name, binding] of Object.entries(step.parameters)) {
       if (['__proto__', 'constructor', 'prototype'].includes(name) || !object(binding) || !['fixed', 'default', 'ask', 'result', 'tool_default'].includes(binding.mode)) throw new Error(`Invalid binding: ${step.id}.${name}`)
       if (['fixed', 'default'].includes(binding.mode) && !Object.hasOwn(binding, 'value')) throw new Error(`Missing value: ${step.id}.${name}`)
-      if (binding.mode === 'result' && !/^\{\{[\w.]+\}\}$/.test(binding.value || '')) throw new Error(`Invalid result reference: ${step.id}.${name}`)
+      if (binding.mode === 'result' && !validResultBinding(binding.value)) throw new Error(`Invalid result reference: ${step.id}.${name}`)
     }
   }
+  const indexById = new Map(workflow.steps.map((step, index) => [step.id, index]))
+  for (const [index, step] of workflow.steps.entries()) {
+    if (!['next', 'complete', 'pause'].includes(step.on_success) && !ids.has(step.on_success)) throw new Error(`Unsupported success transition: ${step.id}`)
+    if (step.on_failure !== 'pause' && !ids.has(step.on_failure)) throw new Error(`Unsupported failure transition: ${step.id}`)
+    if (step.on_error !== undefined && step.on_error !== 'pause' && !ids.has(step.on_error)) throw new Error(`Unsupported error transition: ${step.id}`)
+    for (const target of [step.on_success, step.on_failure, step.on_error]) {
+      if (ids.has(target) && indexById.get(target) <= index && step.max_visits === undefined) {
+        throw new Error(`Loop transition requires max_visits: ${step.id} -> ${target}`)
+      }
+    }
+  }
+  if (!workflow.steps.some(step => step.on_success === 'complete')) throw new Error('Workflow must declare at least one on_success: complete transition')
   return workflow
 }
 
 export function completionSatisfied(condition, result) {
-  if (!condition || condition.type === 'tool_success') return true
+  if (!condition || ['tool_success', 'semantic_judge'].includes(condition.type)) return true
   let value = result.structuredContent
   for (const key of condition.field.split('.')) value = object(value) && Object.hasOwn(value, key) ? value[key] : undefined
+  if (condition.type === 'branch') return typeof value === 'boolean'
   return condition.type === 'field_present' ? value !== undefined && value !== null : JSON.stringify(value) === JSON.stringify(condition.value)
 }
 

@@ -100,7 +100,7 @@ describe('EDMORE workflow recovery', () => {
       steps: [{
         step_id: `${workflowId}-step`, agent: 'agent_sem', goal: workflowId,
         skill: 'acquire-4d-stem', tool_name: toolName, arguments: {}, required_inputs: [],
-        expected_output: 'ok', on_success: 'done', on_failure: 'pause',
+        expected_output: 'ok', on_success: 'complete', on_failure: 'pause',
       }],
       user_summary: workflowId,
       missing_inputs: [],

@@ -1,0 +1,15 @@
+{
+  "name": "@deepseek-ai/dsh-edmore-jev-decisions",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "peerDependencies": {
+    "@deepseek-ai/dsh-edmore-plan-judge": "0.0.0",
+    "@deepseek-ai/dsh-credentials": "0.1.7-rc.2",
+    "@deepseek-ai/cordis": "4.0.4",
+    "@deepseek-ai/schemastery": "3.18.4"
+  },
+  "exports": { ".": "./src/index.ts", "./package.json": "./package.json" }
+}

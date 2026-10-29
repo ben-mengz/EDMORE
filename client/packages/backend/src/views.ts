@@ -64,7 +64,8 @@ export function planApprovalUiSummary(plan: Record<string, unknown>): string {
   return [
     textOf(plan.user_summary) || textOf(plan.summary) || 'I prepared a plan.',
     '',
-    `Plan judge: ${textOf(judge.status) || 'pass'}${issues ? ` with ${issues} note${issues === 1 ? '' : 's'}` : ''}.`,
+    plan.planning_mode === 'temporary' ? 'No Contract. Plan Judge skipped; user review required.'
+      : `Plan judge: ${textOf(judge.status) || 'pass'}${issues ? ` with ${issues} note${issues === 1 ? '' : 's'}` : ''}.`,
     `${steps} step${steps === 1 ? '' : 's'} are waiting for your approval.`,
   ].join('\n')
 }
@@ -73,7 +74,8 @@ export function uiProcessLabelForAssistant(event: EdmoreEvent, fallback: string)
   const payload = asRecord(event.payload)
   const role = textOf(payload.role)
   const source = event.source
-  if (source === 'edmore-result-judge') return 'Judging result'
+  if (source === 'edmore-workflow-intent') return 'Checking workflow intent'
+  if (source === 'edmore-result-judge') return `LLM is judging result${payload.model ? ` (${textOf(payload.model)})` : ''}`
   if (role === 'planner' || source.includes('planner')) return 'Planning'
   if (role === 'judge' || source.includes('judge')) return 'Judging plan'
   if (role === 'orchestrator' || source.includes('orchestrator')) return 'Routing'
@@ -101,7 +103,16 @@ export function toUiEvent(raw: EdmoreEvent, type: string, payload: Record<string
 }
 
 export function projectUiEvents(raw: EdmoreEvent): EdmoreUiEvent[] {
+  if (raw.type === 'edmore.custom.decision.status') {
+    const status = asRecord(raw.payload)
+    const provider = textOf(status.provider)
+    const label = status.phase === 'started' ? `${provider} is deciding`
+      : status.phase === 'fallback' ? `${provider} unavailable; falling back to LLM`
+        : `${provider} decision received`
+    return [toUiEvent(raw, 'edmore.ui.process.updated', { label, detail: textOf(status.reason) }, 'decision-process')]
+  }
   const payload = asRecord(raw.payload)
+  if (payload.superseded === true && raw.type.startsWith('edmore.assistant.')) return []
   if (raw.type === 'edmore.assistant.delta') return []
   if (payload.hidden === true && raw.type.startsWith('edmore.assistant.')) {
     if (raw.type === 'edmore.assistant.started') {
@@ -152,6 +163,12 @@ export function projectUiEvents(raw: EdmoreEvent): EdmoreUiEvent[] {
   }
   if (raw.type === 'edmore.plan.generated') {
     return [toUiEvent(raw, 'edmore.ui.process.started', { label: 'Plan generated' })]
+  }
+  if (raw.type === 'edmore.custom.workflow_mode.disabled') {
+    return [toUiEvent(raw, 'edmore.ui.workflow.mode_disabled', payload)]
+  }
+  if (raw.type === 'edmore.custom.workflow_mode.enabled') {
+    return [toUiEvent(raw, 'edmore.ui.workflow.mode_enabled', payload)]
   }
   if (raw.type === 'edmore.custom.planning_proposal.requested') {
     return [

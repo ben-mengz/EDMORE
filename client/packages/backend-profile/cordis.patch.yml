@@ -1,8 +1,9 @@
 - insert:
+    - id: config-editor
+      name: '@deepseek-ai/dsh-config-editor'
+
     - id: settings
-      name: '@deepseek-ai/dsh-settings-file'
-      config:
-        path: !!js dshHomePath('edmore/settings.yaml')
+      name: '@deepseek-ai/dsh-settings'
 
     - id: credentials
       name: '@deepseek-ai/dsh-credentials-local'
@@ -18,7 +19,7 @@
         providers: {}
 
     - id: llm-deepseek
-      name: '@deepseek-ai/dsh-llm-deepseek'
+      name: '@deepseek-ai/dsh-llm-deepseek-api-key'
       config:
         apiKeyEnv: DEEPSEEK_API_KEY
         reasoningEffort: low
@@ -37,6 +38,24 @@
 
     - id: session-projection
       name: '@deepseek-ai/dsh-session-projection'
+
+    - id: token-meter
+      name: '@deepseek-ai/dsh-token-meter'
+
+    - id: compaction-tool-result-pruner
+      name: '@deepseek-ai/dsh-compaction-tool-result-pruner'
+
+    - id: compaction-basic
+      name: '@deepseek-ai/dsh-compaction-basic'
+      config:
+        modelPolicies:
+          - provider: bonsai-local
+            model: bonsai-2-27b
+            thresholdRatio: 0.75
+            headroomTokens: 16384
+            retainTokens: 16384
+            maxTokens: 4096
+            maxOverflowRetries: 1
 
     - id: jobs
       name: '@deepseek-ai/dsh-jobs-local'
@@ -89,9 +108,11 @@
       name: '@deepseek-ai/dsh-fs-observation-policy'
 
     - id: tool-fs
+      disabled: !!js process.env.EDMORE_AUTH_WORKER === '1'
       name: '@deepseek-ai/dsh-tool-fs'
 
     - id: tool-bash
+      disabled: !!js process.env.EDMORE_AUTH_WORKER === '1'
       name: '@deepseek-ai/dsh-tool-bash'
       config:
         enableRunInBackground: false
@@ -102,13 +123,24 @@
     - id: skill-filesystem
       name: '@deepseek-ai/dsh-skill-filesystem'
       config:
-        includeDefaultRoots: true
+        includeDefaultRoots: !!js process.env.EDMORE_AUTH_WORKER !== '1'
         customSkillDirs:
           - !!js process.env.EDMORE_CLIENT_ROOT + '/skills'
           - !!js dshHomePath('edmore/skills')
 
     - id: tool-skill
       name: '@deepseek-ai/dsh-tool-skill'
+
+    - id: computer-use
+      disabled: !!js process.env.EDMORE_DISABLE_COMPUTER_USE === '1' || process.platform !== 'darwin'
+      name: '@deepseek-ai/dsh-computer-use'
+
+    - id: computer-use-cua-driver-mcp
+      disabled: !!js process.env.EDMORE_DISABLE_COMPUTER_USE === '1' || process.platform !== 'darwin'
+      name: '@deepseek-ai/dsh-experimental-computer-use-cua-driver-mcp'
+      config:
+        command: !!js process.env.EDMORE_CUA_DRIVER_PATH || (process.env.HOME + '/.local/bin/cua-driver')
+        args: [mcp]
 
     - id: edmore-workspace
       name: '@deepseek-ai/dsh-edmore-optional-feature'
@@ -134,10 +166,19 @@
           assistantTimeoutMs: 60000
 
     - id: webserver
+      disabled: !!js process.env.EDMORE_AUTH_WORKER === '1'
       name: '@deepseek-ai/dsh-host-webserver'
       config:
         host: !!js process.env.EDMORE_CLIENT_HOST ?? '127.0.0.1'
         port: !!js Number(process.env.EDMORE_CLIENT_PORT ?? 7380)
+        compression: none
+
+    - id: edmore-user-webserver
+      disabled: !!js process.env.EDMORE_AUTH_WORKER !== '1'
+      name: '@deepseek-ai/dsh-edmore-auth/worker-webserver'
+      config:
+        host: '127.0.0.1'
+        port: 0
         compression: none
 
     - id: edmore-session-state
@@ -149,6 +190,7 @@
             root: !!js dshHomePath('edmore/session-state')
 
     - id: edmore-plan-judge
+      disabled: !!js process.env.EDMORE_USER_PLAN_JUDGE === '0'
       name: '@deepseek-ai/dsh-edmore-optional-feature'
       config:
         id: edmore-plan-judge
@@ -158,6 +200,18 @@
             statePath: !!js dshHomePath('edmore/plan-judge-state.json')
             autoRepairMaxAttempts: 2
 
+    - id: edmore-jev-decisions
+      disabled: false
+      name: '@deepseek-ai/dsh-edmore-optional-feature'
+      config:
+        id: edmore-jev-decisions
+        module: '@deepseek-ai/dsh-edmore-jev-decisions'
+        options:
+            apiKeyRef: TYPESAFE_API_KEY
+            timeoutMs: 2500
+            minConfidence: 0.9
+            minMargin: 0.2
+
     - id: edmore-session-state-api
       name: '@deepseek-ai/dsh-edmore-optional-feature'
       config:
@@ -165,6 +219,7 @@
         module: '@deepseek-ai/dsh-edmore-session-state-api'
 
     - id: edmore-mcp-bridge
+      disabled: !!js process.env.EDMORE_DISABLE_NIONSWIFT === '1'
       name: '@deepseek-ai/dsh-edmore-optional-feature'
       config:
         id: edmore-mcp-bridge
@@ -194,6 +249,7 @@
         module: '@deepseek-ai/dsh-edmore-workspace-api'
 
     - id: edmore-conversation-title
+      disabled: !!js process.env.EDMORE_USER_CONVERSATION_TITLE === '0'
       name: '@deepseek-ai/dsh-edmore-optional-feature'
       config:
         id: edmore-conversation-title

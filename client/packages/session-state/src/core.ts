@@ -171,7 +171,7 @@ export class SessionStateStore {
         'edmore.workflow.failed': 'failed', 'edmore.approval.rejected': 'rejected',
       }
       const trusted = ['edmore-client-api', 'edmore-plan-judge', 'edmore-plan-judge-loop', 'edmore-result-judge'].includes(event.source)
-      if (trusted && statuses[event.type]) state.status = statuses[event.type]
+      if (trusted && statuses[event.type] && state.status !== 'cancelled') state.status = statuses[event.type]
       if (trusted && ['recovery.choice.requested', 'recovery.choice.accepted', 'recovery.fix.completed', 'recovery.check.passed'].includes(event.type)) {
         state.recovery = { event_id: event.event_id, status: event.type, payload: event.payload }
       }
@@ -193,6 +193,16 @@ export class SessionStateStore {
       }
     }
     return structuredClone({ schema_version: 1, session_id: sessionId, version: through, workflows })
+  }
+
+  stepResult(sessionId: string, workflowId: string, stepId: string): unknown {
+    for (const row of [...this.records].reverse()) {
+      const event = row.event
+      if (event.session_id !== sessionId || event.workflow_id !== workflowId || event.step_id !== stepId) continue
+      if (event.type === 'tool.result') return structuredClone(object(event.payload).result)
+      if (event.type === 'tool.call') return { isError: true, incomplete: true }
+    }
+    return undefined
   }
 
   evidence(sessionId: string, workflowIds: string[], through = this.records.length) {

@@ -1,7 +1,7 @@
 {
   "name": "@deepseek-ai/dsh-edmore-backend",
   "description": "EDMORE HTTP actions, event subscriptions and web UI adapter",
-  "version": "0.1.5-rc.1",
+  "version": "0.1.7-rc.2",
   "publishConfig": {
     "access": "public"
   },
@@ -27,11 +27,11 @@
   "dependencies": {
     "@deepseek-ai/dsh-edmore-runtime": "0.0.0",
     "@deepseek-ai/dsh-edmore-contracts": "0.0.0",
-    "@deepseek-ai/schemastery": "3.18.2"
+    "@deepseek-ai/schemastery": "3.18.4"
   },
   "peerDependencies": {
-    "@deepseek-ai/cordis": "4.0.2",
-    "@deepseek-ai/dsh-host-webserver": "0.1.5-rc.1"
+    "@deepseek-ai/cordis": "4.0.4",
+    "@deepseek-ai/dsh-host-webserver": "0.1.7-rc.2"
   },
   "private": true
 }

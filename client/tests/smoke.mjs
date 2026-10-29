@@ -10,6 +10,7 @@ import { setTimeout as delay } from 'node:timers/promises'
 
 const root = fileURLToPath(new URL('..', import.meta.url))
 const home = await mkdtemp(join(tmpdir(), 'edmore-client-test-'))
+const baselinePatch = join(home, 'test-baseline.json')
 const socket = createServer()
 await new Promise(resolve => socket.listen(0, '127.0.0.1', resolve))
 const port = socket.address().port
@@ -34,7 +35,7 @@ const modelServer = createHttpServer(async (req, res) => {
 await new Promise(resolve => modelServer.listen(0, '127.0.0.1', resolve))
 async function start(extraArgs = [], healthPath = '/api/edmore/health') {
   logs = ''
-  child = spawn(process.execPath, ['--import', 'tsx/esm', 'start.mjs', ...extraArgs], {
+  child = spawn(process.execPath, ['--import', 'tsx/esm', 'start.mjs', '--patch', baselinePatch, ...extraArgs], {
     cwd: root,
     env: { ...process.env, DSH_HOME: home, EDMORE_CLIENT_PORT: String(port),
       EDMORE_NIONSWIFT_BASE_URL: 'http://127.0.0.1:1', EDMORE_WORKSPACE: home },
@@ -77,12 +78,19 @@ async function api(path, body) {
   return response.json()
 }
 try {
+  await writeFile(baselinePatch, JSON.stringify([{ id: 'edmore-jev-decisions', disabled: true }]))
   await mkdir(join(home, 'edmore'), { recursive: true })
   await writeFile(join(home, 'edmore/events.jsonl'), JSON.stringify({ event_id: 'state-fixture', cursor: 1,
     timestamp: '2026-09-15T00:00:00Z', source: 'test', type: 'edmore.custom.ui_input', scope: 'workflow',
     session_id: 'state-test', workflow_id: 'fixture-workflow', payload: { text: 'User fixture, no execution' },
   }) + '\n')
   await start()
+  assert.ok((await api('/api/edmore/extensions')).extensions.some(row => row.id === 'tango'))
+  const instruments = await api('/api/edmore/extensions/tango/state?session_id=instrument-smoke')
+  assert.equal(instruments.enabled, true)
+  assert.deepEqual(instruments.selected, [])
+  assert.ok(instruments.error)
+  await api('/api/edmore/extensions/tango/state', { session_id: 'instrument-smoke', devices: [] })
   const roles = await api('/api/edmore/agent-roles')
   assert.equal(roles.roles.planner.timeoutMs, 300000)
   assert.equal(roles.roles.orchestrator.timeoutMs, 60000)
@@ -111,12 +119,40 @@ try {
   assert.equal((await fetch(`${base}/edmore/`)).status, 200)
   await stop()
   await start()
+  const noTangoHome = join(home, 'edmore/features.json')
+  await stop()
+  await writeFile(noTangoHome, JSON.stringify({ version: 1, disabled: ['tango'] }))
+  await start()
+  assert.deepEqual((await api('/api/edmore/extensions')).extensions, [])
+  assert.equal((await fetch(base + '/edmore/')).status, 200)
+  assert.equal((await fetch(base + '/api/edmore/extensions/tango/panel.js')).status, 404)
+  await stop()
+  await writeFile(noTangoHome, JSON.stringify({ version: 1, disabled: [] }))
+  await start()
   const restored = await api(`/api/edmore-workspace/conversations?project_id=${encodeURIComponent(project.id)}`)
   assert.ok(restored.conversations.some(item => item.id === created.conversation.id))
   const replayed = await api(`/api/edmore-session-state/events?session_id=${encodeURIComponent(sessionId)}`)
   assert.deepEqual(replayed.events.slice(0, journal.events.length), journal.events)
   const capabilities = await api('/api/edmore/capabilities')
   assert.equal(capabilities.capabilities.find(row => row.id === 'edmore-session-state-api').status, 'ready')
+  assert.equal(capabilities.capabilities.find(row => row.id === 'edmore-jev-decisions').status, 'unavailable')
+  await stop()
+  const jevPatch = join(home, 'enable-jev.json')
+  const judgeProbe = join(home, 'judge-probe.mjs')
+  await writeFile(judgeProbe, `export const inject = ['webServer', 'edmorePlanJudge', 'tools'];
+export function apply(ctx) { ctx.effect(() => ctx.webServer.register({kind:'prefix',path:'/test-judge',handler:async (req,res)=>{
+if(req.url.endsWith('/disable')) await ctx.edmorePlanJudge.disable('Injected Judge failure');
+res.setHeader('content-type','application/json'); res.end(JSON.stringify({tools:ctx.tools.schemas().map(tool=>tool.name)}));
+}}), 'test.judge-failure'); }`)
+  await writeFile(jevPatch, JSON.stringify([{ id: 'edmore-jev-decisions', disabled: false }, { insert: [{ id: 'judge-probe', name: judgeProbe }] }]))
+  await start(['--patch', jevPatch])
+  const withJev = await api('/api/edmore/capabilities')
+  assert.equal(withJev.capabilities.find(row => row.id === 'edmore-jev-decisions').status, 'ready')
+  assert.equal(withJev.capabilities.find(row => row.id === 'edmore-plan-judge').status, 'ready')
+  assert.ok((await api('/test-judge/tools')).tools.includes('edmore_request_workflow_mode'))
+  assert.equal((await api('/test-judge/disable')).tools.includes('edmore_request_workflow_mode'), false)
+  assert.equal((await api('/api/edmore/capabilities')).capabilities.find(row => row.id === 'edmore-plan-judge').status, 'failed')
+  console.log('PASS: Judge failure changes capability health and removes its mode tool')
   await stop()
   const patch = join(home, 'no-state-view.json')
   await writeFile(patch, JSON.stringify([{ id: 'edmore-session-state-api', disabled: true }]))
@@ -135,8 +171,18 @@ try {
   const minimal = await api('/api/edmore/capabilities')
   assert.equal(minimal.capabilities.find(row => row.id === 'edmore-plan-judge').status, 'unavailable')
   assert.equal(minimal.capabilities.find(row => row.id === 'edmore-backend').status, 'ready')
+  assert.equal((await api('/api/edmore/harness/tools')).tools.some(row => row.name === 'edmore_request_workflow_mode'), false)
+  await api('/api/edmore/actions/trigger', { prompt: 'must not execute', plan_mode: true, session_id: 'no-judge-plan' })
+  for (let i = 0; i < 30; i++) {
+    const result = await api('/api/edmore/events?session_id=no-judge-plan&after=0&limit=100')
+    if (result.events.some(event => event.type === 'edmore.assistant.completed' && event.payload.text.includes('No action was executed'))) break
+    assert.ok(i < 29, 'Stale Workflow request was not explicitly rejected')
+    await delay(100)
+  }
   assert.deepEqual((await api('/api/edmore/ui/state?session_id=state-test')).workflow, {})
-  assert.ok((await api('/api/edmore/skills')).skills)
+  const referenceCatalog = (await api('/api/edmore/skills')).skills
+  assert.ok(referenceCatalog.some(row => row.category === 'workflow'))
+  assert.ok(referenceCatalog.some(row => row.category === 'support'))
   const denied = await fetch(`${base}/api/edmore/actions/approve`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ workflow_id: 'not-a-plan', session_id: 'one', action_id: 'disabled-approval' }) })
   assert.equal(denied.ok, false)
   assert.match(await denied.text(), /Workflow capability is unavailable/)
@@ -196,7 +242,18 @@ res.writeHead(200, {'content-type':'application/json'}); res.end(JSON.stringify(
   for (const id of disabled) assert.equal(reduced.capabilities.find(row => row.id === id).status, 'unavailable', id)
   assert.equal((await fetch(`${base}/edmore/`)).status, 404)
   assert.equal((await fetch(`${base}/api/edmore-workspace/projects`)).status, 404)
-  assert.deepEqual((await api('/api/edmore/harness/tools')).tools, [])
+  let computerUseTools = []
+  const expectComputerUse = process.platform === 'darwin' && process.env.EDMORE_DISABLE_COMPUTER_USE !== '1'
+  for (let i = 0; i < (expectComputerUse ? 100 : 1) && computerUseTools.length < 40; i++) {
+    computerUseTools = (await api('/api/edmore/harness/tools')).tools.map(tool => tool.name)
+    if (computerUseTools.length < 40) await delay(50)
+  }
+  if (expectComputerUse) {
+    assert.ok(computerUseTools.length >= 40)
+    for (const name of ['list_apps', 'list_windows', 'get_window_state', 'click', 'type_text', 'press_key', 'hotkey']) {
+      assert.ok(computerUseTools.includes(`mcp__cua-driver-mcp__${name}`), name)
+    }
+  } else assert.equal(computerUseTools.some(name => name.startsWith('mcp__cua-driver-mcp__')), false)
   assert.equal(await chat('NO_OPTIONAL_PLUGINS'), nativeSession)
   const slow = await api('/api/edmore/actions/trigger', { prompt: 'SLOW_CANCEL', session_id: 'native-loop-test' })
   for (let i = 0; i < 100 && !JSON.stringify(modelRequests.at(-1)?.messages.at(-1)).includes('SLOW_CANCEL'); i++) await delay(50)

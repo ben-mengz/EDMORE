@@ -1,3 +1,20 @@
+import { createHash } from 'node:crypto'
+
+// Matches @deepseek-ai/dsh-mcp-client's 64-character public-name contract.
+export function nativeMcpToolName(server: string, raw: string): string {
+  const joined = `mcp__${server}__${raw}`
+  const normalized = joined.replace(/[^A-Za-z0-9_-]/g, '_')
+  if (normalized === joined && joined.length <= 64) return joined
+  const hash = createHash('sha256').update(`${server}\0${raw}`).digest('hex').slice(0, 12)
+  return `${normalized.slice(0, 51)}_${hash}`
+}
+
+export function workflowToolSchemaName(agent: string, raw: string): string {
+  if (!agent.startsWith('agent_mcp_')) return raw
+  const server = workflowServerName(agent)
+  return nativeMcpToolName(server, raw).slice(`mcp__${server}__`.length)
+}
+
 // agent_mcp_<server> addresses an already registered standard MCP namespace.
 export function workflowServerName(agent: string): string {
   return agent.startsWith('agent_mcp_') ? agent.slice(10) : `nionswift_${agent}`

@@ -21,7 +21,7 @@ function workflowDefinition(name = 'custom-wait'): SkillDefinition {
     schema_version: 1, id: name.replace(/-/g, '_'), version: '1.0.0', steps: [{
       id: 'wait', title: 'Wait', purpose: 'Wait for readiness', tool: 'agent_sem.wait',
       parameters: { seconds: { mode: 'fixed', value: 7 } }, confirm: false,
-      completion: { type: 'tool_success' }, on_success: 'next', on_failure: 'pause',
+      completion: { type: 'tool_success' }, on_success: 'complete', on_failure: 'pause',
     }],
   } } })
 }
@@ -134,7 +134,7 @@ describe('native skill adapter', () => {
 })
 
 describe('PlanJudge skill evidence', () => {
-  it('uses the independent state plugin for judge evidence and records reproducible input versions', async () => {
+  it('keeps result judging independent from persisted workflow history', async () => {
     const directory = await mkdtemp(resolve(tmpdir(), 'edmore-judge-state-'))
     try {
       const store = new SessionStateStore(directory)
@@ -152,26 +152,23 @@ describe('PlanJudge skill evidence', () => {
       plan.steps[0].required_inputs = ['confirm_roi']
       workflow['pausedBySession'].set('session', { plan, reason: 'Confirm ROI', state: { next_step_index: 0 } })
       workflow.bindHarnessSession('harness', 'session')
-      let inputPacket: any
+      let judgePrompt = ''
       workflow.bindRoleRunner({ async runRoleOnce(_session, role, prompt) {
         expect(role).toBe('judge')
-        const serialized = prompt.split('Shared execution context (state and source events):\n')[1].split('\n\n')[0]
-        inputPacket = JSON.parse(serialized)
-        expect(inputPacket.state.workflows['plugin-plan'].gates['1'].confirmation_context).toEqual({ button: 'confirm_roi', roi: 12 })
-        expect(inputPacket.events.some((row: any) => row.event.type === 'tool.result')).toBe(true)
+        judgePrompt = prompt
         return '{"status":"success","reason":"Accepted user confirmation and successful wait."}'
       } })
       await workflow.resume(plan.workflow_id, 'session', 'ROI confirmed', 'ui-confirmation', { button: 'confirm_roi', roi: 12 })
       await workflow.beforeLoopToolCall('harness', 'agent_sem', 'wait', { seconds: 7 }, 'call')
       await workflow.afterLoopToolResult('harness', 'agent_sem', 'wait', 'call', { content: [{ type: 'text', text: 'Waited for 7 seconds.' }] })
       expect(plan.execution_context).toBeUndefined()
-      expect(store.evidence('session', [plan.workflow_id], inputPacket.version).digest).toBe(inputPacket.digest)
-      const used = store.events('session', 0, 1000).find(row => row.event.type === 'edmore.context.used' && (row.event.payload as any).consumer === 'result-judge')!
-      expect((used.event.payload as any).digest).toBe(inputPacket.digest)
+      expect(judgePrompt).toContain('Criterion:')
+      expect(judgePrompt).toContain('MCP structured output:')
+      expect(judgePrompt).toContain('Waited for 7 seconds.')
+      expect(judgePrompt).not.toContain('Shared execution context')
+      expect(judgePrompt).not.toContain('confirm_roi')
+      expect(store.events('session', 0, 1000).some(row => row.event.type === 'edmore.context.used' && (row.event.payload as any).consumer === 'result-judge')).toBe(false)
       await store.flush()
-      const restored = new SessionStateStore(directory)
-      await restored.ready()
-      expect(restored.evidence('session', [plan.workflow_id], inputPacket.version)).toEqual(inputPacket)
     } finally { await rm(directory, { recursive: true, force: true }) }
   })
 
@@ -188,11 +185,18 @@ describe('PlanJudge skill evidence', () => {
     const child = await workflow['generatePlan']('child-evidence', 'custom-wait: Recover readiness', 'session')
     child.parent_return = { workflow_id: parent.workflow_id, session_id: 'session', plan: restored, next_step_index: 0, reason: 'Not ready' }
     workflow.bindRoleRunner({ async runRoleOnce(_session, role, prompt) {
+      if (role === 'judge') {
+        expect(prompt).toContain('Criterion:')
+        expect(prompt).not.toContain('Use defocus 1200 from my query')
+        expect(prompt).not.toContain('ui-42')
+        expect(prompt).not.toContain('Measured value 23')
+        return '{"status":"success","reason":"Current MCP result satisfies the criterion."}'
+      }
       expect(prompt).toContain('Use defocus 1200 from my query')
       expect(prompt).toContain('ui-42')
       expect(prompt).toContain('"width":25')
       expect(prompt).toContain('Measured value 23')
-      return role === 'judge' ? '{"status":"success","reason":"Evidence available."}' : '{"needs_subplan":false}'
+      return '{"needs_subplan":false}'
     } })
     expect((await workflow['assessStepResult'](child, child.steps[0], { content: [] }, 'session', 'judge')).status).toBe('success')
     await workflow['proposeRuntimeSubplan'](child, child.steps[0], 0, 'Not ready', 'session', 'recovery')
@@ -202,20 +206,21 @@ describe('PlanJudge skill evidence', () => {
     expect(JSON.stringify(workflow['executionContext'](unrelated))).not.toContain('ui-42')
   })
 
-  it('passes accepted UI or chat confirmation to the result judge only for the resumed step', async () => {
+  it('keeps confirmation state out of the result-judge input', async () => {
     const { registry } = registryFixture()
     const workflow = new EdmoreWorkflow({ append: async value => value } as never, bridge, '', undefined, 0, registry)
     const plan = await workflow['generatePlan']('confirmation', 'custom-wait', 'session')
     plan.steps[0].required_inputs = ['confirm_roi_selection_after_pixel_sync']
+    plan.steps[0].on_success = 'next'
     plan.steps.push({ ...plan.steps[0], step_id: '2', required_inputs: [] })
     workflow.bindHarnessSession('harness', 'session')
     workflow['pausedBySession'].set('session', { plan, reason: 'Confirm ROI', state: { next_step_index: 0 } })
-    const confirmations: boolean[] = []
+    const judgePrompts: string[] = []
     workflow.bindRoleRunner({ async runRoleOnce(_session, role, prompt) {
       expect(role).toBe('judge')
-      const evidence = JSON.parse(prompt.split('Harness confirmation gate state:\n')[1].split('\n\n')[0])
-      confirmations.push(evidence.accepted_for_current_step)
-      expect(evidence.step_id).toBe(String(confirmations.length))
+      judgePrompts.push(prompt)
+      expect(prompt).not.toContain('Harness confirmation gate state')
+      expect(prompt).not.toContain('confirm_roi_selection_after_pixel_sync')
       return '{"status":"success","reason":"Wait completed; user gate evaluated separately from the tool result."}'
     } })
     await workflow.resume(plan.workflow_id, 'session', 'confirm', 'user-confirmation', { status: 'success', tool_name: 'confirm_roi_selection' })
@@ -225,7 +230,7 @@ describe('PlanJudge skill evidence', () => {
     expect(workflow['activeBySession'].get('session')?.confirmedStepIndex).toBeUndefined()
     await workflow.beforeLoopToolCall('harness', 'agent_sem', 'wait', { seconds: 7 }, 'second')
     await workflow.afterLoopToolResult('harness', 'agent_sem', 'wait', 'second', { content: [{ type: 'text', text: 'Waited for 7 seconds.' }] })
-    expect(confirmations).toEqual([true, false])
+    expect(judgePrompts).toHaveLength(2)
   })
 
   it('cancels only the selected paused workflow after hardware verification', async () => {
@@ -268,6 +273,164 @@ describe('PlanJudge skill evidence', () => {
     expect(append.mock.calls.filter(([e]) => e.type === 'edmore.workflow.cancelled').map(([e]) => e.workflow_id).sort()).toEqual(['child', 'parent'])
   })
 
+  it('cancels a suspended parent while its recovery child awaits approval', async () => {
+    const { registry } = registryFixture()
+    const append = vi.fn(async value => value)
+    const workflow = new EdmoreWorkflow({ append } as never, bridge, '', undefined, 0, registry)
+    const parent = await workflow['generatePlan']('parent', 'custom-wait', 'session')
+    const child = { ...parent, workflow_id: 'child', parent_return: { workflow_id: 'parent', plan: parent, next_step_index: 0, reason: 'Recovery' } }
+    workflow['pending'].set('child', child)
+    workflow['pendingBySession'].set('session', 'child')
+    workflow['updateInstrumentLeases']('session', parent, 'paused', 'Waiting for recovery approval')
+    await expect(workflow.cancelPaused('parent', 'other-session', true)).rejects.toThrow('no longer paused')
+    await expect(workflow.cancelPaused('parent', 'session', false)).rejects.toThrow('Verify')
+    workflow['inFlightToolCalls'].set('session', { callId: 'in-flight' } as never)
+    await expect(workflow.cancelPaused('parent', 'session', true)).rejects.toThrow('in flight')
+    workflow['inFlightToolCalls'].delete('session')
+    await workflow.cancelPaused('parent', 'session', true)
+    expect(workflow['pending'].has('child')).toBe(false)
+    expect(workflow['pendingBySession'].has('session')).toBe(false)
+    expect((workflow.state() as any).instrument_leases).toHaveLength(0)
+    expect(append.mock.calls.filter(([e]) => e.type === 'edmore.workflow.cancelled').map(([e]) => e.workflow_id).sort()).toEqual(['child', 'parent'])
+  })
+
+  it('restores the suspended parent when a pending recovery child is rejected', async () => {
+    const { registry } = registryFixture()
+    const workflow = new EdmoreWorkflow({ append: async value => value } as never, bridge, '', undefined, 0, registry)
+    const parent = await workflow['generatePlan']('parent', 'custom-wait', 'session')
+    const child = { ...parent, workflow_id: 'child', parent_return: { workflow_id: 'parent', plan: parent, next_step_index: 0, reason: 'Recovery' } }
+    workflow['pending'].set('child', child)
+    workflow['pendingBySession'].set('session', 'child')
+    workflow['updateInstrumentLeases']('session', parent, 'paused', 'Waiting')
+    await workflow.reject('child', 'Rejected', 'session')
+    expect(workflow['pausedBySession'].get('session')?.plan.workflow_id).toBe('parent')
+    await workflow.cancelPaused('parent', 'session', true)
+    expect((workflow.state() as any).instrument_leases).toHaveLength(0)
+  })
+
+  it('clears all session plans and proposals from a stale paused lease without touching other sessions', async () => {
+    const { registry } = registryFixture()
+    const workflow = new EdmoreWorkflow({ append: async value => value } as never, bridge, '', undefined, 0, registry)
+    const parent = await workflow['generatePlan']('orphan', 'custom-wait', 'session')
+    const other = { ...parent, workflow_id: 'other', session_id: 'other-session' }
+    workflow['updateInstrumentLeases']('session', parent, 'paused', 'Stale reservation')
+    workflow['pending'].set('new', { ...parent, workflow_id: 'new' })
+    workflow['pending'].set('extra', { ...parent, workflow_id: 'extra' })
+    workflow['pending'].set('other', other)
+    workflow['pendingBySession'].set('session', 'new')
+    workflow['pendingBySession'].set('other-session', 'other')
+    workflow['planningProposals'].set('proposal', { proposal_id: 'proposal', session_id: 'session' } as never)
+    workflow['planningProposals'].set('other-proposal', { proposal_id: 'other-proposal', session_id: 'other-session' } as never)
+    workflow['planningProposalBySession'].set('session', 'proposal')
+    workflow['activeBySession'].set('session', { plan: parent, nextStepIndex: 0 })
+    await expect(workflow.cancelPaused('orphan', 'session', true)).rejects.toThrow('active')
+    expect(workflow['pending'].size).toBe(3)
+    workflow['activeBySession'].delete('session')
+    await workflow.cancelPaused('orphan', 'session', true)
+    expect([...workflow['pending'].keys()]).toEqual(['other'])
+    expect([...workflow['pendingBySession'].keys()]).toEqual(['other-session'])
+    expect([...workflow['planningProposals'].keys()]).toEqual(['other-proposal'])
+    expect(workflow['planningProposalBySession'].has('session')).toBe(false)
+    expect((workflow.state() as any).instrument_leases).toHaveLength(0)
+  })
+
+  it('routes a workflow request directly to formal PlanReview without a direction proposal', async () => {
+    const { registry } = registryFixture()
+    const workflow = new EdmoreWorkflow({ append: async value => value } as never, bridge, '', undefined, 0, registry)
+    const route = vi.spyOn(workflow as any, 'routeQuery').mockResolvedValue({ action: 'start_workflow', workflow: 'custom-wait', selected_skills: [], reason: 'Execute the requested contract.' })
+    const proposal = vi.spyOn(workflow as any, 'createPlanningProposal')
+    const result = await workflow.handleTrigger({ event_id: 'direct-formal-plan', cursor: 1, timestamp: new Date().toISOString(),
+      session_id: 'session', source: 'test', type: 'edmore.trigger.requested', scope: 'workflow', payload: { prompt: '\\plan custom-wait' } })
+    expect(route).not.toHaveBeenCalled()
+    expect(proposal).not.toHaveBeenCalled()
+    expect(result.action).toBe('planned')
+    expect(workflow['planningProposals'].size).toBe(0)
+    expect(workflow['pending'].size).toBe(1)
+    expect(workflow['activeBySession'].size).toBe(0)
+  })
+
+  it('cancels routing and discards a late planning proposal', async () => {
+    const { registry } = registryFixture()
+    const workflow = new EdmoreWorkflow({ append: async value => value } as never, bridge, '', undefined, 0, registry)
+    let finish!: (value: string) => void
+    let started!: () => void
+    const ready = new Promise<void>(resolve => { started = resolve })
+    workflow.bindRoleRunner({ async runRoleOnce() {
+      started()
+      return await new Promise<string>(resolve => { finish = resolve })
+    } })
+    const event = { event_id: 'late', session_id: 'session', timestamp: new Date().toISOString(), cursor: 1, source: 'test', type: 'test', scope: 'workflow', payload: {} }
+    const running = workflow['createPlanningProposal']('custom-wait', event as never)
+    const rejected = expect(running).rejects.toThrow('cancelled')
+    await ready
+    await workflow.cancelSession('session')
+    finish('{"plan_goal":"custom-wait","user_message":"ready"}')
+    await rejected
+    expect(workflow['planningProposals'].size).toBe(0)
+    expect(workflow['pending'].size).toBe(0)
+  })
+
+  it('cancels active execution but retains an unverified in-flight instrument reservation', async () => {
+    const { registry } = registryFixture()
+    const workflow = new EdmoreWorkflow({ append: async value => value } as never, bridge, '', undefined, 0, registry)
+    const plan = await workflow['generatePlan']('cancel-running', 'custom-wait', 'session')
+    workflow['activeBySession'].set('session', { plan, nextStepIndex: 0 })
+    workflow['updateInstrumentLeases']('session', plan, 'in_flight', 'Executing')
+    workflow['inFlightToolCalls'].set('session', { callId: 'running' } as never)
+    expect(await workflow.cancelSession('session')).toEqual({ hardware_stop_verified: false })
+    expect(workflow['activeBySession'].size).toBe(0)
+    expect(workflow['pausedBySession'].size).toBe(0)
+    expect((workflow.state() as any).instrument_leases[0].state).toBe('verify_required')
+    expect(await workflow.cancelSession('session')).toEqual({ hardware_stop_verified: false })
+  })
+
+  it('cancel wins over approval already awaiting an event write', async () => {
+    const { registry } = registryFixture()
+    let release!: () => void
+    let reached!: () => void
+    const ready = new Promise<void>(resolve => { reached = resolve })
+    const events: any[] = []
+    const workflow = new EdmoreWorkflow({ append: async (event: any) => {
+      events.push(event)
+      if (event.type === 'edmore.approval.granted') { reached(); await new Promise<void>(resolve => { release = resolve }) }
+      return event
+    } } as never, bridge, '', undefined, 0, registry)
+    const plan = await workflow['generatePlan']('cancel-approval', 'custom-wait', 'session')
+    plan.judge_report = { status: 'pass', summary: 'test', issues: [] } as never
+    workflow['pending'].set(plan.workflow_id, plan)
+    workflow['pendingBySession'].set('session', plan.workflow_id)
+    const approval = workflow.approve(plan.workflow_id, 'session')
+    const rejected = expect(approval).rejects.toThrow('cancelled')
+    await ready
+    await workflow.cancelSession('session')
+    release(); await rejected
+    expect(workflow['activeBySession'].size).toBe(0)
+    expect(workflow['pending'].size).toBe(0)
+    expect(events.some(event => event.type === 'edmore.workflow.cancelled' && event.workflow_id === plan.workflow_id)).toBe(true)
+    expect(events.some(event => event.type === 'edmore.workflow.started')).toBe(false)
+  })
+
+  it('cancel wins over a late successful result judge and quarantines old executors', async () => {
+    const { registry } = registryFixture()
+    const workflow = new EdmoreWorkflow({ append: async value => value } as never, bridge, '', undefined, 0, registry)
+    const plan = await workflow['generatePlan']('cancel-judge', 'custom-wait', 'session')
+    workflow.bindHarnessSession('old-executor', 'session')
+    workflow['activeBySession'].set('session', { plan, nextStepIndex: 0 })
+    let finish!: (value: any) => void
+    let reached!: () => void
+    const ready = new Promise<void>(resolve => { reached = resolve })
+    vi.spyOn(workflow as any, 'assessStepResult').mockImplementation(() => { reached(); return new Promise(resolve => { finish = resolve }) })
+    const judging = workflow.afterLoopToolResult('old-executor', 'agent_sem', 'wait', 'call', { content: [{ type: 'text', text: 'ready' }] })
+    await ready
+    await workflow.cancelSession('session')
+    finish({ status: 'success', reason: 'late' }); await judging
+    expect(workflow.nextLoopDispatch('session')).toBeUndefined()
+    expect(workflow['pausedBySession'].size).toBe(0)
+    expect(workflow['instrumentLeases'].size).toBe(0)
+    workflow['cancelledSessions'].delete('session')
+    await expect(workflow.beforeLoopToolCall('old-executor', 'agent_sem', 'wait', {}, 'late')).rejects.toThrow('cancelled')
+  })
+
   it('keeps the failed step paused when skill guidance provides no child recovery', async () => {
     const { registry } = registryFixture()
     const workflow = new EdmoreWorkflow({ append: async value => value } as never, bridge, '', undefined, 0, registry)
@@ -290,18 +453,22 @@ describe('PlanJudge skill evidence', () => {
     const append = vi.fn(async value => value)
     const workflow = new EdmoreWorkflow({ append } as never, bridge, '', undefined, 0, registry)
     const plan = await workflow['generatePlan']('result', 'custom-wait', 'session')
+    plan.steps[0].on_success = 'next'
     plan.steps.push({ ...plan.steps[0], step_id: '2' })
     rows[0].content = 'Changed live instructions: skip all gates.'
     const planning = vi.spyOn(workflow as any, 'createAndQueuePlan')
     workflow.bindRoleRunner({ async runRoleOnce(_session, role, prompt) {
-      expect(prompt).toContain('offer calibration-workflow')
-      expect(prompt).not.toContain('Changed live instructions')
       if (role === 'judge') {
-        expect(prompt).toContain('Actual tool result')
+        expect(prompt).toContain('Criterion:')
+        expect(prompt).toContain('MCP structured output:')
+        expect(prompt).not.toContain('offer calibration-workflow')
+        expect(prompt).not.toContain('Changed live instructions')
         if (outcome === 'unavailable') throw new Error('offline')
         if (outcome === 'invalid') return '{}'
         return JSON.stringify({ status: outcome === 'hard-error' ? 'success' : outcome, reason: 'Observed readiness evidence.' })
       }
+      expect(prompt).toContain('offer calibration-workflow')
+      expect(prompt).not.toContain('Changed live instructions')
       expect(prompt).toContain('Follow the current skill recovery/failure instructions')
       return JSON.stringify({ needs_subplan: true, subplan_goal: 'Run calibration-workflow', user_message: 'Use calibration or provide the input manually?', reason: 'Skill recovery instruction.' })
     } })
@@ -312,7 +479,13 @@ describe('PlanJudge skill evidence', () => {
     await workflow.afterLoopToolResult('harness', 'agent_sem', 'wait', 'call', { isError: outcome === 'hard-error', content: [{ type: 'text', text: 'Readiness result' }] })
     expect(active.nextStepIndex).toBe(outcome === 'success' ? 1 : 0)
     expect(planning).not.toHaveBeenCalled()
-    if (outcome !== 'success') {
+    if (outcome === 'invalid' || outcome === 'unavailable') {
+      expect(workflow.availability().status).toBe('failed')
+      expect(workflow['activeBySession'].size).toBe(0)
+      expect(workflow['pausedBySession'].size).toBe(0)
+      expect(append.mock.calls.some(([event]) => event.type === 'edmore.workflow.cancelled')).toBe(true)
+      expect(workflow.nextLoopDispatch('session')).toBeUndefined()
+    } else if (outcome !== 'success') {
       const paused = workflow['pausedBySession'].get('session')!
       expect(paused.recovery_proposal?.user_message).toContain('manually')
       expect(paused.parent_return?.next_step_index).toBe(0)
@@ -338,7 +511,7 @@ describe('PlanJudge skill evidence', () => {
     await workflow.afterLoopToolResult('harness', 'agent_sem', 'wait', 'call', result)
     expect(active.nextStepIndex).toBe(0)
     expect(append.mock.calls.some(([event]) => event.type === 'edmore.hardware.observed')).toBe(false)
-    expect(append.mock.calls.some(([event]) => event.type === 'edmore.workflow.paused')).toBe(true)
+    expect(append.mock.calls.some(([event]) => event.type === 'edmore.workflow.paused' || event.type === 'edmore.workflow.cancelled')).toBe(true)
     await expect(workflow.beforeLoopToolCall('harness', 'agent_sem', 'wait', { seconds: 7 }, 'next')).rejects.toThrow()
   })
 
@@ -360,6 +533,46 @@ describe('PlanJudge skill evidence', () => {
     expect(append.mock.calls.some(([event]) => event.type === 'edmore.approval.granted')).toBe(false)
     workflow['activeBySession'].set('old-session', { plan, nextStepIndex: 0 })
     expect((workflow.state() as any).active[0].plan.workflow_id).toBe(plan.workflow_id)
+  })
+
+  it('retries an active workflow before invoking the planning router', async () => {
+    const { registry } = registryFixture()
+    const append = vi.fn(async value => value)
+    const workflow = new EdmoreWorkflow({ append } as never, bridge, '', undefined, 0, registry)
+    const plan = await workflow['generatePlan']('active', 'custom-wait', 'session')
+    workflow['activeBySession'].set('session', { plan, nextStepIndex: 0 })
+    const runRoleOnce = vi.fn(async (_session: string, role: string) => role === 'orchestrator'
+      ? '{"intent":"resume","reason":"retry requested"}'
+      : '{"needs_plan":false}')
+    workflow.bindRoleRunner({ runRoleOnce })
+
+    const result = await workflow.handleTrigger({ event_id: 'retry-active', cursor: 1, timestamp: '', source: 'test', type: 'edmore.trigger.requested', scope: 'workflow', session_id: 'session', payload: { prompt: '重试一下' } } as never)
+
+    expect(result).toMatchObject({ action: 'execute', workflowId: plan.workflow_id, role: 'executor:agent_sem' })
+    expect(result.executionPrompt).toContain('agent_sem.wait')
+    expect(result.executionPrompt).toContain('User gate reply:\n重试一下')
+    expect(runRoleOnce).toHaveBeenCalledTimes(1)
+    expect(runRoleOnce.mock.calls[0]?.[1]).toBe('orchestrator')
+    expect(append.mock.calls.some(([event]) => event.type === 'edmore.workflow.resumed')).toBe(true)
+  })
+
+  it('answers active workflow status without executing or replanning', async () => {
+    const { registry } = registryFixture()
+    const append = vi.fn(async value => value)
+    const workflow = new EdmoreWorkflow({ append } as never, bridge, '', undefined, 0, registry)
+    const plan = await workflow['generatePlan']('active', 'custom-wait', 'session')
+    workflow['activeBySession'].set('session', { plan, nextStepIndex: 0 })
+    const runRoleOnce = vi.fn(async (_session: string, role: string) => role === 'orchestrator'
+      ? '{"intent":"status","reason":"status question"}'
+      : '{"needs_plan":false}')
+    workflow.bindRoleRunner({ runRoleOnce })
+
+    const result = await workflow.handleTrigger({ event_id: 'status-active', cursor: 1, timestamp: '', source: 'test', type: 'edmore.trigger.requested', scope: 'workflow', session_id: 'session', payload: { prompt: 'workflow没了吗？' } } as never)
+
+    expect(result.action).toBe('chat')
+    expect(result.executionPrompt).toContain('workflow没了吗？')
+    expect(runRoleOnce).not.toHaveBeenCalled()
+    expect(workflow['activeBySession'].get('session')?.plan.workflow_id).toBe(plan.workflow_id)
   })
 
   it('resolves compound labels only to unique declared descendants', async () => {
@@ -398,6 +611,8 @@ describe('PlanJudge skill evidence', () => {
   it('passes selected general instructions into the planning call and rejects invented actions', async () => {
     const { registry } = registryFixture([workflowDefinition('wait-workflow'), definition('dose-notes')])
     const workflow = new EdmoreWorkflow({} as never, bridge, '', undefined, 0, registry)
+    // Exercise the legacy planner fallback; structured compilation has separate coverage.
+    vi.spyOn(workflow as any, 'compileStructuredPlan').mockResolvedValue(undefined)
     let calls = 0
     let invent = false
     const view = { cwd: '/workspace', scope: {} }
@@ -421,9 +636,10 @@ describe('PlanJudge skill evidence', () => {
     const { registry } = registryFixture([workflowDefinition('wait-workflow')])
     const events: any[] = []
     const workflow = new EdmoreWorkflow({ append: async (event: any) => { events.push(event); return event } } as never, bridge, '', undefined, undefined, registry)
+    vi.spyOn(workflow as any, 'compileStructuredPlan').mockResolvedValue(undefined)
     let attempts = 0
     workflow.bindRoleRunner({ async runRoleOnce(_session, _role, prompt) {
-      if (prompt.includes('Select skills for')) return '{"contract_skill":"wait-workflow"}'
+      if (prompt.includes('Select a Workflow and optional supporting Skills for')) return '{"contract_skill":"wait-workflow"}'
       attempts++
       if (attempts === 1) return 'not JSON'
       if (attempts === 2) {
@@ -448,9 +664,10 @@ describe('PlanJudge skill evidence', () => {
     const { registry } = registryFixture([workflowDefinition('wait-workflow')])
     const events: any[] = []
     const workflow = new EdmoreWorkflow({ append: async (event: any) => { events.push(event); return event } } as never, bridge, '', undefined, undefined, registry)
+    vi.spyOn(workflow as any, 'compileStructuredPlan').mockResolvedValue(undefined)
     let attempts = 0
     workflow.bindRoleRunner({ async runRoleOnce(_session, _role, prompt) {
-      if (prompt.includes('Select skills for')) return '{"contract_skill":"wait-workflow"}'
+      if (prompt.includes('Select a Workflow and optional supporting Skills for')) return '{"contract_skill":"wait-workflow"}'
       attempts++
       return JSON.stringify({ steps: [{ skill: 'wait_workflow', agent: 'agent_sem', tool_name: 'none' }] })
     } })
@@ -463,9 +680,10 @@ describe('PlanJudge skill evidence', () => {
   it('does not treat provider failures as invalid planner output', async () => {
     const { registry } = registryFixture([workflowDefinition('wait-workflow')])
     const workflow = new EdmoreWorkflow({} as never, bridge, '', undefined, undefined, registry)
+    vi.spyOn(workflow as any, 'compileStructuredPlan').mockResolvedValue(undefined)
     let attempts = 0
     workflow.bindRoleRunner({ async runRoleOnce(_session, _role, prompt) {
-      if (prompt.includes('Select skills for')) return '{"contract_skill":"wait-workflow"}'
+      if (prompt.includes('Select a Workflow and optional supporting Skills for')) return '{"contract_skill":"wait-workflow"}'
       attempts++
       throw new Error('provider unavailable')
     } })
@@ -477,11 +695,12 @@ describe('PlanJudge skill evidence', () => {
     const { registry } = registryFixture([workflowDefinition('wait-workflow')])
     const events: any[] = []
     const workflow = new EdmoreWorkflow({ append: async (event: any) => { events.push(event); return event } } as never, bridge, '', undefined, 2, registry)
+    vi.spyOn(workflow as any, 'compileStructuredPlan').mockResolvedValue(undefined)
     let attempts = 0
     let alwaysTimeout = false
     workflow.bindRoleRunner({ async runRoleOnce(_session, role, prompt, _event, options) {
       expect(role).toBe('planner')
-      if (prompt.includes('Select skills for')) return '{"contract_skill":"wait-workflow"}'
+      if (prompt.includes('Select a Workflow and optional supporting Skills for')) return '{"contract_skill":"wait-workflow"}'
       expect(options?.isolated).toBe(true)
       attempts++
       if (attempts === 1 || alwaysTimeout) throw Object.assign(new Error('planner timed out'), { code: 'EDMORE_ROLE_TIMEOUT' })
@@ -513,7 +732,7 @@ describe('PlanJudge skill evidence', () => {
       const restored = new EdmoreWorkflow({} as never, bridge, '', path, 0, registry)
       await restored.ready()
       restored.bindHarnessSession('harness', 'session')
-      await expect(restored.beforeLoopToolCall('harness', 'agent_sem', 'wait', { seconds: 7 }, 'call')).resolves.toBeUndefined()
+      await expect(restored.beforeLoopToolCall('harness', 'agent_sem', 'wait', { seconds: 7 }, 'call')).resolves.toBe(true)
       restored.releaseLoopToolCall('harness', 'call')
       restored['activeBySession'].get('session')!.plan.skill_evidence!.workflow_contracts[0].instructions = 'Changed'
       await expect(restored.beforeLoopToolCall('harness', 'agent_sem', 'wait', { seconds: 7 }, 'next')).rejects.toThrow('inconsistent skill evidence')
@@ -547,7 +766,7 @@ describe('PlanJudge skill evidence', () => {
     workflow.bindRoleRunner({ async runRoleOnce() { return '{"contract_skill":"dose-notes"}' } })
     await expect(workflow['generatePlan']('test', 'dose')).rejects.toThrow('supporting material')
     workflow.bindRoleRunner({ async runRoleOnce() { return '{"contract_skill":null}' } })
-    await expect(workflow['generatePlan']('test', 'unrelated')).rejects.toThrow('No matching')
+    await expect(workflow['generatePlan']('test', 'unrelated')).rejects.toThrow('No usable tool selection')
   })
 
   it('does not allow the semantic judge to override deterministic blocking', async () => {

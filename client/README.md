@@ -8,24 +8,16 @@ See [the EDMORE README](../README.md) for configuration, data paths and APIs.
 
 - `packages/` and `skills/` are the editable EDMORE implementation, migrated from
   the previously separate Harness checkout. TypeScript is loaded through tsx.
-- `runtime/` contains the selected upstream runtime packages, including their
-  sources, prebuilt JavaScript, manifests and license notices. Versions and source
-  locations are recorded in `runtime/provenance.json`.
-- `package-lock.json` pins registry dependencies. The native system package uses
-  the published version 0.1.2; its platform binaries are installed by npm.
+- `package-lock.json` pins the published DeepSeek Harness runtime and plugins,
+  currently `0.1.7-rc.2`. Startup resolves the CLI from `@deepseek-ai/dsh`.
+- `runtime/` is the inactive `0.1.5-rc.1` source snapshot retained for provenance
+  and rollback reference. It is not a workspace and is not loaded at runtime.
 
-Runtime manifests use concrete versions instead of workspace protocol references.
-The CLI manifest contains only the dependencies used by its profile launcher;
-unrelated app presets are not included. Optional peer integrations outside this
-profile are omitted. `.npmrc` disables automatic peer installation because the
-required peers are explicit local workspaces, including their dependency cycles.
-
-The runtime snapshot is deliberately checked in, so normal installation and startup
-never read the original checkout or require its build tools. To update it, review
-upstream source and generated artifacts together. `scripts/import-runtime.py` records
-the original import procedure and refuses to overwrite existing directories; it is
-not a build or installation step. EDMORE's profile path edits and source entrypoints
-must also be retained when importing a future version.
+Published Harness dependencies use concrete versions. `.npmrc` disables automatic
+peer installation, so the peers required by this profile are declared explicitly.
+The retained snapshot's origin is recorded in `runtime/provenance.json`; the old
+`scripts/import-runtime.py` documents its import procedure but is no longer the
+normal upgrade path.
 
 ## Checks
 
@@ -44,8 +36,8 @@ OpenAI-compatible HTTP server, including cancellation and session restoration.
 `edmore-core` is the mandatory entry. It initializes events, action receipts,
 tasks, policy/connection registries, capability diagnostics and the internal
 `packages/runtime` module. That module adapts native Harness agents, models,
-sessions and skills; it is not a replacement agent loop. The upstream code in
-`client/runtime` is unchanged by this refactor.
+sessions and skills; it is not a replacement agent loop. Upstream Harness code is
+consumed from the npm packages locked by `package-lock.json`.
 
 Optional profile entries retain independent lifecycle boundaries:
 
@@ -69,5 +61,42 @@ paths are preserved. Evidence migration creates `before-core-refs` and
 `before-evidence` backups before replacing duplicate records with references.
 Keep Core event logs and workflow evidence together when moving or restoring data.
 
+### Structured Workflow Planning
+
+New plans whose leaf Skills all define complete, unambiguous structured steps are
+compiled from their pinned contracts. The model selects the Skill; it does not
+rewrite the step list. If a contract has user-overridable `default` or
+`tool_default` parameters, a parameter-only model call supplies a validated
+override map. Fixed values, result bindings, confirmation gates, transitions and
+loop bounds remain contract-owned. With no overridable parameters, step
+generation makes no model call. Compiler-produced plans run structural/schema
+validation only, without LLM plan review or automatic LLM plan rewriting. Invalid
+plans remain blocked. Approval and runtime completion judging (Jev with LLM
+fallback) are unchanged; this optimization never skips judging measured results.
+
+Legacy contracts, optional-action/recovery-loop contracts, ambiguous child step
+IDs, and revisions or child-plan recovery keep the existing planner and LLM plan
+review path for now.
+Malformed parameter output or provider failure blocks planning; it never silently
+falls back to an invented plan. Existing approved plans are unchanged. Restart
+Harness to load code changes; assess latency on a fresh plan, not a resumed one.
+
 See [the refactoring plan and verification record](../docs/plugin-decoupling-plan.zh.md)
 for current deployment status and real-hardware acceptance limits.
+# Workflow And Skill Terminology
+
+Executable EDMORE definitions are **Workflows**, including single-step and
+compound workflows. Knowledge and guidance documents are **Skills**. The
+optional execution plugin is displayed as **Workflow Engine**.
+
+A Workflow has two uses. With Workflow Engine enabled, it provides the reviewed
+execution contract, parameter bindings, transitions and completion conditions.
+With the engine disabled, it remains readable through the ordinary skill
+registry for explanation and reference only. The LLM must not emulate execution
+or bypass approval; Core blocks MCP execution without a registered policy.
+The skill registry must remain enabled for reference access.
+
+Compatibility identifiers (`edmore-plan-judge`, `skill`, `contract_skill`,
+`supporting_skills`), API routes, directories and `SKILL.md` filenames are
+unchanged. Renaming the displayed concepts does not migrate approved snapshots
+or change the six TEM calibration tools.

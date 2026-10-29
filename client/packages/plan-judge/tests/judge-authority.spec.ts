@@ -17,7 +17,7 @@ function fixture(names = core) {
     judge_report: { status: 'pass', grounding_status: 'fully_grounded', summary: '', issues: [] },
     steps: names.map((tool_name, i) => ({
       step_id: String(i + 1), agent: 'agent_ptychography', skill: 'ptychography', tool_name,
-      goal: tool_name, arguments: {}, required_inputs: [], expected_output: 'ok', on_success: 'next', on_failure: 'ask_user',
+      goal: tool_name, arguments: {}, required_inputs: [], expected_output: 'ok', on_success: i === names.length - 1 ? 'complete' : 'next', on_failure: 'ask_user',
     })),
   }
   return { workflow, plan }

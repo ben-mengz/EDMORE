@@ -24,8 +24,8 @@ it('uses saved custom steps, fixed parameters and gates without LLM rewriting or
     expect(plan.steps[0].required_inputs).toContain('Confirm readiness')
     expect(plan.steps[1].required_inputs.join(' ')).toContain('dwell_time')
     expect(plan.steps[1].required_inputs.join(' ')).toContain('ROI')
-    expect(plan.steps[1].on_failure).toBe('ask_user')
-    expect(plan.steps[1].on_success).toBe('done')
+    expect(plan.steps[1].on_failure).toBe('pause')
+    expect(plan.steps[1].on_success).toBe('complete')
     expect(plan.steps[1].arguments).not.toHaveProperty('dwell_time')
   } finally { vi.unstubAllEnvs(); await rm(home, { recursive: true, force: true }) }
 })

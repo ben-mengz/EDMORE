@@ -1,8 +1,40 @@
+import { conversationExtensions } from './extensions.js'
+
+const extensions = conversationExtensions(document.querySelector('#conversationExtensions'), api, () => sessionId)
+// randomUUID is unavailable on plain HTTP origins; getRandomValues still works.
+function newId() {
+  if (globalThis.crypto.randomUUID) return globalThis.crypto.randomUUID()
+  const bytes = globalThis.crypto.getRandomValues(new Uint8Array(16))
+  bytes[6] = (bytes[6] & 15) | 64
+  bytes[8] = (bytes[8] & 63) | 128
+  const hex = Array.from(bytes, byte => byte.toString(16).padStart(2, '0')).join('')
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`
+}
+
 const settingsDialog = document.querySelector('#settingsDialog')
+let authenticatedUser = false
+fetch('/auth/me').then(async response => {
+  if (response.status === 401) { location.assign('/login'); return }
+  if (!response.ok) return
+  const identity = await response.json()
+  if (!identity.enabled) return
+  authenticatedUser = true
+  const previous = localStorage.getItem('edmore-auth-user')
+  if (previous !== identity.username) {
+    for (const storage of [localStorage, sessionStorage]) for (const key of Object.keys(storage)) if (key.startsWith('edmore-')) storage.removeItem(key)
+    localStorage.setItem('edmore-auth-user', identity.username)
+    location.reload(); return
+  }
+  const link = document.createElement('a')
+  link.href = '/account'; link.textContent = identity.username + ' · Account'
+  document.querySelector('#openSettings').after(link)
+  document.querySelector('#newProvider').hidden = true
+  fillProviderForm(selectedProvider())
+}).catch(() => {})
 const settingsContent = document.querySelector('#settingsContent')
 const settingsNavigation = document.querySelector('#settingsNavigation')
 const settingsPanels = [...document.querySelectorAll('.side-panel > .panel')].filter(panel => !panel.querySelector('#pending'))
-const settingsLabels = ['Models', 'MCP', 'Tools', 'Agents', 'Skills', 'Events']
+const settingsLabels = ['Models', 'MCP', 'Tools', 'Agents', 'Workflows & Skills', 'Events']
 settingsPanels.forEach((panel, index) => {
   panel.hidden = index !== 0
   settingsContent.append(panel)
@@ -21,11 +53,16 @@ document.querySelector('#closeSettings').onclick = () => settingsDialog.close()
 const conversationModel = document.querySelector('#conversationModel')
 let modelSelectionGeneration = 0
 async function refreshConversationModel() {
+  extensions.refresh().catch(() => {})
   const generation = ++modelSelectionGeneration
   const data = await api(`/api/edmore/conversation-model?session_id=${encodeURIComponent(sessionId)}`)
   if (generation !== modelSelectionGeneration) return
   conversationModel.replaceChildren(new Option(`Default${data.effective && !data.override ? ` · ${data.effective.model}` : ''}`, ''))
-  for (const profile of providerProfiles) conversationModel.add(new Option(`${profile.displayName || profile.id} · ${profile.model}`, JSON.stringify([profile.id, profile.model])))
+  for (const profile of providerProfiles) {
+    const option = new Option(`${profile.displayName || profile.id} · ${profile.model}${profile.credential?.configured === false ? ' (key required)' : ''}`, JSON.stringify([profile.id, profile.model]))
+    option.disabled = profile.credential?.configured === false
+    conversationModel.add(option)
+  }
   const value = data.override ? JSON.stringify([data.override.provider, data.override.model]) : ''
   if (value && ![...conversationModel.options].some(option => option.value === value)) conversationModel.add(new Option(`${data.override.provider} · ${data.override.model}`, value))
   conversationModel.value = value
@@ -74,6 +111,8 @@ const approve = document.querySelector('#approve')
 const reject = document.querySelector('#reject')
 const confirmWorkflow = document.querySelector('#confirmWorkflow')
 const promptInput = document.querySelector('#prompt')
+const stopGeneration = document.querySelector('#stopGeneration')
+const cancelWorkflow = document.querySelector('#cancelWorkflow')
 const chatHistory = document.querySelector('#chatHistory')
 const processStatus = document.querySelector('#processStatus')
 const providerSelect = document.querySelector('#providerSelect')
@@ -101,6 +140,7 @@ const deleteProject = document.querySelector('#deleteProject')
 const deleteConversation = document.querySelector('#deleteConversation')
 
 let pendingWorkflowId = null
+let temporaryDraft = null
 let pausedWorkflowId = null
 let confirmationContext = null
 let recoveryChoice = null
@@ -124,7 +164,24 @@ const assistantMessages = new Map()
 const renderedEventIds = new Set()
 let processTimer = null
 let uiSource = null
-let sessionId = sessionStorage.getItem('edmore-session-id') || `NOMAD-${crypto.randomUUID().slice(0, 8)}`
+let sessionId = sessionStorage.getItem('edmore-session-id') || `NOMAD-${newId().slice(0, 8)}`
+let planMode = sessionStorage.getItem(`edmore-plan-mode:${sessionId}`) === '1'
+let workflowAvailable = false
+function setPlanMode(enabled) {
+  planMode = enabled
+  sessionStorage.setItem('edmore-session-id', sessionId)
+  sessionStorage.setItem(`edmore-plan-mode:${sessionId}`, enabled ? '1' : '0')
+  document.querySelector('#planModeIndicator').hidden = !enabled || !workflowAvailable
+  if (!enabled) sessionStorage.removeItem(`edmore-source-draft:${sessionId}`)
+}
+setPlanMode(planMode)
+promptInput.addEventListener('input', () => {
+  const command = /^[\\/]plan(?:\s+|$)/i.exec(promptInput.value)
+  if (!command || !workflowAvailable) return
+  setPlanMode(true)
+  promptInput.value = promptInput.value.slice(command[0].length)
+})
+document.querySelector('#exitPlanMode').addEventListener('click', () => { setPlanMode(false); promptInput.focus() })
 let stateStream = null
 let stateCursor = 0
 let stateMore = false
@@ -141,6 +198,13 @@ const reportedCapabilityErrors = new Set()
 
 async function refreshCapabilities() {
   const { capabilities } = await api('/api/edmore/capabilities')
+  workflowAvailable = capabilities.some(item => item.id === 'edmore-plan-judge' && item.status === 'ready')
+  if (!workflowAvailable) {
+    for (const key of Object.keys(sessionStorage)) {
+      if (key.startsWith('edmore-plan-mode:') || key.startsWith('edmore-source-draft:')) sessionStorage.removeItem(key)
+    }
+    setPlanMode(false)
+  } else setPlanMode(planMode)
   sessionStateAvailable = capabilities.some(item => item.id === 'edmore-session-state-api' && item.status === 'ready')
   viewTabs[1].hidden = !sessionStateAvailable
   if (!sessionStateAvailable) selectSessionView(0)
@@ -351,10 +415,12 @@ function showProcess(message, detail = '') {
   processStatus.hidden = false
   processStatus.classList.remove('settled')
   processStatus.innerHTML = `<span class="process-dot"></span><span>${escapeHtml(message)}</span>${detail ? `<code>${escapeHtml(detail)}</code>` : ''}`
+  stopGeneration.disabled = false
 }
 
 function settleProcess(message = '') {
   if (message) showProcess(message)
+  stopGeneration.disabled = true
   processStatus.classList.add('settled')
   processTimer = setTimeout(() => {
     processStatus.hidden = true
@@ -453,6 +519,7 @@ function setSubplanProposal(proposal) {
 }
 
 function setPlanningProposal(proposal) {
+  if (proposal) clearPlanSection()
   planningProposalPending = Boolean(proposal)
   currentPlanningProposal = proposal || null
   if (proposal) {
@@ -467,6 +534,7 @@ function setPlanningProposal(proposal) {
 
 function updatePlanActionButtons() {
   approve.disabled = !pendingWorkflowId && !subplanProposalPending && !planningProposalPending
+  if (temporaryDraft?.dirty && temporaryDraft.id === pendingWorkflowId) approve.disabled = true
   reject.disabled = !pendingWorkflowId && !subplanProposalPending && !planningProposalPending
   approve.textContent = planningProposalPending && !pendingWorkflowId ? 'Approve direction' : (subplanProposalPending && !pendingWorkflowId ? 'Approve subplan' : 'Approve')
   reject.textContent = planningProposalPending && !pendingWorkflowId ? 'Reject direction' : (subplanProposalPending && !pendingWorkflowId ? 'Reject subplan' : 'Reject')
@@ -493,7 +561,8 @@ function renderPlanSection() {
       <div>Workflow: ${escapeHtml(lease.workflow_id)}</div>
       <p>${escapeHtml(lease.reason || '')}</p>
       <button type="button" data-lease-index="${index}">Open workflow</button>
-      <button type="button" data-lease-index="${index}" data-cancel-paused="true" ${lease.state === 'active' ? 'disabled' : ''}>Cancel paused workflow</button>
+      <button type="button" data-lease-index="${index}" data-cancel-workflow="true">Cancel workflow</button>
+      ${lease.state === 'verify_required' ? `<button type="button" data-lease-index="${index}" data-cancel-paused="true">Verify stopped and release reservation</button>` : ''}
     </div>`).join('')}` : ''
   pending.classList.toggle('empty', !currentPlan && !currentPlanningProposal)
   if (!currentPlan && currentPlanningProposal) {
@@ -584,7 +653,7 @@ function renderPlanSection() {
     </details>
     <div class="plan-meta">
       <span>${escapeHtml(planStatusLabel())}</span>
-      <span>Judge: ${escapeHtml(judge.status || 'unknown')}</span>
+      <span>${currentPlan.planning_mode === 'temporary' ? 'No Contract / Plan Judge skipped' : `Judge: ${escapeHtml(judge.status || 'unknown')}`}</span>
       <span>${escapeHtml(currentPlan.workflow_id || '')}</span>
     </div>
     ${leaseRows}
@@ -596,6 +665,11 @@ function renderPlanSection() {
       <select aria-label="Recovery action" id="recoveryAction"><option value="">Select an action</option>${(recoveryChoice.options || []).map(option => `<option value="${escapeHtml(option.id)}">${escapeHtml(option.id)}</option>`).join('')}<option value="retry_check">Recheck diagnostics</option></select>
       <button type="button" data-recovery-version="${escapeHtml(recoveryChoice.version)}">Run selected action</button></section>` : ''}
     <ol class="plan-steps">${rows}</ol>
+    ${currentPlan.planning_mode === 'temporary' && pendingWorkflowId ? `<section class="temporary-plan-editor">
+      <strong>No Workflow Contract</strong><p>Plan Judge was skipped. Check the device, arguments and effects before approval.</p>
+      <label for="temporaryPlanJson">Plan JSON</label><textarea id="temporaryPlanJson" spellcheck="false" rows="16">${escapeHtml(temporaryDraft?.id === pendingWorkflowId ? temporaryDraft.text : JSON.stringify({ goal: currentPlan.goal, summary: currentPlan.summary, steps: currentPlan.steps.map(s => ({ agent: s.agent, tool_name: s.tool_name, goal: s.goal, arguments: s.arguments, success_criterion: s.completion?.criteria || '' })) }, null, 2))}</textarea>
+      <button type="button" id="saveTemporaryPlan">Save changes</button><p id="temporaryPlanError" role="alert"></p>
+    </section>` : ''}
   `
 }
 
@@ -751,14 +825,16 @@ async function touchConversation(fields = {}) {
 
 async function selectConversation(conversation, options = {}) {
   const empty = !conversation
-  conversation ||= { id: null, session_id: `NOMAD-${crypto.randomUUID()}` }
+  conversation ||= { id: null, session_id: `NOMAD-${newId()}` }
   if (uiSource) { uiSource.close(); uiSource = null }
   currentConversationId = conversation.id
   sessionId = conversation.session_id
   document.querySelector('#modelStatus').textContent = ''
   refreshConversationModel().catch(error => { document.querySelector('#modelStatus').textContent = error.message })
   sessionStorage.setItem('edmore-session-id', sessionId)
+  setPlanMode(sessionStorage.getItem(`edmore-plan-mode:${sessionId}`) === '1')
   stateGeneration++
+  stopGeneration.disabled = true
   stateBusy = false
   stateCursor = 0
   stateMore = false
@@ -784,7 +860,22 @@ async function selectConversation(conversation, options = {}) {
 }
 
 function renderUiEvent(event) {
+  if (renderedEventIds.has(event.event_id)) return
   addEventRow(event)
+  if (event.type === 'edmore.ui.workflow.mode_disabled') {
+    workflowAvailable = false
+    setPlanMode(false)
+    void refreshCapabilities()
+  }
+  if (event.type === 'edmore.ui.workflow.mode_enabled' && workflowAvailable && belongsToCurrentConversation(event)) {
+    const key = `edmore-mode-event:${event.event_id}`
+    if (!sessionStorage.getItem(key)) {
+      sessionStorage.setItem(key, '1')
+      setPlanMode(true)
+      if (event.payload?.source_draft_id) sessionStorage.setItem(`edmore-source-draft:${sessionId}`, event.payload.source_draft_id)
+      if (!promptInput.value.trim()) promptInput.value = text(event.payload?.draft)
+    }
+  }
   if (event.type === 'edmore.ui.conversation.user_message') {
     if (belongsToCurrentConversation(event)) {
       addMessage('user', text(event.payload?.text), event.event_id)
@@ -965,6 +1056,10 @@ function fillProviderForm(profile) {
   providerModel.value = profile.model || ''
   providerEmbeddingModel.value = profile.embeddingModel || ''
   providerApiKey.value = ''
+  const shared = authenticatedUser && profile.id !== 'openai'
+  for (const field of [providerId, providerBaseUrl, providerModel, providerEmbeddingModel, providerApiKey]) field.disabled = shared
+  if (authenticatedUser) { providerId.disabled = true; providerBaseUrl.disabled = true; providerEmbeddingModel.disabled = true }
+  document.querySelector('#providerForm button[type=submit]').disabled = shared
 }
 
 function selectedProvider() {
@@ -1082,24 +1177,41 @@ async function sendAction(kind, path, payload) {
 async function refreshSkillCatalog() {
   const data = await api('/api/edmore/skills')
   const list = data.skills || []
-  skills.textContent = list.length
-    ? list.map(skill => `${skill.name}\n${skill.description || '(no description)'}`).join('\n\n')
-    : 'No EDMORE skills discovered'
+  skills.replaceChildren()
+  for (const [category, title] of [['workflow', 'Workflows'], ['support', 'Skills'], ['unknown', 'Unclassified']]) {
+    const entries = list.filter(entry => (entry.category || 'unknown') === category)
+    if (!entries.length) continue
+    const heading = document.createElement('h3'); heading.textContent = title; skills.append(heading)
+    for (const entry of entries) {
+      const item = document.createElement('p'), name = document.createElement('strong'), description = document.createElement('div')
+      name.textContent = entry.name; description.textContent = entry.description || '(no description)'
+      item.append(name, description); skills.append(item)
+    }
+  }
+  if (!list.length) skills.textContent = 'No Workflows or Skills discovered'
 }
 
 async function refreshPendingFromState() {
-  const state = await api(`/api/edmore/ui/state?session_id=${encodeURIComponent(sessionId)}&limit=1`)
+  const targetSession = sessionId
+  const generation = stateGeneration
+  const state = await api(`/api/edmore/ui/state?session_id=${encodeURIComponent(targetSession)}&limit=1`)
+  if (targetSession !== sessionId || generation !== stateGeneration) return
+  const historicalPlan = currentPlan
+  clearPlanSection()
   instrumentLeases = state.workflow?.instrument_leases || []
   const proposals = state.workflow?.planning_proposals || []
   const proposal = proposals.find(item => item.session_id === sessionId) || null
   setPlanningProposal(proposal)
   const pendingPlans = state.workflow?.pending || []
-  const active = pendingWorkflowId
-    ? pendingPlans.find(plan => plan.workflow_id === pendingWorkflowId)
-    : pendingPlans.find(plan => plan.session_id === sessionId)
+  const active = pendingPlans.find(plan => plan.session_id === sessionId)
   if (active) setPending(active)
   const running = (state.workflow?.active || []).find(item => item.session_id === sessionId)
   const paused = (state.workflow?.paused || []).find(item => item.session_id === sessionId)
+  if (!active && !running && paused) {
+    currentPlan = paused.plan || (historicalPlan?.workflow_id === paused.workflow_id ? historicalPlan : null)
+    currentPlanStatus = 'paused'
+    currentStepIndex = paused.state?.next_step_index ?? -1
+  }
   if (!active && running?.plan) {
     currentPlan = running.plan
     pendingWorkflowId = null
@@ -1119,17 +1231,27 @@ instrumentOccupancy.addEventListener('click', async event => {
   if (!button) return
   const lease = instrumentLeases[Number(button.dataset.leaseIndex)]
   if (!lease) return
+  if (button.dataset.cancelWorkflow) {
+    button.disabled = true
+    try {
+      const result = await api('/api/edmore/actions/cancel-workflow', { method: 'POST', body: JSON.stringify({ session_id: lease.session_id }) })
+      if (sessionId === lease.session_id) { clearPlanSection(); setPausedWorkflow(null); settleProcess('Workflow cancelled') }
+      await refreshPendingFromState()
+      addMessage('gui', result.hardware_stop_verified ? 'Selected workflow cancelled. Instrument reservation released; chat history retained.' : 'Selected workflow cancelled. Verify hardware stopped before releasing its reservation.')
+    } catch (error) { addMessage('gui', error.message); button.disabled = false }
+    return
+  }
   if (button.dataset.cancelPaused) {
-    if (!window.confirm(`Cancel the paused workflow chain containing ${lease.workflow_id} in session ${lease.session_id}?\n\nThis cancels the current child and its suspended parents. It releases their instrument reservations but does NOT stop hardware or undo previous actions. Continue only after verifying that acquisition and hardware operations have stopped.`)) return
+    if (!window.confirm(`Clear ALL workflow state in session ${lease.session_id}?\n\nThis cancels paused workflows, recovery children, pending plans and planning proposals, and releases this session's instrument reservations. Chat history and other sessions are retained. It does NOT stop hardware or undo previous actions. Continue only after verifying that acquisition and hardware operations have stopped.`)) return
     button.disabled = true
     try {
       await api('/api/edmore/actions/cancel-paused', { method: 'POST', body: JSON.stringify({
         workflow_id: lease.workflow_id, session_id: lease.session_id, hardware_stop_verified: true,
-        action_id: crypto.randomUUID(),
+        action_id: newId(),
       }) })
       if (sessionId === lease.session_id) { clearPlanSection(); setPausedWorkflow(null) }
       await refreshPendingFromState()
-      addMessage('gui', 'Paused workflow cancelled; instrument reservation released.')
+      addMessage('gui', 'All workflow state in the selected session cleared; instrument reservations released. Chat history retained.')
     } catch (error) { addMessage('gui', error.message); button.disabled = false; await refreshPendingFromState() }
     return
   }
@@ -1141,7 +1263,10 @@ instrumentOccupancy.addEventListener('click', async event => {
 })
 
 async function replayUiState() {
-  const data = await api(`/api/edmore/ui/state?session_id=${encodeURIComponent(sessionId)}&limit=160`)
+  const targetSession = sessionId
+  const generation = stateGeneration
+  const data = await api(`/api/edmore/ui/state?session_id=${encodeURIComponent(targetSession)}&limit=160`)
+  if (targetSession !== sessionId || generation !== stateGeneration) return
   runtime.textContent = `Runtime: ${data.runtime}; Session: ${sessionId}`
   mcpStatus.textContent = `MCP: ${data.nionswift?.ok ? 'online' : 'offline'}`
   mcpStatus.title = data.nionswift?.message || ''
@@ -1174,7 +1299,8 @@ refreshSkills.addEventListener('click', () => {
 })
 
 newProject.addEventListener('click', async () => {
-  const cwd = window.prompt('Local project folder', '/Users/zhaomeng/SEM')
+  const defaultCwd = projects.find(project => project.id === currentProjectId)?.cwd || projects[0]?.cwd || ''
+  const cwd = window.prompt('Project folder on the Harness host', defaultCwd)
   if (!cwd) return
   const name = window.prompt('Project name', cwd.split('/').filter(Boolean).at(-1) || 'Project') || 'Project'
   try {
@@ -1260,18 +1386,67 @@ document.querySelector('#triggerForm').addEventListener('submit', async (event) 
   event.preventDefault()
   const prompt = promptInput.value.trim()
   if (!prompt) return
+  if (!workflowAvailable && (/^[\\/]plan(?:\s+|$)/i.test(prompt) || /^enable workflow mode[.!]?$/i.test(prompt))) {
+    showProcess('Workflow mode is unavailable', 'Enable the Judge plugin first. This request was not sent.')
+    return
+  }
+  const requestedPlanMode = planMode
   if (!currentConversationId && workspaceLoaded) {
     if (!currentProjectId) { showProcess('Select or create a project first'); return }
     try { await selectConversation(await createConversation()) }
     catch (error) { showProcess('Could not create conversation', error.message); return }
   }
+  setPlanMode(requestedPlanMode)
   promptInput.value = ''
   promptInput.placeholder = prompt
   await touchConversation({ title: prompt, last_message_preview: prompt })
-  await sendAction('trigger', '/api/edmore/actions/trigger', { prompt, session_id: sessionId })
+  const sourceDraftId = requestedPlanMode ? sessionStorage.getItem(`edmore-source-draft:${sessionId}`) : null
+  await sendAction('trigger', '/api/edmore/actions/trigger', { prompt, session_id: sessionId, plan_mode: requestedPlanMode,
+    ...(sourceDraftId ? { source_draft_id: sourceDraftId } : {}) })
+})
+
+cancelWorkflow.addEventListener('click', async () => {
+  const targetSession = sessionId
+  cancelWorkflow.disabled = true
+  try {
+    const result = await api('/api/edmore/actions/cancel-workflow', {
+      method: 'POST', body: JSON.stringify({ session_id: targetSession }),
+    })
+    if (targetSession !== sessionId) return
+    clearPlanSection()
+    setPausedWorkflow(null)
+    setSubplanProposal(null)
+    settleProcess('Workflow cancelled')
+    await refreshPendingFromState()
+    addMessage('gui', result.hardware_stop_verified
+      ? 'Workflow cancelled: routing, planning, queued execution and pending plans cleared. Chat history retained.'
+      : 'Workflow cancelled. A tool may still be operating: verify hardware has stopped before releasing its reservation. Do not retry yet.')
+  } catch (error) {
+    if (targetSession === sessionId) addMessage('gui', `Could not cancel workflow: ${error.message}`)
+  } finally { cancelWorkflow.disabled = false }
+})
+
+stopGeneration.addEventListener('click', async () => {
+  const targetSession = sessionId
+  stopGeneration.disabled = true
+  try {
+    const result = await sendAction('cancel', '/api/edmore/actions/cancel', { session_id: targetSession })
+    if (targetSession !== sessionId) return
+    const count = Number(result.cancelled) || 0
+    settleProcess(count ? 'Response stopped' : 'Nothing running')
+    addMessage('gui', count
+      ? `Stopped ${count} active or queued task${count === 1 ? '' : 's'}. This session and its history are still available.`
+      : 'No active response was found. This session is unchanged.')
+  } catch (error) {
+    if (targetSession === sessionId) {
+      addMessage('gui', `Could not stop the response: ${error.message}`)
+      stopGeneration.disabled = false
+    }
+  }
 })
 
 approve.addEventListener('click', async () => {
+  if (temporaryDraft?.dirty && temporaryDraft.id === pendingWorkflowId) return
   if ((planningProposalPending || subplanProposalPending) && !pendingWorkflowId) {
     await sendAction('proposal-approve', '/api/edmore/actions/trigger', { prompt: 'approve', session_id: sessionId })
     return
@@ -1294,6 +1469,15 @@ confirmWorkflow.addEventListener('click', async () => {
 })
 
 pending.addEventListener('click', async event => {
+  if (event.target.closest('#saveTemporaryPlan')) {
+    const error = pending.querySelector('#temporaryPlanError')
+    try {
+      const draft = JSON.parse(pending.querySelector('#temporaryPlanJson').value)
+      const result = await sendAction('edit-plan', '/api/edmore/actions/edit-plan', { workflow_id: pendingWorkflowId, session_id: sessionId, draft })
+      if (result.plan) setPending(result.plan)
+    } catch (e) { if (error) error.textContent = e.message }
+    return
+  }
   const button = event.target.closest('[data-recovery-version]')
   if (!button || !recoveryChoice || button.dataset.recoveryVersion !== recoveryChoice.version) return
   const selected = pending.querySelector('#recoveryAction')?.value
@@ -1305,6 +1489,12 @@ pending.addEventListener('click', async event => {
   } finally { button.disabled = false }
 })
 
+pending.addEventListener('input', event => {
+  if (event.target.id !== 'temporaryPlanJson') return
+  temporaryDraft = { id: pendingWorkflowId, text: event.target.value, dirty: true }
+  updatePlanActionButtons()
+})
+
 function startUiStream() {
   if (uiSource) uiSource.close()
   uiSource = new EventSource(`/api/edmore/ui/stream?session_id=${encodeURIComponent(sessionId)}`)
@@ -1313,6 +1503,7 @@ function startUiStream() {
 }
 
 Promise.allSettled([
+  extensions.refresh(),
   refreshCapabilities(),
   refreshState(),
   refreshProviders(),

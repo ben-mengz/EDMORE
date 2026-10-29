@@ -71,9 +71,15 @@ export async function apply(ctx: Context, config: Config): Promise<void> {
     if (event.type !== 'edmore.trigger.requested') return
     void (async () => {
       const workflow = ctx.get('edmoreWorkflow')
+      const payload = asRecord(event.payload)
+      if (!workflow && (payload.plan_mode === true || /^[\\/]plan(?:\s+|$)|^enable workflow mode[.!]?$/i.test(textOf(payload.prompt).trim()))) {
+        await hub.append(withOptionalSession({ type: 'edmore.assistant.completed', source: name, scope: 'workflow', correlation_id: event.event_id,
+          payload: { text: 'Workflow mode is unavailable because the Judge plugin is unavailable. No action was executed.' } }, event.session_id))
+        return
+      }
       const route = workflow ? await workflow.handleTrigger(event) : { action: 'chat' as const }
       if (route.action === 'chat') {
-        await agentLoop.handleTrigger(event)
+        await agentLoop.handleTrigger(route.executionPrompt ? { ...event, payload: { ...event.payload as object, prompt: route.executionPrompt } } : event)
         return
       }
       if (route.action === 'execute' && route.executionPrompt !== undefined) {

@@ -6,18 +6,21 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js'
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js'
 import type { Transport } from '@modelcontextprotocol/sdk/shared/transport.js'
 import { ListResourcesResultSchema, ListToolsResultSchema, ReadResourceResultSchema } from '@modelcontextprotocol/sdk/types.js'
-import { publicToolName } from '@deepseek-ai/dsh-mcp-client/src/tools.ts'
 import { contentText, projectMcpContent } from '@deepseek-ai/dsh-edmore-contracts/content'
 import { asRecord, normalizeNionSwiftAgentInfo, type NionSwiftAgentInfo } from '@deepseek-ai/dsh-edmore-runtime/services'
 import { z } from 'zod'
 const RawCallToolResultSchema = z.record(z.string(), z.unknown())
+
+function publicToolName(serverName: string, rawName: string): string {
+  return `mcp__${serverName}__${rawName}`
+}
 export class NionSwiftBridge {
   private modelMetadata = new Map<string, { expires: number; value: Partial<NionSwiftAgentInfo> }>()
-  constructor(private hub: EdmoreEventHub, private baseUrl: string) {}
+  constructor(private hub: EdmoreEventHub, private baseUrl: string, private headers: Record<string, string> = {}) {}
 
   async status(): Promise<{ ok: boolean; agents: string[]; agentInfo: Record<string, NionSwiftAgentInfo>; message: string }> {
     try {
-      const response = await fetch(`${this.baseUrl}/agents`, { signal: AbortSignal.timeout(5000) })
+      const response = await fetch(`${this.baseUrl}/agents`, { headers: this.headers, signal: AbortSignal.timeout(5000) })
       if (!response.ok) return { ok: false, agents: [], agentInfo: {}, message: `HTTP ${response.status}` }
       const data = await response.json()
       if (!Array.isArray(data)) return { ok: false, agents: [], agentInfo: {}, message: 'agents response is not a JSON list' }
@@ -109,7 +112,7 @@ export class NionSwiftBridge {
 
   async connectAgent(agent: string): Promise<Client> {
     const client = new Client({ name: 'edmore-harness-nionswift-bridge', version: '0.1.0' })
-    const transport = new StreamableHTTPClientTransport(new URL(`${this.baseUrl}/mcp/${encodeURIComponent(agent)}/`))
+    const transport = new StreamableHTTPClientTransport(new URL(`${this.baseUrl}/mcp/${encodeURIComponent(agent)}/`), { requestInit: { headers: this.headers } })
     await client.connect(transport as Transport)
     return client
   }
@@ -192,8 +195,9 @@ export class EdmoreHarnessMcpToolBridge {
         },
         execute: async (args, exec) => {
           const callId = String(exec.callId)
-          const policy = this.policy.require()
-          await policy.beforeLoopToolCall(exec.agent?.id, agent, rawName, asRecord(args), callId)
+          exec.signal?.throwIfAborted()
+          const policy = this.policy.optional()
+          const workflowControlled = await policy?.beforeLoopToolCall(exec.agent?.id, agent, rawName, asRecord(args), callId)
           try {
             const result = await this.nionSwift.callTool(
               agent,
@@ -201,15 +205,17 @@ export class EdmoreHarnessMcpToolBridge {
               asRecord(args),
               exec.signal,
             )
-            await policy.afterLoopToolResult(exec.agent?.id, agent, rawName, callId, result)
+            exec.signal?.throwIfAborted()
+            await policy?.afterLoopToolResult(exec.agent?.id, agent, rawName, callId, result)
             const content = Array.isArray(result.content) ? result.content : []
             if (result.isError === true) throw new Error(contentText(projectMcpContent(content, rawName)))
+            if (workflowControlled === true) exec.concludeTurn()
             return {
               content,
               ...result.structuredContent === undefined ? {} : { structuredContent: result.structuredContent },
             }
           } catch (error) {
-            await policy.handleLoopToolError(exec.agent?.id, agent, rawName, callId, error)
+            await policy?.handleLoopToolError(exec.agent?.id, agent, rawName, callId, error)
             throw error
           }
         },

@@ -28,6 +28,10 @@ export interface EventFilter {
 }
 
 export interface RuntimeDispatch {
+  executionId?: string
+  retryPrompt?: string
+  retryToolName?: string
+  argumentRepairAttempt?: number
   workflowId: string
   role: string
   prompt: string
@@ -37,6 +41,7 @@ export interface RuntimeDispatch {
 export interface RuntimeScheduler {
   bindSession(harnessSessionId: string, sessionId: string): void
   next(sessionId: string, workflowId: string): RuntimeDispatch | undefined
+  pauseEmptyOutput?(sessionId: string, dispatch: RuntimeDispatch, correlationId: string, reason: string): Promise<boolean>
 }
 
 export interface ToolPolicy {
@@ -66,8 +71,10 @@ export interface WorkflowControl {
   routeSessionForLegacyTrigger(event: EdmoreEvent): string | undefined
   handleTrigger(event: EdmoreEvent): Promise<WorkflowDecision>
   approve(workflowId: string, sessionId?: string, correlationId?: string): Promise<WorkflowDecision>
+  editTemporaryPlan?(workflowId: string, sessionId: string, draft: unknown): Promise<unknown>
   resume(workflowId: string | undefined, sessionId: string | undefined, prompt?: string, correlationId?: string, confirmationContext?: unknown): Promise<WorkflowDecision>
   reject(workflowId: string, reason?: string, sessionId?: string): Promise<void>
+  cancelSession(sessionId: string): Promise<{ hardware_stop_verified: boolean }>
   cancelPaused(workflowId: string, sessionId: string, verifiedHardwareStopped: boolean): Promise<void>
 }
 
@@ -89,6 +96,7 @@ export interface EvidenceEvent {
 }
 
 export interface WorkflowEvidence {
+  stepResult?(sessionId: string, workflowId: string, stepId: string): unknown
   record(event: EvidenceEvent): void
   flush(): Promise<void>
   evidence(sessionId: string, workflowIds: string[], through?: number): { version: number; digest: string; event_ids: string[]; [key: string]: unknown }

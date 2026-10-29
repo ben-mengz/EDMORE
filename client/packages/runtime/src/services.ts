@@ -3,8 +3,10 @@ import type { EdmoreEventHub } from '@deepseek-ai/dsh-edmore-core/events'
 import type {} from '@deepseek-ai/dsh-edmore-core'
 export type { EdmoreEvent } from '@deepseek-ai/dsh-edmore-contracts'
 import { randomUUID } from 'node:crypto'
+import { unchangedExecutorDispatch, emptyOutputAction } from './workflow-dispatch.ts'
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { dirname } from 'node:path'
+import { loadSkillDirectory } from '../../../skill-format.mjs'
 import type { Context } from '@deepseek-ai/cordis'
 import z from '@deepseek-ai/schemastery'
 import { createUserMessage, ReasoningEffortId } from '@deepseek-ai/dsh-llm'
@@ -95,6 +97,7 @@ export interface LlmProviderProfile {
   displayName: string
   baseURL?: string
   model: string
+  contextWindow?: number
   embeddingBaseURL?: string
   embeddingModel?: string
   apiKeyEnv?: string
@@ -104,6 +107,7 @@ export interface LlmProviderProfile {
 }
 
 export interface LlmProviderStore {
+  disabledProviders?: string[]
   activeProvider?: string
   profiles?: LlmProviderProfile[]
 }
@@ -114,6 +118,8 @@ export interface LlmProviderInput {
   base_url?: unknown
   baseURL?: unknown
   model?: unknown
+  context_window?: unknown
+  contextWindow?: unknown
   embedding_base_url?: unknown
   embeddingBaseURL?: unknown
   embedding_model?: unknown
@@ -125,6 +131,12 @@ export interface LlmProviderInput {
   api?: unknown
   reasoning_effort?: unknown
   reasoningEffort?: unknown
+}
+
+export function isSettingsNotReadyError(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error)
+  return message.includes('settings namespace "llm-pi-ai" is not registered')
+    || message.includes('Configuration entry changed during reload')
 }
 
 export const DEFAULT_LLM_PROVIDER_PROFILES: LlmProviderProfile[] = [
@@ -162,13 +174,25 @@ export function optionalString(value: unknown): string | undefined {
   return typeof value === 'string' && value.trim().length > 0 ? value.trim() : undefined
 }
 
+export function optionalPositiveInteger(value: unknown, name: string): number | undefined {
+  if (value === undefined || value === null || value === '') return undefined
+  if (typeof value !== 'number' || !Number.isSafeInteger(value) || value <= 0) {
+    throw new Error(`${name} must be a positive integer`)
+  }
+  return value
+}
+
 export function compactAssistantConfig(config: Record<string, unknown>): Partial<AssistantConfig> {
   return Object.fromEntries(Object.entries(config).filter(([, value]) => value !== undefined && value !== '')) as Partial<AssistantConfig>
 }
 
 export function providerCompatibleConfig(config: AssistantConfig): AssistantConfig {
-  // HU exposes llm3 through Chat Completions without an effort-level contract.
-  // Omit the OpenAI effort parameter; this does not disable server-side thinking.
+  // These OpenAI-compatible endpoints do not expose OpenAI effort levels.
+  // Omitting the parameter does not disable their server-side reasoning.
+  if (config.provider === 'bonsai-local' || config.provider === 'strata-local') {
+    const { reasoningEffort, ...compatible } = config
+    return { ...compatible, timeoutMs: Math.max(config.timeoutMs, 600000) }
+  }
   if (config.provider === 'llm3-hu') {
     const { reasoningEffort, ...compatible } = config
     return compatible
@@ -219,18 +243,20 @@ export function executorRoleForMcpAgent(agent: string): string {
 }
 
 export function roleAllowsMcpAgent(role: string, agent: string): boolean {
-  if (role === 'orchestrator') return true
-  if (!role.startsWith('executor:')) return false
-  return role.slice('executor:'.length) === agent
+  const executionRole = role.split('@')[0]!
+  if (executionRole === 'orchestrator') return true
+  if (!executionRole.startsWith('executor:')) return false
+  return executionRole.slice('executor:'.length) === agent
 }
 
 export function allowedToolNamesForRole(role: string, availableNames: string[]): string[] | undefined {
-  if (role.includes('@')) return availableNames.filter(name => ['skill', 'read', 'read_image', 'edmore_read_evidence'].includes(name))
-  if (role === 'orchestrator') return undefined
+  const executionRole = role.split('@')[0]!
+  if (role.includes('@') && !executionRole.startsWith('executor:')) return availableNames.filter(name => ['skill', 'read', 'read_image', 'edmore_read_evidence'].includes(name))
+  if (executionRole === 'orchestrator') return undefined
   const baseAllow = availableNames.filter(name => name === 'skill' || name === 'list_subagent_models')
-  if (role === 'planner' || role === 'judge') return [...baseAllow, ...availableNames.filter(name => name === 'read' || name === 'read_image')]
-  if (!role.startsWith('executor:')) return baseAllow
-  const agent = role.slice('executor:'.length)
+  if (executionRole === 'planner' || executionRole === 'judge') return [...baseAllow, ...availableNames.filter(name => name === 'read' || name === 'read_image')]
+  if (!executionRole.startsWith('executor:')) return baseAllow
+  const agent = executionRole.slice('executor:'.length)
   const prefix = `mcp__${agent.startsWith('agent_mcp_') ? agent.slice(10) : `nionswift_${agent}`}__`
   return [...baseAllow, ...availableNames.filter(name => name.startsWith(prefix))]
 }
@@ -288,13 +314,24 @@ declare module '@deepseek-ai/cordis' {
 export class EdmoreSkillContext {
   constructor(private ctx: Context, private cwd: string) {}
 
-  async catalog(): Promise<{ complete: boolean; skills: Array<SkillSummary & { metadata?: Readonly<Record<string, unknown>> }> }> {
+  async catalog(): Promise<{ complete: boolean; skills: Array<SkillSummary & { category: string }> }> {
     const snapshot = await this.ctx.skills.snapshot({ cwd: this.cwd })
+    const skills: Array<SkillSummary & { category: string }> = []
+    for (const summary of snapshot.skills.filter(isModelInvocable)) {
+      const definition = await this.ctx.skills.get(summary.name, { cwd: this.cwd })
+      if (!definition || !isModelInvocable(definition)) continue
+      const metadata = asRecord(definition.metadata)
+      const authority = asRecord(metadata.edmore).authority
+      let category = authority === 'workflow' ? 'workflow' : 'support'
+      if (authority === undefined && definition.path && definition.resourceBase?.kind === 'directory') {
+        try { category = (await loadSkillDirectory(dirname(definition.path))).category }
+        catch { category = 'unknown' }
+      }
+      skills.push({ ...summary, category })
+    }
     return {
       complete: snapshot.complete,
-      skills: snapshot.skills
-        .filter(isModelInvocable)
-        .map(skill => skill as SkillSummary & { metadata?: Readonly<Record<string, unknown>> }),
+      skills,
     }
   }
 
@@ -337,6 +374,7 @@ export class EdmoreLlmProviderManager {
       displayName: profile.displayName,
       baseURL: profile.baseURL ?? '',
       model: profile.model,
+      contextWindow: profile.contextWindow,
       embeddingBaseURL: profile.embeddingBaseURL ?? '',
       embeddingModel: profile.embeddingModel ?? '',
       apiKeyEnv: profile.apiKeyEnv,
@@ -355,6 +393,8 @@ export class EdmoreLlmProviderManager {
     const id = this.normalizeProviderId(stringField(input.id, 'id'))
     const displayName = optionalString(input.displayName) || id
     const model = stringField(input.model, 'model')
+    const previous = this.profiles().find(profile => profile.id === id)
+    const contextWindow = optionalPositiveInteger(input.contextWindow ?? input.context_window, 'contextWindow') ?? previous?.contextWindow
     const baseURL = optionalString(input.baseURL) || optionalString(input.base_url)
     const embeddingBaseURL = optionalString(input.embeddingBaseURL) || optionalString(input.embedding_base_url)
     const embeddingModel = optionalString(input.embeddingModel) || optionalString(input.embedding_model)
@@ -362,7 +402,6 @@ export class EdmoreLlmProviderManager {
     const explicitApiKeyEnv = optionalString(input.apiKeyEnv) || optionalString(input.api_key_env)
     const apiKey = optionalString(input.apiKey) || optionalString(input.api_key)
     const reasoningEffort = optionalString(input.reasoningEffort) || optionalString(input.reasoning_effort)
-    const previous = this.profiles().find(profile => profile.id === id)
     const apiKeyEnv = explicitApiKeyEnv || previous?.apiKeyEnv || defaultCredentialRefForProvider(id)
     if (apiKey) await this.setCredential(apiKeyEnv, apiKey)
     const profile = compactProfile({
@@ -370,6 +409,7 @@ export class EdmoreLlmProviderManager {
       displayName,
       ...baseURL === undefined ? {} : { baseURL },
       model,
+      ...contextWindow === undefined ? {} : { contextWindow },
       ...embeddingBaseURL === undefined ? {} : { embeddingBaseURL },
       ...embeddingModel === undefined ? {} : { embeddingModel },
       ...apiKeyEnv === undefined ? {} : { apiKeyEnv },
@@ -391,6 +431,7 @@ export class EdmoreLlmProviderManager {
         id: profile.id,
         displayName: profile.displayName,
         model: profile.model,
+        contextWindow: profile.contextWindow,
         baseURL: profile.baseURL ?? '',
         apiKeyEnv: profile.apiKeyEnv,
         apiKeyConfigured: profile.apiKeyEnv === undefined ? false : ((await credentialsService(this.ctx)?.describe(credentialRefName(profile.apiKeyEnv))) as { configured?: boolean } | undefined)?.configured ?? false,
@@ -463,7 +504,7 @@ export class EdmoreLlmProviderManager {
   private profiles(): LlmProviderProfile[] {
     const merged = new Map(DEFAULT_LLM_PROVIDER_PROFILES.map(profile => [profile.id, profile]))
     for (const profile of this.store.profiles ?? []) merged.set(profile.id, profile)
-    return [...merged.values()]
+    return [...merged.values()].filter(profile => !this.store.disabledProviders?.includes(profile.id))
   }
 
   private activeProviderId(): string {
@@ -485,6 +526,7 @@ export class EdmoreLlmProviderManager {
         models: [{
           id: profile.model,
           name: profile.model,
+          ...profile.contextWindow === undefined ? {} : { contextWindow: profile.contextWindow },
         }],
       }
     }
@@ -492,8 +534,7 @@ export class EdmoreLlmProviderManager {
       await settings.replace('llm-pi-ai', { providers })
       return true
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error)
-      if (message.includes('settings namespace "llm-pi-ai" is not registered')) return false
+      if (isSettingsNotReadyError(error)) return false
       throw error
     }
   }
@@ -597,13 +638,14 @@ export class EdmoreAgentRoleManager {
   private async resolve(role: string): Promise<ResolvedAgentConfig> {
     await this.ready()
     const base = await this.providers.activeAssistantConfig()
+    const executionRole = role.split('@')[0]!
     const baseRole = baseRoleFor(role)
     const backend = { ...base, ...(DEFAULT_AGENT_ROLE_CONFIGS[baseRole] ?? {}) }
-    const agentInfo = role.startsWith('executor:') ? await this.requireOnlineExecutorAgent(role) : undefined
+    const agentInfo = executionRole.startsWith('executor:') ? await this.requireOnlineExecutorAgent(executionRole) : undefined
     const mcp = assistantConfigFromAgentInfo(agentInfo)
     const user = {
       ...(this.store.roles?.[baseRole] ?? {}),
-      ...(this.store.roles?.[role] ?? {}),
+      ...(this.store.roles?.[executionRole] ?? {}),
     }
     const sourceFor = (key: keyof AssistantConfig): AgentConfigSource => user[key] !== undefined
       ? 'user_role'
@@ -689,7 +731,15 @@ export class EdmoreAgentRoleManager {
   }
 }
 
+interface WorkflowRunOptions extends RoleRunOptions {
+  workflowRunId?: string
+  emptyOutputRetried?: boolean
+  maxTokensOverride?: number
+  retryToolName?: string
+}
+
 export class EdmoreAgentLoopBridge {
+  private workflowRuns = new Map<string, string>()
   private handledTriggers = new Set<string>()
   private agents = new Map<string, {
     handle: AgentHandle
@@ -717,6 +767,8 @@ export class EdmoreAgentLoopBridge {
 
   async runWorkflow(sourceEvent: EdmoreEvent, prompt: string, workflowId?: string, role = 'orchestrator'): Promise<void> {
     const sessionId = sourceEvent.session_id ?? 'default'
+    const workflowRunId = randomUUID()
+    this.workflowRuns.set(sessionId, workflowRunId)
     const event: EdmoreEvent = {
       ...sourceEvent,
       ...workflowId === undefined && sourceEvent.workflow_id === undefined ? {} : { workflow_id: workflowId ?? sourceEvent.workflow_id },
@@ -728,7 +780,28 @@ export class EdmoreAgentLoopBridge {
         ...workflowId === undefined && sourceEvent.workflow_id === undefined ? {} : { workflow_id: workflowId ?? sourceEvent.workflow_id },
       },
     }
-    await this.ctx.edmoreTasks.run(sessionId, role, signal => this.runPrompt(sessionId, role, prompt, event, workflowId, 0, {}, signal))
+    await this.ctx.edmoreTasks.run(sessionId, role, signal => this.runIsolatedWorkflowStep(sessionId, role, prompt, event, workflowId, 0, { workflowRunId }, signal))
+  }
+
+  private async runIsolatedWorkflowStep(
+    sessionId: string,
+    role: string,
+    prompt: string,
+    event: EdmoreEvent,
+    workflowId: string | undefined,
+    depth: number,
+    options: WorkflowRunOptions,
+    signal?: AbortSignal,
+  ): Promise<string> {
+    const isolatedRole = `${role.split('@')[0]!}@${randomUUID()}`
+    try {
+      return await this.runPrompt(sessionId, isolatedRole, prompt, event, workflowId, depth, options, signal)
+    } finally {
+      const key = this.agentKey(sessionId, isolatedRole)
+      const entry = this.agents.get(key)
+      this.agents.delete(key)
+      await entry?.handle.dispose()
+    }
   }
 
   async runRoleOnce(sessionId: string, role: string, prompt: string, event: EdmoreEvent, options: RoleRunOptions = {}): Promise<string> {
@@ -764,12 +837,17 @@ export class EdmoreAgentLoopBridge {
     event: EdmoreEvent,
     workflowId?: string,
     depth = 0,
-    options: RoleRunOptions = {},
+    options: WorkflowRunOptions = {},
     signal?: AbortSignal,
   ): Promise<string> {
     signal?.throwIfAborted()
-    const entry = await this.ensureAgent(sessionId, role)
+    const superseded = () => options.workflowRunId !== undefined && this.workflowRuns.get(sessionId) !== options.workflowRunId
+    if (superseded()) return ''
+    const startingDispatch = workflowId === undefined ? undefined : this.scheduling.next(sessionId, workflowId)
+    const entry = await this.ensureAgent(sessionId, role, options)
     const config = await this.roles.configFor(role, sessionId)
+    signal?.throwIfAborted()
+    if (superseded()) return ''
     entry.selection.current = {
       provider: config.provider,
       model: config.model,
@@ -780,8 +858,12 @@ export class EdmoreAgentLoopBridge {
     const transcript = new Map<string, string>()
     let finalText = ''
     let modelError: string | undefined
+    let toolCalls = 0
+    let finishReason: string | undefined
     const disposeStream = this.ctx.on('agent/assistant-stream', ({ agent, frame }) => {
       if (agent !== entry.handle.agent) return
+      if (frame.type === 'chunk' && frame.chunk.type === 'finish') finishReason = frame.chunk.reason.kind
+      if (superseded() || signal?.aborted) return
       void this.projectAssistantFrame(frame, event, responseId, config, transcript, role, options)
         .catch(error => this.ctx.logger.warn(error instanceof Error ? error : new Error(String(error))))
     })
@@ -799,10 +881,13 @@ export class EdmoreAgentLoopBridge {
         source: { kind: 'user' },
       }))
       let timedOut = false
+      const timeoutMs = workflowId !== undefined && role.startsWith('executor:')
+        ? Math.max(config.timeoutMs, 300_000)
+        : config.timeoutMs
       const timeout = setTimeout(() => {
         timedOut = true
-        entry.handle.agent.cancel({ kind: 'hook', reason: `EDMORE ${role} timed out after ${config.timeoutMs} ms` })
-      }, config.timeoutMs)
+        entry.handle.agent.cancel({ kind: 'hook', reason: `EDMORE ${role} timed out after ${timeoutMs} ms` })
+      }, timeoutMs)
       try {
         await entry.handle.agent.whenIdle()
       } catch (error) {
@@ -812,10 +897,11 @@ export class EdmoreAgentLoopBridge {
         signal?.removeEventListener('abort', cancel)
       }
       signal?.throwIfAborted()
-      if (timedOut) throw Object.assign(new Error(`EDMORE ${role} timed out after ${config.timeoutMs} ms`), { code: 'EDMORE_ROLE_TIMEOUT' })
+      if (timedOut) throw Object.assign(new Error(`EDMORE ${role} timed out after ${timeoutMs} ms`), { code: 'EDMORE_ROLE_TIMEOUT' })
       const outcome = summarizeAssistantOutput(entry.handle.agent.session, firstSeq)
       finalText = outcome.text.trim()
       modelError = outcome.error
+      toolCalls = outcome.toolCalls
       await this.hub.append(withOptionalSession({
         type: outcome.error === undefined ? 'edmore.assistant.completed' : 'edmore.assistant.failed',
         source: options.source ?? 'edmore-agent-loop',
@@ -829,7 +915,11 @@ export class EdmoreAgentLoopBridge {
           model: config.model,
           text: finalText,
           usage: outcome.usage,
-          ...options.hidden === true ? { hidden: true } : {},
+          finish_reason: finishReason,
+          tool_calls: toolCalls,
+          empty_output_retry: options.emptyOutputRetried === true,
+          ...options.hidden === true || superseded() || (!finalText && !outcome.error) ? { hidden: true } : {},
+          ...superseded() ? { superseded: true } : {},
           ...outcome.error === undefined ? {} : { error: outcome.error },
         },
       }, event.session_id))
@@ -843,7 +933,8 @@ export class EdmoreAgentLoopBridge {
           response_id: responseId,
           session_id: entry.handle.agent.id,
           role,
-          ...options.hidden === true ? { hidden: true } : {},
+          ...options.hidden === true || superseded() || signal?.aborted ? { hidden: true } : {},
+          ...superseded() || signal?.aborted ? { superseded: true } : {},
           error: error instanceof Error ? error.message : String(error),
         },
       }, event.session_id))
@@ -882,10 +973,34 @@ export class EdmoreAgentLoopBridge {
       disposeStream()
       signal?.removeEventListener('abort', cancel)
     }
+    signal?.throwIfAborted()
+    if (superseded()) return ''
     if (modelError !== undefined) throw new Error(modelError)
-    const dispatch = workflowId === undefined || depth >= 50
+    const candidateDispatch = workflowId === undefined || depth >= 50
       ? undefined
       : this.scheduling.next(sessionId, workflowId)
+    const unchangedExecutorStep = unchangedExecutorDispatch(role, startingDispatch, candidateDispatch)
+    const emptyAction = emptyOutputAction({ role, previous: startingDispatch, next: candidateDispatch, text: finalText,
+      toolCalls, error: modelError, retried: options.emptyOutputRetried === true, cancelled: signal?.aborted === true, superseded: superseded() })
+    if (emptyAction === 'retry' && candidateDispatch) {
+      await this.hub.append(withOptionalSession({ type: 'edmore.assistant.completed', source: 'edmore-agent-loop', scope: 'workflow',
+        correlation_id: event.event_id, payload: { response_id: randomUUID(), text: 'The model returned no text or tool call. Retrying this step once with reduced context; your confirmation is retained.' },
+      }, event.session_id))
+      signal?.throwIfAborted()
+      if (superseded()) return ''
+      return this.runIsolatedWorkflowStep(sessionId, candidateDispatch.role,
+        candidateDispatch.retryPrompt ?? candidateDispatch.prompt, event, candidateDispatch.workflowId, depth,
+        { ...options, emptyOutputRetried: true,
+          ...(finishReason === 'max-tokens' ? { maxTokensOverride: Math.max(config.maxTokens, Math.min(8192, Math.max(4096, config.maxTokens * 2))) } : {}),
+          retryToolName: candidateDispatch.retryToolName,
+        }, signal)
+    }
+    if (emptyAction === 'pause' && candidateDispatch) {
+      await this.scheduling.pauseEmptyOutput(sessionId, candidateDispatch, event.event_id,
+        'Workflow paused: the model returned no text or tool call after one automatic retry. This step was not executed. Your session and prior confirmation are retained. Reply retry to retry this step.')
+      return ''
+    }
+    const dispatch = unchangedExecutorStep ? undefined : candidateDispatch
     if (dispatch !== undefined) {
       await this.hub.append(withOptionalSession({
         type: 'edmore.custom.workflow_handoff',
@@ -901,18 +1016,20 @@ export class EdmoreAgentLoopBridge {
           tool_name: dispatch.step.tool_name,
         },
       }, event.session_id))
-      await this.runPrompt(sessionId, dispatch.role, dispatch.prompt, event, dispatch.workflowId, depth + 1, options, signal)
+      await this.runIsolatedWorkflowStep(sessionId, dispatch.role, dispatch.prompt, event, dispatch.workflowId, depth + 1,
+        { ...options, emptyOutputRetried: false, maxTokensOverride: undefined, retryToolName: undefined }, signal)
     }
     return finalText
   }
 
-  private async ensureAgent(sessionId: string, role: string): Promise<{
+  private async ensureAgent(sessionId: string, role: string, options: WorkflowRunOptions = {}): Promise<{
     handle: AgentHandle
     selection: ModelSelectionRef
     configSignature: string
   }> {
     const key = this.agentKey(sessionId, role)
-    const config = await this.roles.configFor(role, sessionId)
+    const baseConfig = await this.roles.configFor(role, sessionId)
+    const config = { ...baseConfig, ...(options.maxTokensOverride === undefined ? {} : { maxTokens: options.maxTokensOverride }) }
     const existing = this.agents.get(key)
     const configSignature = JSON.stringify(config)
     if (existing !== undefined && existing.configSignature === configSignature) return existing
@@ -938,6 +1055,12 @@ export class EdmoreAgentLoopBridge {
     }
     const setup = (agentCtx: Context) => {
         installModelSelection(agentCtx, selection)
+        agentCtx.tools.guard(exec => this.ctx.get('edmoreConversationExtensions')?.denial(sessionId, exec.name, exec.arguments))
+        agentCtx.systemPrompt.section({
+          name: 'edmore:conversation-extensions',
+          order: agentCtx.systemPrompt.getSectionOrder('DEPLOYMENT_PERSONA_PREFIX') + 21,
+          text: () => this.ctx.get('edmoreConversationExtensions')?.prompt(sessionId) ?? '',
+        })
         const evidence = this.ctx.get('edmoreSessionState') as unknown as { readEvidence(session: string, event?: string, after?: number, offset?: number): unknown } | undefined
         if (evidence && role.includes('@')) {
           agentCtx.tools.register({
@@ -953,7 +1076,11 @@ export class EdmoreAgentLoopBridge {
         }
         const allow = allowedToolNamesForRole(role, agentCtx.tools.schemas().map(schema => schema.name))
         if (allow !== undefined) agentCtx.tools.restrict({ allow })
+        if (options.retryToolName) agentCtx.tools.restrict({ allow: [options.retryToolName, 'skill', 'edmore_read_evidence'] })
         agentCtx.on('tools/pre-execute', async (exec, next) => {
+          if (options.workflowRunId !== undefined && this.workflowRuns.get(sessionId) !== options.workflowRunId) {
+            return { kind: 'deny', reason: 'This executor was superseded by a newer workflow request.' }
+          }
           const mcp = /^mcp__nionswift_([^_]+(?:_[^_]+)*)__/.exec(exec.name)
           const agent = mcp?.[1]
           if (agent !== undefined && !roleAllowsMcpAgent(role, agent)) {
@@ -1029,7 +1156,8 @@ export class EdmoreAgentLoopBridge {
     }
     if (role === 'planner') {
       return [
-        'You are the EDMORE planner. Convert user goals into grounded PlanReview objects using visible skills, MCP schemas, and current state.',
+        'You are the EDMORE planner. Convert user goals into grounded PlanReview objects using Workflows, supporting Skills, MCP schemas, and current state.',
+        'A Workflow is an executable EDMORE contract. A Skill provides reference guidance only. Legacy skill field names do not change this distinction.',
         'Do not execute hardware tools. Produce plans only.',
       ].join('\n')
     }
@@ -1049,9 +1177,11 @@ export class EdmoreAgentLoopBridge {
     return [
       'You are the EDMORE orchestrator for NionSwift microscope and ptychography workflows.',
       'Use available Harness MCP tools when the user asks about current NionSwift agents, tool inventory, parameters, resources, or when a workflow action requires live MCP state.',
-      'Use Harness skills for workflow order, required inputs, user confirmation gates, and safety policy. If a task clearly matches an EDMORE skill, load that skill before acting.',
+      'Call executable EDMORE definitions Workflows, and knowledge or guidance documents Skills. Workflows remain stored in the compatible Harness skill registry and SKILL.md files; load the matching definition before discussing or planning it.',
+      'Distinguish the installed Judge plugin from per-message Workflow mode. When mode is off or Judge is unavailable, use Skills normally with permitted tools, preserving device selection, safety confirmations, prerequisites and result verification. Workflow metadata alone does not require switching modes. Only an available Judge provides Workflow mode: prepare a reviewed plan and wait for separate approval. Never bypass a pending, active or paused plan. Judge failure cancels existing workflows; never continue those as ordinary tool calls. New user requests may use ordinary Skills. Disabling Judge does not grant tool permissions.',
       'Do not claim that hardware has been changed unless an approved MCP tool result proves it.',
-      'For destructive, acquisition, server submission, or hardware-changing actions, explain the needed plan and approval instead of directly executing unsafe changes.',
+      'For destructive, acquisition, server submission, or hardware-changing actions, honor tool permissions and obtain the required user confirmation before acting; normal Skill mode does not remove safety gates. Never interpret a request for an explanation or a draft as execution authorization.',
+      'Use English for user-facing replies and status messages. Do not tell users to enable Workflow mode merely to get an answer or follow a Skill. Only report a plan as submitted, approved or executed when the corresponding system result proves it.',
     ].join('\n')
   }
 
@@ -1161,12 +1291,14 @@ export function normalizeSessionId(sessionId: string): string {
   return normalized || 'default'
 }
 
-export function summarizeAssistantOutput(session: Session, firstSeq: number): { text: string; usage?: unknown; error?: string } {
+export function summarizeAssistantOutput(session: Session, firstSeq: number): { text: string; toolCalls: number; usage?: unknown; error?: string } {
   let text = ''
+  let toolCalls = 0
   let usage: unknown
   let error: string | undefined
   for (const event of session.snapshotEvents()) {
     if (event.seq < firstSeq) continue
+    if (event.type === 'tool/call') toolCalls += 1
     if (event.type === 'assistant/message') {
       const joined = event.data.message.content
         .filter((block): block is Extract<ContentBlock, { type: 'text' }> => block.type === 'text')
@@ -1180,6 +1312,7 @@ export function summarizeAssistantOutput(session: Session, firstSeq: number): { 
   }
   return {
     text,
+    toolCalls,
     ...usage === undefined ? {} : { usage },
     ...error === undefined ? {} : { error },
   }

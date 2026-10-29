@@ -1,6 +1,6 @@
 {
   "name": "@deepseek-ai/dsh-edmore-workspace-api", "version": "0.0.0", "private": true,
   "type": "module", "exports": { ".": "./src/index.ts" },
-  "dependencies": { "@deepseek-ai/dsh-edmore-workspace": "0.1.5-rc.1" },
-  "peerDependencies": { "@deepseek-ai/cordis": "4.0.2", "@deepseek-ai/dsh-host-webserver": "0.1.5-rc.1" }
+  "dependencies": { "@deepseek-ai/dsh-edmore-workspace": "0.1.7-rc.2" },
+  "peerDependencies": { "@deepseek-ai/cordis": "4.0.4", "@deepseek-ai/dsh-host-webserver": "0.1.7-rc.2" }
 }

@@ -2,15 +2,26 @@ export class TaskQueues {
   private queues = new Map<string, Promise<unknown>>()
   private pending = new Map<string, Set<AbortController>>()
 
+  isBusy(sessionId: string): boolean { return Boolean(this.pending.get(sessionId)?.size) }
+
   run<T>(sessionId: string, role: string, task: (signal: AbortSignal) => Promise<T>): Promise<T> {
     const key = JSON.stringify([sessionId, role])
     const controller = new AbortController()
     const pending = this.pending.get(sessionId) ?? new Set<AbortController>()
     this.pending.set(sessionId, pending)
     pending.add(controller)
-    const operation = (this.queues.get(key) ?? Promise.resolve()).catch(() => {}).then(() => {
+    const operation = (this.queues.get(key) ?? Promise.resolve()).catch(() => {}).then(async () => {
       controller.signal.throwIfAborted()
-      return task(controller.signal)
+      const result = await new Promise<T>((resolve, reject) => {
+        const abort = () => reject(controller.signal.reason)
+        controller.signal.addEventListener('abort', abort, { once: true })
+        // Detach a cancelled task from the scheduling queue even when a model
+        // transport ignores abort. Workflow guards quarantine its late results.
+        Promise.resolve().then(() => { controller.signal.throwIfAborted(); return task(controller.signal) })
+          .then(resolve, reject).finally(() => controller.signal.removeEventListener('abort', abort))
+      })
+      controller.signal.throwIfAborted()
+      return result
     })
     this.queues.set(key, operation)
     return operation.finally(() => {

@@ -8,6 +8,6 @@
     "./content": "./src/content.ts"
   },
   "peerDependencies": {
-    "@deepseek-ai/dsh-llm": "0.1.5-rc.1"
+    "@deepseek-ai/dsh-llm": "0.1.7-rc.2"
   }
 }
