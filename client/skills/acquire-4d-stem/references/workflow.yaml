@@ -1,6 +1,6 @@
 schema_version: 1
 id: acquire_4d_stem
-version: 1.5.0
+version: 1.6.0
 steps:
   - id: start-preview
     title: Start BF preview
@@ -11,7 +11,7 @@ steps:
     confirmation: ''
     expected_output: BF Preview playback started.
     completion: {type: tool_success}
-    on_success: next
+    on_success: stabilize-preview
     on_failure: pause
   - id: stabilize-preview
     title: Wait for preview stabilization
@@ -23,7 +23,7 @@ steps:
     confirmation: ''
     expected_output: The 10-second wait completes.
     completion: {type: tool_success}
-    on_success: next
+    on_success: synchronize-pixels
     on_failure: pause
   - id: synchronize-pixels
     title: Synchronize pixel size
@@ -34,7 +34,7 @@ steps:
     confirmation: ''
     expected_output: Pixel size synchronization succeeds.
     completion: {type: tool_success}
-    on_success: next
+    on_success: confirm-roi
     on_failure: pause
   - id: confirm-roi
     title: Confirm the synchronized ROI
@@ -47,7 +47,7 @@ steps:
     confirmation_required: true
     expected_output: User confirms the ROI and the one-second wait completes.
     completion: {type: tool_success}
-    on_success: next
+    on_success: stop-preview
     on_failure: pause
   - id: stop-preview
     title: Stop BF preview
@@ -58,7 +58,7 @@ steps:
     confirmation: ''
     expected_output: BF Preview playback stopped.
     completion: {type: tool_success}
-    on_success: next
+    on_success: settle-detector
     on_failure: pause
   - id: settle-detector
     title: Wait after stopping preview
@@ -70,7 +70,7 @@ steps:
     confirmation: ''
     expected_output: The 10-second wait completes.
     completion: {type: tool_success}
-    on_success: next
+    on_success: acquire-dataset
     on_failure: pause
   - id: acquire-dataset
     title: Acquire the 4D-STEM dataset
@@ -87,6 +87,6 @@ steps:
     confirmation: ''
     expected_output: Acquisition reports a saved data path or success message. Tool success does not independently validate dataset quality.
     completion: {type: tool_success}
-    on_success: next
+    on_success: complete
     on_failure: pause
     failure_guidance: If defocus, dwell or scan-grid values are missing, ask for manual values or offer recommend_4d_stem_parameters. Never retry acquisition automatically.

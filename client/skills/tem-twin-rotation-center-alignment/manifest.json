@@ -1,0 +1,16 @@
+{
+  "id": "tem_twin_rotation_center_alignment",
+  "name": "TEM Rotation centre",
+  "version": "5.0.0",
+  "description": "Choose the target, then perform ONLY Rotation centre.",
+  "kind": "compound_workflow",
+  "agents": [
+    "agent_mcp_tem_twin"
+  ],
+  "required_tools": [],
+  "ordered_tools": [],
+  "references": [
+    "tem_tango_device_selection",
+    "tem_twin_phase_rot"
+  ]
+}

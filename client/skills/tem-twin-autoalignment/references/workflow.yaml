@@ -1,0 +1,262 @@
+schema_version: 1
+id: tem_twin_autoalignment
+version: "1.0.0"
+steps:
+  - id: beam_prepare
+    title: Prepare beam and C2 alignment
+    purpose: Use unblanked imaging mode at 20 kx.
+    tool: agent_mcp_tem_twin.configure_imaging
+    parameters:
+      magnification: {mode: fixed, value: 20000}
+      projector_mode: {mode: fixed, value: Imaging}
+      blanked: {mode: fixed, value: false}
+    confirm: false
+    confirmation: ''
+    expected_output: Imaging mode, 20 kx, and unblanked beam are reported.
+    completion: {type: tool_success}
+    on_success: beam_measure_focused
+    on_failure: pause
+  - id: beam_measure_focused
+    title: Measure focused-beam centering
+    purpose: Measure focused-beam position from an AutoScript image.
+    tool: agent_mcp_tem_twin.measure_beam
+    parameters:
+      beam_fraction_of_fov: {mode: fixed, value: 0.02}
+      image_size_px: {mode: fixed, value: 256}
+      exposure_s: {mode: fixed, value: 0.005}
+      camera: {mode: fixed, value: BM-Ceta}
+    confirm: false
+    confirmation: ''
+    expected_output: Focused-beam centroid evidence is reported.
+    completion: {type: semantic_judge, criteria: "Success only when beam_found is true and centroid_distance_half_fov is at most 0.02. A missing beam or larger distance is failure; missing or contradictory evidence is uncertain."}
+    on_success: beam_measure_spread
+    on_failure: beam_correct
+  - id: beam_measure_spread
+    title: Measure spread-beam C2 centering
+    purpose: Measure C2 aperture centering from an AutoScript image.
+    tool: agent_mcp_tem_twin.measure_beam
+    parameters:
+      beam_fraction_of_fov: {mode: fixed, value: 0.9}
+      image_size_px: {mode: fixed, value: 256}
+      exposure_s: {mode: fixed, value: 0.02}
+      camera: {mode: fixed, value: BM-Ceta}
+    confirm: false
+    confirmation: ''
+    expected_output: Spread-beam centroid evidence is reported.
+    completion: {type: semantic_judge, criteria: "Success only when beam_found is true and centroid_distance_half_fov is at most 0.01. A missing beam or larger distance is failure; missing or contradictory evidence is uncertain."}
+    on_success: gun_measure
+    on_failure: beam_correct
+  - id: beam_correct
+    title: Correct beam shift and C2 aperture
+    purpose: Run the official AutoScript aperture-centering primitive.
+    tool: agent_mcp_tem_twin.autoscript_auto_functions_run_aperture_centering
+    parameters:
+      arguments:
+        mode: fixed
+        value: [{__type__: RunApertureCenteringSettings, aperture_mechanism_type: C2, maximum_allowed_distance: 0.01, maximum_iterations: 8, beam_diameter_change_allowed: true, stage_movement_allowed: false, check_only_mode: false}]
+    confirm: false
+    confirmation: ''
+    expected_output: Official aperture centering completes.
+    completion: {type: tool_success}
+    on_success: beam_measure_focused
+    on_failure: pause
+    max_visits: 4
+
+  - id: gun_measure
+    title: Probe gun-tilt current response
+    purpose: Measure whether a small gun-tilt step can raise screen current.
+    tool: agent_mcp_tem_twin.measure_gun_tilt
+    parameters:
+      probe_step: {mode: fixed, value: 0.03}
+      samples: {mode: fixed, value: 2}
+      beam_fraction_of_fov: {mode: fixed, value: 0.35}
+      image_size_px: {mode: fixed, value: 256}
+      exposure_s: {mode: fixed, value: 0.02}
+      camera: {mode: fixed, value: BM-Ceta}
+    confirm: false
+    confirmation: ''
+    expected_output: Gun-tilt current probes and best_delta are reported.
+    completion: {type: semantic_judge, criteria: "Success only when baseline_current_A is positive and maximum_gain_fraction is less than 0.005. A gain at or above 0.005 is failure; missing or contradictory evidence is uncertain."}
+    on_success: c2stig_measure
+    on_failure: gun_correct
+  - id: gun_correct
+    title: Apply gun-tilt correction
+    purpose: Apply exactly the best measured relative gun-tilt delta.
+    tool: agent_mcp_tem_twin.set_gun_tilt
+    parameters:
+      x: {mode: result, value: "{{gun_measure.best_delta.x}}"}
+      y: {mode: result, value: "{{gun_measure.best_delta.y}}"}
+      relative: {mode: fixed, value: true}
+    confirm: false
+    confirmation: ''
+    expected_output: Relative gun-tilt SET completes.
+    completion: {type: tool_success}
+    on_success: gun_measure
+    on_failure: pause
+    max_visits: 64
+
+  - id: c2stig_measure
+    title: Probe condenser stigmation
+    purpose: Measure beam ellipticity and nearby stigmator responses.
+    tool: agent_mcp_tem_twin.measure_condenser_stigmation
+    parameters:
+      probe_step: {mode: fixed, value: 0.05}
+      beam_fraction_of_fov: {mode: fixed, value: 0.2}
+      image_size_px: {mode: fixed, value: 256}
+      exposure_s: {mode: fixed, value: 0.05}
+      camera: {mode: fixed, value: BM-Ceta}
+    confirm: false
+    confirmation: ''
+    expected_output: Ellipticity and best_delta are reported with restored controls.
+    completion: {type: semantic_judge, criteria: "Success only when beam_found is true and ellipticity is below 0.03. Ellipticity at or above 0.03 is failure when improvement_available is true. No beam or no improving probe is uncertain."}
+    on_success: z_prepare
+    on_failure: c2stig_correct
+  - id: c2stig_correct
+    title: Apply condenser-stigmator correction
+    purpose: Apply exactly the best measured relative condenser-stigmator delta.
+    tool: agent_mcp_tem_twin.set_condenser_stigmator
+    parameters:
+      x: {mode: result, value: "{{c2stig_measure.best_delta.x}}"}
+      y: {mode: result, value: "{{c2stig_measure.best_delta.y}}"}
+      relative: {mode: fixed, value: true}
+    confirm: false
+    confirmation: ''
+    expected_output: Relative condenser-stigmator SET completes.
+    completion: {type: tool_success}
+    on_success: c2stig_measure
+    on_failure: pause
+    max_visits: 48
+
+  - id: z_prepare
+    title: Prepare eucentric Z measurement
+    purpose: Use 250 kx imaging with a spread unblanked beam.
+    tool: agent_mcp_tem_twin.configure_imaging
+    parameters:
+      magnification: {mode: fixed, value: 250000}
+      beam_diameter_m: {mode: fixed, value: 4.4e-7}
+      projector_mode: {mode: fixed, value: Imaging}
+      blanked: {mode: fixed, value: false}
+    confirm: false
+    confirmation: ''
+    expected_output: Eucentric measurement conditions are reported.
+    completion: {type: tool_success}
+    on_success: z_measure
+    on_failure: pause
+  - id: z_measure
+    title: Measure eucentric Z offset
+    purpose: Measure required stage-Z delta and restore the stage.
+    tool: agent_mcp_tem_twin.measure_eucentric_offset
+    parameters:
+      camera: {mode: fixed, value: BM-Ceta}
+      maximum_iterations: {mode: fixed, value: 6}
+    confirm: false
+    confirmation: ''
+    expected_output: Required stage delta and absolute offset are reported.
+    completion: {type: semantic_judge, criteria: "Success only when stage_restored is true and absolute_offset_m is less than 1.0e-7 m. A larger offset is failure; missing or contradictory evidence is uncertain."}
+    on_success: rotation_prepare
+    on_failure: z_correct
+  - id: z_correct
+    title: Apply stage-Z correction
+    purpose: Move stage Z by exactly the measured relative delta.
+    tool: agent_mcp_tem_twin.set_stage_z
+    parameters:
+      z_m: {mode: result, value: "{{z_measure.required_stage_delta_m}}"}
+      relative: {mode: fixed, value: true}
+    confirm: false
+    confirmation: ''
+    expected_output: Relative stage-Z move completes.
+    completion: {type: tool_success}
+    on_success: z_measure
+    on_failure: pause
+    max_visits: 4
+
+  - id: rotation_prepare
+    title: Prepare rotation-center measurement
+    purpose: Keep 250 kx imaging with a spread beam.
+    tool: agent_mcp_tem_twin.configure_imaging
+    parameters:
+      magnification: {mode: fixed, value: 250000}
+      beam_diameter_m: {mode: fixed, value: 4.4e-7}
+      projector_mode: {mode: fixed, value: Imaging}
+      blanked: {mode: fixed, value: false}
+    confirm: false
+    confirmation: ''
+    expected_output: Rotation-center conditions are reported.
+    completion: {type: tool_success}
+    on_success: rotation_measure
+    on_failure: pause
+  - id: rotation_measure
+    title: Measure rotation-center offset
+    purpose: Measure beam-tilt offset while restoring temporary probes.
+    tool: agent_mcp_tem_twin.measure_rotation_center
+    parameters:
+      maximum_iterations: {mode: fixed, value: 6}
+    confirm: false
+    confirmation: ''
+    expected_output: Rotation distance and required beam-tilt delta are reported.
+    completion: {type: semantic_judge, criteria: "Success only when controls_restored is true and distance_mrad is below 0.8. A larger distance is failure; missing or contradictory evidence is uncertain."}
+    on_success: ostig_prepare
+    on_failure: rotation_correct
+  - id: rotation_correct
+    title: Apply rotation-center correction
+    purpose: Apply exactly the measured relative beam-tilt delta.
+    tool: agent_mcp_tem_twin.set_beam_tilt
+    parameters:
+      x_rad: {mode: result, value: "{{rotation_measure.required_beam_tilt_delta_rad.x}}"}
+      y_rad: {mode: result, value: "{{rotation_measure.required_beam_tilt_delta_rad.y}}"}
+      relative: {mode: fixed, value: true}
+    confirm: false
+    confirmation: ''
+    expected_output: Relative beam-tilt SET completes.
+    completion: {type: tool_success}
+    on_success: rotation_measure
+    on_failure: pause
+    max_visits: 6
+
+  - id: ostig_prepare
+    title: Prepare objective-stigmation measurement
+    purpose: Use 4 Mx imaging with a spread unblanked beam.
+    tool: agent_mcp_tem_twin.configure_imaging
+    parameters:
+      magnification: {mode: fixed, value: 4000000}
+      beam_diameter_m: {mode: fixed, value: 2.75e-8}
+      projector_mode: {mode: fixed, value: Imaging}
+      blanked: {mode: fixed, value: false}
+    confirm: false
+    confirmation: ''
+    expected_output: Objective-stigmation conditions are reported.
+    completion: {type: tool_success}
+    on_success: ostig_measure
+    on_failure: pause
+  - id: ostig_measure
+    title: Measure objective astigmatism
+    purpose: Fit directional defocus from AutoScript camera images.
+    tool: agent_mcp_tem_twin.measure_objective_astigmatism
+    parameters:
+      frames: {mode: fixed, value: 4}
+      image_size_px: {mode: fixed, value: 256}
+      exposure_s: {mode: fixed, value: 0.2}
+      camera: {mode: fixed, value: BM-Ceta}
+      cs_m: {mode: fixed, value: 1.2e-3}
+      measurement_defocus_m: {mode: fixed, value: -4.0e-7}
+    confirm: false
+    confirmation: ''
+    expected_output: Objective astigmatism and fit evidence are reported.
+    completion: {type: semantic_judge, criteria: "Success only when measurable and defocus_restored are true and astigmatism_nm is below 3.0. A value at or above 3.0 is failure; unmeasurable or contradictory evidence is uncertain."}
+    on_success: complete
+    on_failure: ostig_correct
+  - id: ostig_correct
+    title: Correct objective astigmatism
+    purpose: Run the official AutoScript objective autostigmator.
+    tool: agent_mcp_tem_twin.autoscript_auto_functions_run_objective_auto_stigmator
+    parameters:
+      arguments:
+        mode: fixed
+        value: [{__type__: RunObjectiveAutoStigmatorSettings, camera_detector: BM-Ceta, size: 256, exposure_time: 0.2, maximum_iterations: 3}]
+    confirm: false
+    confirmation: ''
+    expected_output: Official AutoScript objective autostigmator completes.
+    completion: {type: tool_success}
+    on_success: ostig_measure
+    on_failure: pause
+    max_visits: 3

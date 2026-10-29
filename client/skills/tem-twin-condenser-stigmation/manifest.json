@@ -1,0 +1,16 @@
+{
+  "id": "tem_twin_condenser_stigmation",
+  "name": "TEM Condenser astigmatism",
+  "version": "5.0.0",
+  "description": "Choose the target, then perform ONLY Condenser astigmatism.",
+  "kind": "compound_workflow",
+  "agents": [
+    "agent_mcp_tem_twin"
+  ],
+  "required_tools": [],
+  "ordered_tools": [],
+  "references": [
+    "tem_tango_device_selection",
+    "tem_twin_phase_c2stig"
+  ]
+}

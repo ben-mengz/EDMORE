@@ -25,7 +25,7 @@ Do not use this skill for parameter recommendation, visualization-only tasks, or
 
 ## Steps
 Read [the structured workflow](references/workflow.yaml) for exact step IDs,
-parameter bindings, confirmation gates and completion conditions. This YAML file
+parameter bindings, confirmation gates, completion conditions and transitions. This YAML file
 is an EDMORE execution extension, not part of the Agent Skills execution standard.
 
 <!-- edmore:steps:start -->

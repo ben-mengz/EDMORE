@@ -21,6 +21,7 @@ hardware-free demo explicitly; never silently substitute a NionSwift experiment.
 Read [workflow.yaml](references/workflow.yaml). The four steps use the existing
 standard MCP server named asyncroscopy. agent_mcp_asyncroscopy is the Harness
 workflow address for that namespace, not a new MCP server or hardware adapter.
+Follow the declared step IDs for success transitions and pause on failed steps.
 
 Prepare a PlanReview with exactly these four steps, preserving skill_step_id.
 Resolve user-provided scan and FOV parameters into the PlanReview. Parameters marked

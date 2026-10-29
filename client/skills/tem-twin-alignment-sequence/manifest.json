@@ -1,0 +1,19 @@
+{
+  "id": "tem_twin_alignment_sequence",
+  "name": "TEM Twin Alignment Sequence",
+  "description": "Default for overall TEM Digital Twin alignment: select a device, then all six phases. Follow as an ordinary Skill with permitted tools when Workflow mode is off; compile a reviewed plan only when that mode is enabled. Use a single child only for an explicitly limited scope.",
+  "version": "5.0.0",
+  "kind": "compound_workflow",
+  "agents": ["agent_mcp_tem_twin"],
+  "required_tools": [],
+  "ordered_tools": [],
+  "references": [
+    "tem_tango_device_selection",
+    "tem_twin_phase_beam",
+    "tem_twin_phase_gun",
+    "tem_twin_phase_c2stig",
+    "tem_twin_phase_z",
+    "tem_twin_phase_rot",
+    "tem_twin_phase_ostig"
+  ]
+}

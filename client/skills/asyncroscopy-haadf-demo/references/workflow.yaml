@@ -1,6 +1,6 @@
 schema_version: 1
 id: asyncroscopy_haadf_demo
-version: "1.1.0"
+version: "1.2.0"
 steps:
   - id: configure-scan
     title: Configure simulated scan
@@ -16,7 +16,7 @@ steps:
     confirmation: ''
     expected_output: Updated simulated scan settings.
     completion: {type: tool_success}
-    on_success: next
+    on_success: set-fov
     on_failure: pause
   - id: set-fov
     title: Set 10 nm field of view
@@ -28,7 +28,7 @@ steps:
     confirmation: ''
     expected_output: Field of view set without tool error.
     completion: {type: tool_success}
-    on_success: next
+    on_success: focus
     on_failure: pause
   - id: focus
     title: Focus the digital twin
@@ -39,7 +39,7 @@ steps:
     confirmation: ''
     expected_output: Simulated autofocus completes without tool error.
     completion: {type: tool_success}
-    on_success: next
+    on_success: acquire
     on_failure: pause
   - id: acquire
     title: Acquire HAADF image
@@ -51,5 +51,5 @@ steps:
     confirmation: ''
     expected_output: A nonempty stem_image_HAADF_*.h5 acquisition key.
     completion: {type: field_present, field: result}
-    on_success: next
+    on_success: complete
     on_failure: pause
