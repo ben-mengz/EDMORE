@@ -1,0 +1,44 @@
+{
+  "id": "wiki",
+  "version": "1.0.0",
+  "hostApi": 1,
+  "requires": [],
+  "label": "Wiki Knowledge",
+  "contracts": [
+    "identity",
+    "storage",
+    "credentials",
+    "skills",
+    "tools",
+    "events"
+  ],
+  "permissions": [
+    "knowledge:read",
+    "knowledge:write-own",
+    "knowledge:publish-admin"
+  ],
+  "contributes": {
+    "cordisBundle": true,
+    "desktop": [
+      "weknora.mjs",
+      "wiki-navigation.mjs"
+    ],
+    "auth": [
+      "accounts",
+      "browser"
+    ],
+    "scripts": [
+      "cloud-wiki-sync",
+      "migrate-wiki-boundaries"
+    ]
+  },
+  "external": [
+    {
+      "name": "WeKnora",
+      "required": true,
+      "version": "0.8.2-lite with deployed SQLite move fix",
+      "managed": false
+    }
+  ],
+  "dataPolicy": "preserve-on-disable-and-uninstall"
+}

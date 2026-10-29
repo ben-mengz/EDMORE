@@ -1,0 +1,23 @@
+{
+  "id": "remote",
+  "version": "1.0.0",
+  "hostApi": 1,
+  "requires": [],
+  "label": "Cloud Connection",
+  "contracts": [
+    "desktop",
+    "identity",
+    "mcp-settings"
+  ],
+  "permissions": [
+    "network:configured-origin",
+    "devices:explicit-share"
+  ],
+  "contributes": {
+    "desktop": [
+      "remote.mjs",
+      "device-sharing.mjs"
+    ]
+  },
+  "dataPolicy": "preserve-on-disable-and-uninstall"
+}

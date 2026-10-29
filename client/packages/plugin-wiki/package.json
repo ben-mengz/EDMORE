@@ -1,0 +1,7 @@
+{
+  "name": "@edmore/plugin-wiki", "version": "1.0.0", "type": "module",
+  "exports": {".": "./src/wiki-accounts.mjs", "./browser": "./src/wiki-browser.mjs", "./legacy": "./src/wiki.mjs", "./plugin.json": "./plugin.json"},
+  "files": ["src", "static", "desktop", "scripts", "docs", "cordis.patch.yml", "plugin.json"],
+  "dsh": {"bundle": {"patch": "./cordis.patch.yml"}},
+  "dependencies": {"@edmore/plugin-host": "1.0.0", "@deepseek-ai/dsh-edmore-weknora-sync": "0.0.0", "@deepseek-ai/dsh-edmore-core": "0.0.0", "@deepseek-ai/dsh-edmore-optional-feature": "0.0.0", "@deepseek-ai/dsh-skill-filesystem": "0.1.7-rc.2", "@modelcontextprotocol/client": "2.0.0", "@wxg-prc-cpg/dsh-weknora": "0.1.0", "yaml": "2.8.3"}
+}

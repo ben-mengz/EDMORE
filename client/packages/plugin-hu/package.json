@@ -1,0 +1,5 @@
+{
+  "name": "@edmore/plugin-hu", "version": "1.0.0", "type": "module",
+  "exports": {".": "./src/index.mjs", "./plugin.json": "./plugin.json"},
+  "files": ["src", "plugin.json"], "peerDependencies": {"@edmore/plugin-host": "1.0.0"}
+}

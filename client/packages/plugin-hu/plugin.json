@@ -1,0 +1,18 @@
+{
+  "id": "hu",
+  "version": "1.0.0",
+  "hostApi": 1,
+  "requires": [],
+  "label": "HU Models",
+  "contracts": [
+    "credentials",
+    "model-proxy"
+  ],
+  "permissions": [
+    "network:configured-model"
+  ],
+  "contributes": {
+    "modelProviders": true
+  },
+  "dataPolicy": "preserve-on-disable-and-uninstall"
+}

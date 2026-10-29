@@ -1,0 +1,45 @@
+- insert:
+    - id: weknora
+      disabled: !!js (process.env.EDMORE_AUTH_WORKER === '1' && process.env.EDMORE_USER_WIKI !== '1') || Boolean(process.env.WEKNORA_BASE_URL) === false
+      name: '@wxg-prc-cpg/dsh-weknora'
+      config:
+        baseUrl: !!js process.env.WEKNORA_BASE_URL
+        apiKey: !!js process.env.WEKNORA_API_KEY
+        tenantId: !!js process.env.WEKNORA_TENANT_ID
+        knowledgeBaseIds: !!js (process.env.WEKNORA_KNOWLEDGE_BASE_IDS ?? process.env.WEKNORA_CAPABILITIES_KB_ID ?? '').split(',').filter(Boolean)
+        resourceUrls: handle
+        tools:
+          listKnowledgeBases: true
+          search: true
+          readDocument: true
+          ask: false
+
+    - id: edmore-weknora-sync
+      disabled: !!js (process.env.EDMORE_AUTH_WORKER === '1' && process.env.EDMORE_USER_WIKI !== '1') || Boolean(process.env.WEKNORA_BASE_URL) === false || Boolean(process.env.WEKNORA_SYNC_API_KEY || process.env.WEKNORA_API_KEY) === false || Boolean(process.env.WEKNORA_CAPABILITIES_KB_ID) === false
+      name: '@deepseek-ai/dsh-edmore-optional-feature'
+      config:
+        id: edmore-weknora-sync
+        module: '@deepseek-ai/dsh-edmore-weknora-sync'
+        options:
+            baseUrl: !!js process.env.WEKNORA_BASE_URL
+            apiKey: !!js process.env.WEKNORA_SYNC_API_KEY || process.env.WEKNORA_API_KEY
+            tenantId: !!js process.env.WEKNORA_TENANT_ID
+            knowledgeBaseId: !!js process.env.WEKNORA_CAPABILITIES_KB_ID
+            cwd: !!js process.env.EDMORE_WORKSPACE ?? process.cwd()
+            documentTitle: EDMORE Capability Catalog
+            historyStatePath: !!js >-
+              process.env.WEKNORA_HISTORY_ENABLED === '1' ? (process.env.WEKNORA_HISTORY_STATE_PATH || dshHomePath('edmore/weknora-history.json')) : undefined
+            runsKnowledgeBaseId: !!js process.env.WEKNORA_RUNS_KB_ID
+            conversationsKnowledgeBaseId: !!js process.env.WEKNORA_CONVERSATIONS_KB_ID
+            importDirectory: !!js process.env.WEKNORA_IMPORT_DIR
+            sharedKnowledgeBaseId: !!js process.env.WEKNORA_SHARED_KB_ID
+            researchKnowledgeBaseId: !!js process.env.WEKNORA_RESEARCH_KB_ID
+            documentsKnowledgeBaseId: !!js process.env.WEKNORA_DOCUMENTS_KB_ID
+            personalOnly: !!js process.env.WEKNORA_PERSONAL_ONLY === '1'
+            publicSkillRoots: !!js JSON.parse(process.env.WEKNORA_PUBLIC_SKILL_ROOTS || '[]')
+            personalMcpServers: !!js JSON.parse(process.env.WEKNORA_PERSONAL_MCP_SERVERS || '[]')
+            readApiKey: !!js process.env.WEKNORA_SHARED_API_KEY || process.env.WEKNORA_API_KEY
+            debounceMs: 1500
+            syncIntervalMs: 30000
+            requestTimeoutMs: 30000
+            failOnSyncError: false

@@ -1,9 +1,12 @@
 // Configuration dependencies for the current composition; refined as modules move into Core.
 export const features = {
+  'edmore-weknora-sync': { requires: ['edmore-core', 'skills', 'tools'], service: 'edmoreWeKnoraSync' },
+  'edmore-tango': { requires: ['edmore-mcp-bridge', 'tools'] },
   'edmore-core': { required: true, requires: ['agent', 'agent-loop', 'session', 'session-persistence-jsonl', 'system-prompt', 'tools', 'skills', 'settings', 'credentials', 'llm', 'llm-pi-ai'], service: 'edmoreAgentLoop' },
   'edmore-session-state': { requires: ['edmore-core'], service: 'edmoreSessionState' },
   'edmore-session-state-api': { requires: ['webserver', 'edmore-session-state'], service: 'edmoreSessionStateApi' },
-  'edmore-plan-judge': { requires: ['skills', 'edmore-session-state', 'edmore-core'], service: 'edmorePlanJudge' },
+  'edmore-plan-judge': { displayName: 'Workflow Engine', requires: ['skills', 'edmore-session-state', 'edmore-core'], service: 'edmorePlanJudge' },
+  'edmore-jev-decisions': { requires: ['edmore-plan-judge', 'credentials'], service: 'edmoreJevDecisions' },
   'edmore-workspace': { requires: [], service: 'edmoreWorkspace' },
   'edmore-workspace-api': { requires: ['webserver', 'edmore-workspace'], service: 'edmoreWorkspaceApi' },
   'edmore-mcp-bridge': { requires: ['edmore-core', 'tools'], service: 'edmoreMcpBridge' },

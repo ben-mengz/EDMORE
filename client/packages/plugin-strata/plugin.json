@@ -1,0 +1,24 @@
+{
+  "id": "strata",
+  "version": "1.0.0",
+  "hostApi": 1,
+  "requires": [],
+  "label": "Strata Models",
+  "contracts": [
+    "credentials",
+    "model-proxy"
+  ],
+  "permissions": [
+    "network:configured-model"
+  ],
+  "contributes": {
+    "modelProviders": true
+  },
+  "external": [
+    {
+      "name": "OpenAI-compatible Strata endpoint",
+      "managed": false
+    }
+  ],
+  "dataPolicy": "preserve-on-disable-and-uninstall"
+}

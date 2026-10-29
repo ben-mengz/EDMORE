@@ -1,0 +1,24 @@
+{
+  "id": "bonsai",
+  "version": "1.0.0",
+  "hostApi": 1,
+  "requires": [],
+  "label": "Bonsai Models",
+  "contracts": [
+    "credentials",
+    "model-proxy"
+  ],
+  "permissions": [
+    "network:configured-model"
+  ],
+  "contributes": {
+    "modelProviders": true
+  },
+  "external": [
+    {
+      "name": "OpenAI-compatible Bonsai endpoint",
+      "managed": false
+    }
+  ],
+  "dataPolicy": "preserve-on-disable-and-uninstall"
+}

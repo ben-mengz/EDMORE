@@ -1,0 +1,5 @@
+{
+  "name": "@edmore/plugin-remote", "version": "1.0.0", "type": "module",
+  "exports": {".": "./desktop/remote.mjs", "./plugin.json": "./plugin.json"},
+  "files": ["desktop", "plugin.json"], "peerDependencies": {"@edmore/plugin-host": "1.0.0"}
+}

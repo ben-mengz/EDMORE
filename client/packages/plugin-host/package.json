@@ -1,0 +1,6 @@
+{
+  "name": "@edmore/plugin-host", "version": "1.0.0", "type": "module",
+  "exports": {".": "./src/index.mjs", "./storage": "./src/storage.mjs"},
+  "files": ["src", "README.md"], "engines": {"node": "^22.19.0 || >=24.0.0"},
+  "dependencies": {"semver": "7.8.5"}
+}
