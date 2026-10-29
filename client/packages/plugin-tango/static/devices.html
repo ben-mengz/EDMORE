@@ -1,0 +1,10 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Devices - EDMORE</title><link rel="stylesheet" href="/auth/style.css"><link rel="stylesheet" href="/auth/tango/devices.css"></head>
+<body><main><header><h1>Devices</h1><a href="/account">Account</a><a href="/">Harness</a><button id="refresh" type="button">Refresh Harness tools</button></header>
+<p id="status" role="status"></p>
+<section><h2>Pair a Windows Node</h2><form id="pair"><label>Pairing code<input name="code" required maxlength="128" autocomplete="off"></label><button type="submit">Approve connection</button></form></section>
+<section><h2>My Devices</h2><div id="mine"></div></section>
+<section><h2>Shared With Me</h2><div id="shared"></div></section>
+<section><h2>Sharing Requests</h2><div id="requests"></div></section>
+<section id="admin" hidden><h2>Administration</h2><div id="inventory"></div></section>
+<script type="module" src="/auth/tango/devices.js"></script></main></body></html>

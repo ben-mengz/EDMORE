@@ -1,0 +1,28 @@
+{
+  "id": "tango",
+  "version": "1.0.0",
+  "hostApi": 1,
+  "requires": [],
+  "label": "Tango Devices",
+  "contracts": [
+    "tools",
+    "mcp-bridge",
+    "workflow-approval"
+  ],
+  "permissions": [
+    "devices:explicit-target"
+  ],
+  "contributes": {
+    "cordisBundle": true
+  },
+  "external": [
+    {
+      "name": "Tango MCP gateway",
+      "required": true,
+      "managed": false,
+      "python": "tem-twin-autoscript[cloud]==1.0.0",
+      "note": "Requires matching Windows Node gateway device-access extension. Raw Tango ports must remain private."
+    }
+  ],
+  "dataPolicy": "preserve-on-disable-and-uninstall"
+}

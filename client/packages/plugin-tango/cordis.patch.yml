@@ -1,0 +1,15 @@
+- insert:
+    - id: edmore-tango-conversations
+      name: '@edmore/plugin-tango/conversation'
+    - id: edmore-tango
+      name: '@deepseek-ai/dsh-mcp-client'
+      disabled: !!js >-
+        process.env.EDMORE_AUTH_WORKER === '1' ? !process.env.EDMORE_TANGO_PROXY_URL : !process.env.EDMORE_TANGO_MCP_URL
+      config:
+        serverName: !!js >-
+          process.env.EDMORE_TANGO_SERVER_NAME || 'tango'
+        transport: streamable-http
+        url: !!js >-
+          process.env.EDMORE_AUTH_WORKER === '1' ? process.env.EDMORE_TANGO_PROXY_URL : process.env.EDMORE_TANGO_MCP_URL
+        headers: !!js >-
+          process.env.EDMORE_AUTH_WORKER === '1' ? { Authorization:'Bearer '+process.env.EDMORE_WORKER_TOKEN } : (process.env.EDMORE_TANGO_MCP_TOKEN ? { Authorization:'Bearer '+process.env.EDMORE_TANGO_MCP_TOKEN } : {})

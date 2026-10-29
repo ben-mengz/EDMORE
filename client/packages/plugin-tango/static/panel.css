@@ -1,0 +1,5 @@
+.instrument-options { display: grid; gap: 8px; max-height: 220px; overflow: auto; }
+.instrument-options label { display: flex; align-items: flex-start; gap: 8px; font-size: 13px; }
+.instrument-options input { flex: 0 0 auto; width: 16px; height: 16px; margin: 2px 0; }
+.instrument-options span { min-width: 0; overflow-wrap: anywhere; }
+#conversationInstruments [data-status] { font-size: 12px; color: #596579; overflow-wrap: anywhere; }

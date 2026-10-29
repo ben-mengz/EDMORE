@@ -1,0 +1,24 @@
+schema_version: 1
+id: tem_tango_device_selection
+version: 1.0.0
+steps:
+  - id: select_device
+    title: Choose the TEM device
+    purpose: Ask the user which registered device to use before instrument operations.
+    tool: agent_mcp_tem_twin.select_device
+    parameters:
+      device:
+        mode: ask
+    confirm: true
+    confirmation: Which registered Tango device should this workflow control?
+      Confirm its exact device name.
+    expected_output: The explicitly chosen device identity, kind and available=true.
+      No instrument mutation.
+    completion:
+      type: field_equals
+      field: available
+      value: true
+    on_success: complete
+    on_failure: pause
+    on_error: pause
+    max_visits: 1

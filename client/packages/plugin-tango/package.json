@@ -1,0 +1,8 @@
+{
+  "name": "@edmore/plugin-tango", "version": "1.0.0", "type": "module",
+  "exports": {".": "./src/index.mjs", "./access": "./src/access.mjs", "./conversation": "./src/conversation.mjs", "./plugin.json": "./plugin.json"},
+  "files": ["src", "static", "README.md", "cordis.patch.yml", "plugin.json"],
+  "dsh": {"bundle": {"patch": "./cordis.patch.yml"}},
+  "dependencies": {"@deepseek-ai/dsh-mcp-client": "0.1.7-rc.2", "@deepseek-ai/dsh-edmore-mcp-bridge": "0.0.0", "@modelcontextprotocol/sdk": "^1.12.0"},
+  "peerDependencies": {"@edmore/plugin-host": "1.0.0"}
+}
