@@ -1,0 +1,496 @@
+diff --git a/frontend/public/config.js b/frontend/public/config.js
+index 3d57aa8..5d8e033 100644
+--- a/frontend/public/config.js
++++ b/frontend/public/config.js
+@@ -5,5 +5,13 @@ window.__RUNTIME_CONFIG__ = {
+   // Optional: serve embed on a dedicated origin, e.g. 'https://embed.example.com'
+   EMBED_BASE_URL: '',
+   // Optional: default UI locale for first-time visitors (zh-CN | en-US | ru-RU | ko-KR | ja-JP)
+-  DEFAULT_LOCALE: '',
++  DEFAULT_LOCALE: 'en-US',
+ };
++
++// Apply the EDMORE default once, preserving subsequent manual language choices.
++try {
++  if (localStorage.getItem('edmore-wiki-locale-default') !== 'en-US') {
++    localStorage.setItem('locale', 'en-US');
++    localStorage.setItem('edmore-wiki-locale-default', 'en-US');
++  }
++} catch (_) {}
+diff --git a/frontend/src/components/ResourceListToolbar.vue b/frontend/src/components/ResourceListToolbar.vue
+index 18b41de..dcaeef6 100644
+--- a/frontend/src/components/ResourceListToolbar.vue
++++ b/frontend/src/components/ResourceListToolbar.vue
+@@ -37,6 +37,7 @@ const props = withDefaults(defineProps<{
+   hideScopes?: boolean
+   countAll?: number
+   countMine?: number
++  countShared?: number
+   countFavorites?: number
+   countRecents?: number
+   countCreated?: number
+@@ -55,6 +56,7 @@ const scopes = computed(() => props.mode === 'organization' ? [
+   { value: 'joined', label: t('organization.joinedByMe'), count: props.countJoined },
+ ] : [
+   { value: 'all', label: t('listSpaceSidebar.all'), count: props.countAll },
++  ...(props.countShared !== undefined ? [{ value: 'shared', label: t('listSpaceSidebar.spaces'), count: props.countShared }] : []),
+   { value: 'favorites', label: t('listSpaceSidebar.favorites'), count: props.countFavorites },
+   { value: 'recents', label: t('listSpaceSidebar.recents'), count: props.countRecents },
+   { value: 'mine', label: t('listSpaceSidebar.workspace'), count: props.countMine },
+diff --git a/frontend/src/stores/uploadConfirm.ts b/frontend/src/stores/uploadConfirm.ts
+index 3dfc2ab..35ca152 100644
+--- a/frontend/src/stores/uploadConfirm.ts
++++ b/frontend/src/stores/uploadConfirm.ts
+@@ -1,4 +1,6 @@
+ import { defineStore } from 'pinia'
++import { getKnowledgeBaseById } from '@/api/knowledge-base'
++import { loadUploadDefaults } from './uploadConfirmDefaults'
+ import type { KnowledgeProcessOverrides } from '@/types/knowledgeProcess'
+ 
+ export type UploadConfirmMode = 'file' | 'url' | 'manual' | 'reparse'
+@@ -54,6 +56,7 @@ export interface OpenUploadConfirmOptions {
+ export const useUploadConfirmStore = defineStore('uploadConfirm', {
+   state: () => ({
+     visible: false,
++    openGeneration: 0,
+     mode: 'file' as UploadConfirmMode,
+     kbInfo: null as any,
+     files: [] as File[],
+@@ -70,11 +73,15 @@ export const useUploadConfirmStore = defineStore('uploadConfirm', {
+   }),
+ 
+   actions: {
+-    open(options: OpenUploadConfirmOptions): Promise<UploadConfirmResult> {
++    async open(options: OpenUploadConfirmOptions): Promise<UploadConfirmResult> {
++      this.rejectConfirm()
++      const generation = this.openGeneration
++      // The page snapshot can predate an administrator's default-model update.
++      const kbInfo = await loadUploadDefaults(options.kbInfo?.id, getKnowledgeBaseById)
++      if (generation !== this.openGeneration) throw new Error('Upload confirmation superseded')
+       return new Promise((resolve, reject) => {
+-        this.visible = true
+         this.mode = options.mode
+-        this.kbInfo = options.kbInfo
++        this.kbInfo = kbInfo
+         this.files = options.files ? [...options.files] : []
+         this.urls = options.urls ? [...options.urls] : []
+         this.tagIds = options.tagIds
+@@ -88,6 +95,7 @@ export const useUploadConfirmStore = defineStore('uploadConfirm', {
+         this.folderOptions = options.folderOptions ? [...options.folderOptions] : []
+         this.pendingResolve = resolve
+         this.pendingReject = reject
++        this.visible = true
+       })
+     },
+ 
+@@ -102,6 +110,7 @@ export const useUploadConfirmStore = defineStore('uploadConfirm', {
+     },
+ 
+     reset() {
++      this.openGeneration++
+       this.visible = false
+       this.mode = 'file'
+       this.kbInfo = null
+diff --git a/frontend/src/views/knowledge/KnowledgeBaseList.vue b/frontend/src/views/knowledge/KnowledgeBaseList.vue
+index 48955db..b248368 100644
+--- a/frontend/src/views/knowledge/KnowledgeBaseList.vue
++++ b/frontend/src/views/knowledge/KnowledgeBaseList.vue
+@@ -22,7 +22,7 @@
+           <p class="header-subtitle" style="--wails-draggable: drag">{{ $t('knowledgeList.subtitle') }}</p>
+         </div>
+       </div>
+-      <ResourceListToolbar :hide-scopes="authStore.isLiteMode" v-model="spaceSelection" v-model:query="keyword" :count-all="allKnowledgeBases"
++      <ResourceListToolbar v-model="spaceSelection" v-model:query="keyword" :count-all="allKnowledgeBases" :count-shared="sharedKbCount"
+       :count-mine="kbs.length" :count-by-org="effectiveSharedCountByOrg" :count-favorites="kbFavoritesCount"
+       :count-recents="kbRecentsCount" />
+       <div class="kb-list-main">
+@@ -63,7 +63,7 @@
+         <!-- 卡片网格：全部 / 收藏 / 最近 — 共用同一份卡片模板，
+              仅依赖 filteredKnowledgeBases 切片即可切换视图 -->
+         <div
+-          v-if="(spaceSelection === 'all' || spaceSelection === 'favorites' || spaceSelection === 'recents') && filteredKnowledgeBases.length > 0"
++          v-if="(spaceSelection === 'all' || spaceSelection === 'shared' || spaceSelection === 'favorites' || spaceSelection === 'recents') && filteredKnowledgeBases.length > 0"
+           class="kb-card-wrap">
+           <!-- 置顶分组标题 -->
+           <div
+@@ -252,7 +252,7 @@
+                     </t-tooltip>
+                   </div>
+                 </div>
+-                <div v-if="!authStore.isLiteMode && showKbOriginBadge(kb)" class="bottom-right">
++                <div v-if="showKbOriginBadge(kb)" class="bottom-right">
+                   <ResourceOriginBadge :variant="kbOriginVariant(kb)" :creator-name="kb.creator_name" />
+                 </div>
+               </div>
+@@ -485,7 +485,7 @@
+                     </t-tooltip>
+                   </div>
+                 </div>
+-                <div v-if="!authStore.isLiteMode && showKbOriginBadge(kb)" class="bottom-right">
++                <div v-if="showKbOriginBadge(kb)" class="bottom-right">
+                   <ResourceOriginBadge :variant="kbOriginVariant(kb)" :creator-name="kb.creator_name" />
+                 </div>
+               </div>
+@@ -623,7 +623,7 @@
+         </EmptyState>
+ 
+         <!-- 空间下知识库空状态 -->
+-        <EmptyState v-if="!keyword.trim() && spaceSelectionOrgId && !spaceKbsLoading && spaceKbsList.length === 0" :title="$t('knowledgeList.empty.sharedTitle')"
++        <EmptyState v-if="!keyword.trim() && ((spaceSelectionOrgId && !spaceKbsLoading && spaceKbsList.length === 0) || (spaceSelection === 'shared' && !loading && filteredKnowledgeBases.length === 0))" :title="$t('knowledgeList.empty.sharedTitle')"
+           :description="$t('knowledgeList.empty.sharedDescription')">
+           <template #icon><ResourceIcon type="knowledge" :size="32" /></template>
+         </EmptyState>
+@@ -762,7 +762,7 @@ const selectedResourceSort = ref<ResourceSortValue>(DEFAULT_RESOURCE_SORT)
+ // composable handles two-way sync with the URL. We keep "mine" as the
+ // stored value (not "workspace") for back-compat with any external link
+ // that might point at the old query; ResourceListToolbar labels it as the current workspace.
+-const defaultScope: 'all' | 'mine' = authStore.hasRole('contributor') ? 'mine' : 'all'
++const defaultScope = 'all'
+ const { scope: spaceSelection, creator: creatorFilter, query: keyword } = useListUrlState({
+   defaultScope,
+   defaultCreator: 'all',
+@@ -833,6 +833,7 @@ let uploadRefreshTimer: ReturnType<typeof setTimeout> | null = null
+ // readers still see read-only shares — those are valid resources, just
+ // not editable.
+ const sharedKbs = computed<SharedKnowledgeBase[]>(() => orgStore.sharedKnowledgeBases || [])
++const sharedKbCount = computed(() => new Set(sharedKbs.value.map(item => item.knowledge_base.id)).size)
+ 
+ const allKnowledgeBases = computed(() => kbs.value.length + sharedKbs.value.length)
+ 
+@@ -841,7 +842,7 @@ const allKnowledgeBases = computed(() => kbs.value.length + sharedKbs.value.leng
+ // non-org buckets — otherwise a new pseudo-scope (e.g. "favorites")
+ // falls through here and triggers the per-space code paths, which
+ // renders an extra "no shared KB" empty state on top of the real view.
+-const RESERVED_SCOPES = new Set(['all', 'mine', 'favorites', 'recents'])
++const RESERVED_SCOPES = new Set(['all', 'mine', 'shared', 'favorites', 'recents'])
+ const spaceSelectionOrgId = computed(() => {
+   const s = spaceSelection.value
+   return !!s && !RESERVED_SCOPES.has(s)
+@@ -1079,7 +1080,7 @@ const unsearchedFilteredKnowledgeBases = computed(() => {
+   if (spaceSelection.value === 'mine') {
+     return sortedMineKbs.value.map(kb => ({ ...kb, isMine: true as const }))
+   }
+-  if (spaceSelection.value !== 'all') {
++  if (spaceSelection.value !== 'all' && spaceSelection.value !== 'shared') {
+     return []
+   }
+   // The "All" scope merges own + shared KBs. The card template keys each
+@@ -1090,7 +1091,7 @@ const unsearchedFilteredKnowledgeBases = computed(() => {
+   // (owned wins; most-privileged share kept) while preserving the existing
+   // pinned → mine → teammate → shared(editable-first) ordering.
+   const merged = mergeAllScopeKnowledgeBases(
+-    kbs.value as unknown as OwnedKnowledgeBase[],
++    (spaceSelection.value === 'shared' ? [] : kbs.value) as unknown as OwnedKnowledgeBase[],
+     sharedKbs.value as unknown as SharedKnowledgeBaseLike[],
+     authStore.user?.id,
+   ) as unknown as Array<(KB & { isMine: true }) | (SharedKnowledgeBase['knowledge_base'] & { isMine: false; permission: string; shared_at: string; share_id: string } & any)>
+@@ -1145,15 +1146,7 @@ const fetchList = (force = false) => {
+ 
+ // 选中空间时请求该空间内全部知识库（含我共享的）
+ watch(spaceSelection, (val) => {
+-  // Stale URL guard: an older "协作" view used scope=shared; that view
+-  // was removed, so normalize back to "all" instead of letting the
+-  // value fall through to the per-space fetch branch (which would 404
+-  // on the string "shared").
+-  if (val === 'shared') {
+-    spaceSelection.value = 'all'
+-    return
+-  }
+-  if (val === 'all' || val === 'mine' || val === 'favorites' || val === 'recents' || !val) {
++  if (RESERVED_SCOPES.has(val) || !val) {
+     spaceKbsList.value = []
+     return
+   }
+diff --git a/internal/application/repository/wiki_page.go b/internal/application/repository/wiki_page.go
+index 22ce428..1ea9af4 100644
+--- a/internal/application/repository/wiki_page.go
++++ b/internal/application/repository/wiki_page.go
+@@ -495,9 +495,21 @@ func (r *wikiPageRepository) ListByTypeLight(
+ 	return entries, total, nil
+ }
+ 
++const sqliteWikiSourceRefPredicate = `EXISTS (
++	SELECT 1 FROM json_each(wiki_pages.source_refs) AS ref
++	WHERE ref.value = ? OR substr(ref.value, 1, length(?)) = ?
++)`
++
+ // ListBySourceRef retrieves all wiki pages that reference a given source knowledge ID.
+ // Handles both old format ("knowledgeID") and new format ("knowledgeID|title") in source_refs JSON array.
+ func (r *wikiPageRepository) ListBySourceRef(ctx context.Context, kbID string, sourceKnowledgeID string) ([]*types.WikiPage, error) {
++	if r.wikiDialect() == "sqlite" {
++		var pages []*types.WikiPage
++		prefix := sourceKnowledgeID + "|"
++		err := r.db.WithContext(ctx).Where("knowledge_base_id = ?", kbID).
++			Where(sqliteWikiSourceRefPredicate, sourceKnowledgeID, prefix, prefix).Find(&pages).Error
++		return pages, err
++	}
+ 	// Build the JSON needle safely so arbitrary IDs cannot break out of the
+ 	// quoted string (e.g. ids containing quotes or backslashes).
+ 	needle, err := json.Marshal([]string{sourceKnowledgeID})
+@@ -544,6 +556,13 @@ func (r *wikiPageRepository) ListBySourceRef(ctx context.Context, kbID string, s
+ // containment branch and idx_wiki_pages_source_refs_text for the legacy
+ // text-LIKE branch — both added in migration 000041.
+ func (r *wikiPageRepository) ListSlugsBySourceRef(ctx context.Context, kbID string, sourceKnowledgeID string) ([]string, error) {
++	if r.wikiDialect() == "sqlite" {
++		var slugs []string
++		prefix := sourceKnowledgeID + "|"
++		err := r.db.WithContext(ctx).Model(&types.WikiPage{}).Where("knowledge_base_id = ?", kbID).
++			Where(sqliteWikiSourceRefPredicate, sourceKnowledgeID, prefix, prefix).Pluck("slug", &slugs).Error
++		return slugs, err
++	}
+ 	needle, err := json.Marshal([]string{sourceKnowledgeID})
+ 	if err != nil {
+ 		return nil, fmt.Errorf("marshal source ref needle: %w", err)
+@@ -858,6 +877,11 @@ func (r *wikiPageRepository) ListSummariesByKnowledgeIDs(
+ 		if kid == "" {
+ 			continue
+ 		}
++		if r.wikiDialect() == "sqlite" {
++			clauses = append(clauses, sqliteWikiSourceRefPredicate)
++			args = append(args, kid, kid+"|", kid+"|")
++			continue
++		}
+ 		needle, err := json.Marshal([]string{kid})
+ 		if err != nil {
+ 			return nil, fmt.Errorf("marshal kid needle: %w", err)
+diff --git a/internal/application/service/knowledge.go b/internal/application/service/knowledge.go
+index c7126a2..a1ba5be 100644
+--- a/internal/application/service/knowledge.go
++++ b/internal/application/service/knowledge.go
+@@ -48,6 +48,7 @@ var (
+ // knowledgeService implements the knowledge service interface
+ // service 实现知识服务接口
+ type knowledgeService struct {
++	moveProgress    sync.Map // Lite mode has no Redis; document transfer state remains durable in SQLite.
+ 	config          *config.Config
+ 	retrieveEngine  interfaces.RetrieveEngineRegistry
+ 	ownership       retriever.TenantStoreOwnership
+diff --git a/internal/application/service/knowledge_clone_move.go b/internal/application/service/knowledge_clone_move.go
+index 5965897..e9e9c73 100644
+--- a/internal/application/service/knowledge_clone_move.go
++++ b/internal/application/service/knowledge_clone_move.go
+@@ -1018,12 +1018,37 @@ func getKnowledgeMoveProgressKey(taskID string) string {
+ 	return knowledgeMoveProgressKeyPrefix + taskID
+ }
+ 
++type liteMoveProgress struct {
++	data    []byte
++	expires time.Time
++}
++
++func (s *knowledgeService) saveLiteMoveProgress(taskID string, data []byte, initial bool) {
++	now := time.Now()
++	s.moveProgress.Range(func(key, value any) bool {
++		if value.(liteMoveProgress).expires.Before(now) {
++			s.moveProgress.Delete(key)
++		}
++		return true
++	})
++	value := liteMoveProgress{data: data, expires: now.Add(knowledgeMoveProgressTTL)}
++	if initial {
++		s.moveProgress.LoadOrStore(taskID, value)
++	} else {
++		s.moveProgress.Store(taskID, value)
++	}
++}
++
+ func (s *knowledgeService) saveKnowledgeMoveProgress(ctx context.Context, progress *types.KnowledgeMoveProgress) error {
+ 	key := getKnowledgeMoveProgressKey(progress.TaskID)
+ 	data, err := json.Marshal(progress)
+ 	if err != nil {
+ 		return fmt.Errorf("failed to marshal move progress: %w", err)
+ 	}
++	if s.redisClient == nil {
++		s.saveLiteMoveProgress(progress.TaskID, data, false)
++		return nil
++	}
+ 	return s.redisClient.Set(ctx, key, data, knowledgeMoveProgressTTL).Err()
+ }
+ 
+@@ -1033,11 +1058,27 @@ func (s *knowledgeService) SaveKnowledgeMoveProgress(ctx context.Context, progre
+ 	if err != nil {
+ 		return err
+ 	}
++	if s.redisClient == nil {
++		s.saveLiteMoveProgress(progress.TaskID, data, true)
++		return nil
++	}
+ 	return s.redisClient.SetNX(ctx, getKnowledgeMoveProgressKey(progress.TaskID), data, knowledgeMoveProgressTTL).Err()
+ }
+ 
+ // GetKnowledgeMoveProgress retrieves the progress of a knowledge move task
+ func (s *knowledgeService) GetKnowledgeMoveProgress(ctx context.Context, taskID string) (*types.KnowledgeMoveProgress, error) {
++	if s.redisClient == nil {
++		value, ok := s.moveProgress.Load(taskID)
++		if !ok || value.(liteMoveProgress).expires.Before(time.Now()) {
++			s.moveProgress.Delete(taskID)
++			return nil, werrors.NewNotFoundError("Knowledge move task not found")
++		}
++		var progress types.KnowledgeMoveProgress
++		if err := json.Unmarshal(value.(liteMoveProgress).data, &progress); err != nil {
++			return nil, err
++		}
++		return &progress, nil
++	}
+ 	key := getKnowledgeMoveProgressKey(taskID)
+ 	data, err := s.redisClient.Get(ctx, key).Bytes()
+ 	if err != nil {
+diff --git a/frontend/src/stores/uploadConfirmDefaults.ts b/frontend/src/stores/uploadConfirmDefaults.ts
+new file mode 100644
+index 0000000..8688eed
+--- /dev/null
++++ b/frontend/src/stores/uploadConfirmDefaults.ts
+@@ -0,0 +1,12 @@
++export async function loadUploadDefaults(
++  kbId: string,
++  fetchKnowledgeBase: (id: string) => Promise<any>,
++): Promise<any> {
++  if (!kbId) throw new Error('Knowledge base is required')
++  const response = await fetchKnowledgeBase(kbId)
++  const knowledgeBase = response?.data
++  if (!knowledgeBase || knowledgeBase.id !== kbId) {
++    throw new Error('Unable to load upload defaults for this knowledge base')
++  }
++  return knowledgeBase
++}
+diff --git a/frontend/src/stores/uploadConfirmDefaults.test.ts b/frontend/src/stores/uploadConfirmDefaults.test.ts
+new file mode 100644
+index 0000000..69e0c59
+--- /dev/null
++++ b/frontend/src/stores/uploadConfirmDefaults.test.ts
+@@ -0,0 +1,19 @@
++import assert from 'node:assert/strict'
++import test from 'node:test'
++import { loadUploadDefaults } from './uploadConfirmDefaults.ts'
++
++test('every upload reads fresh knowledge-base model defaults', async () => {
++  let calls = 0
++  const fetchKb = async (id: string) => ({ data: {
++    id, vlm_config: { enabled: true, model_id: `vision-${++calls}` },
++  } })
++  assert.equal((await loadUploadDefaults('personal', fetchKb)).vlm_config.model_id, 'vision-1')
++  assert.equal((await loadUploadDefaults('personal', fetchKb)).vlm_config.model_id, 'vision-2')
++})
++
++test('preserves knowledge-base opt-out and never selects another tenant defaults', async () => {
++  const disabled = { id: 'private', vlm_config: { enabled: false, model_id: '' } }
++  assert.deepEqual(await loadUploadDefaults('private', async () => ({ data: disabled })), disabled)
++  await assert.rejects(loadUploadDefaults('private', async () => ({ data: { id: 'other' } })))
++  await assert.rejects(loadUploadDefaults('private', async () => { throw new Error('Network error') }))
++})
+diff --git a/frontend/src/views/knowledge/sharedKnowledgeVisibility.test.ts b/frontend/src/views/knowledge/sharedKnowledgeVisibility.test.ts
+new file mode 100644
+index 0000000..914a3c8
+--- /dev/null
++++ b/frontend/src/views/knowledge/sharedKnowledgeVisibility.test.ts
+@@ -0,0 +1,24 @@
++import assert from 'node:assert/strict'
++import { readFileSync } from 'node:fs'
++import test from 'node:test'
++import { mergeAllScopeKnowledgeBases } from './kbListMerge.ts'
++
++test('Lite knowledge lists expose all and shared scopes instead of trapping users in mine', () => {
++  const source = readFileSync(new URL('./KnowledgeBaseList.vue', import.meta.url), 'utf8')
++  assert.doesNotMatch(source, /hide-scopes="authStore\.isLiteMode"/)
++  assert.match(source, /const defaultScope = 'all'/)
++  assert.match(source, /RESERVED_SCOPES = new Set\(\['all', 'mine', 'shared'/)
++  assert.match(source, /:count-shared="sharedKbCount"/)
++  assert.doesNotMatch(source, /!authStore\.isLiteMode && showKbOriginBadge/)
++})
++
++test('shared-only view preserves viewer permission without exposing private knowledge', () => {
++  const rows = mergeAllScopeKnowledgeBases([], [{
++    knowledge_base: { id: 'public' }, permission: 'viewer',
++    share_id: 'share-public', shared_at: '2026-10-06', org_name: 'EDMORE Public Wiki',
++  }], 'user')
++  assert.equal(rows.length, 1)
++  assert.equal(rows[0].id, 'public')
++  assert.equal(rows[0].isMine, false)
++  assert.equal((rows[0] as any).permission, 'viewer')
++})
+diff --git a/internal/application/repository/wiki_source_refs_sqlite_test.go b/internal/application/repository/wiki_source_refs_sqlite_test.go
+new file mode 100644
+index 0000000..0d51a36
+--- /dev/null
++++ b/internal/application/repository/wiki_source_refs_sqlite_test.go
+@@ -0,0 +1,47 @@
++package repository
++
++import (
++	"context"
++	"testing"
++
++	"github.com/Tencent/WeKnora/internal/types"
++	"github.com/stretchr/testify/require"
++)
++
++func TestWikiSourceRefsSQLite(t *testing.T) {
++	db := setupWikiPagesTestDB(t)
++	repo := NewWikiPageRepository(db)
++	ctx := context.Background()
++	// Wildcards, quotes, a backslash and Unicode must all be literal.
++	kid := "source_%\\\"'\u4e2d"
++	add := func(kb, slug, status, ref string) *types.WikiPage {
++		page := makeWikiPage(kb, slug, types.WikiPageTypeSummary, status)
++		page.SourceRefs = types.StringArray{ref}
++		require.NoError(t, db.Create(page).Error)
++		return page
++	}
++	add("kb", "bare", types.WikiPageStatusPublished, kid)
++	add("kb", "titled", types.WikiPageStatusPublished, kid+"|Title with | separator")
++	add("other-kb", "other", types.WikiPageStatusPublished, kid)
++	add("kb", "suffix", types.WikiPageStatusPublished, kid+"-other")
++	deleted := add("kb", "deleted", types.WikiPageStatusPublished, kid)
++	require.NoError(t, db.Delete(deleted).Error)
++	pages, err := repo.ListBySourceRef(ctx, "kb", kid)
++	require.NoError(t, err)
++	var slugs []string
++	for _, page := range pages {
++		slugs = append(slugs, page.Slug)
++	}
++	require.ElementsMatch(t, []string{"bare", "titled"}, slugs)
++	slugs, err = repo.ListSlugsBySourceRef(ctx, "kb", kid)
++	require.NoError(t, err)
++	require.ElementsMatch(t, []string{"bare", "titled"}, slugs)
++
++	add("kb", "archived", types.WikiPageStatusArchived, "archived-source")
++	add("kb", "second", types.WikiPageStatusPublished, "second-source|Title")
++	summaries, err := repo.ListSummariesByKnowledgeIDs(ctx, "kb", []string{kid, "second-source", "archived-source", "missing", ""})
++	require.NoError(t, err)
++	require.Len(t, summaries, 2)
++	require.Contains(t, []string{"body of bare", "body of titled"}, summaries[kid])
++	require.Equal(t, "body of second", summaries["second-source"])
++}
+diff --git a/internal/application/service/knowledge_move_lite_test.go b/internal/application/service/knowledge_move_lite_test.go
+new file mode 100644
+index 0000000..b49f2d6
+--- /dev/null
++++ b/internal/application/service/knowledge_move_lite_test.go
+@@ -0,0 +1,27 @@
++package service
++
++import (
++	"context"
++	"github.com/Tencent/WeKnora/internal/types"
++	"github.com/stretchr/testify/require"
++	"testing"
++	"time"
++)
++
++func TestLiteMoveProgressDoesNotRequireRedis(t *testing.T) {
++	s := &knowledgeService{}
++	ctx := context.Background()
++	current := &types.KnowledgeMoveProgress{TaskID: "move", SourceKBID: "source", TargetKBID: "target", Progress: 100}
++	require.NoError(t, s.saveKnowledgeMoveProgress(ctx, current))
++	require.NoError(t, s.SaveKnowledgeMoveProgress(ctx, &types.KnowledgeMoveProgress{TaskID: "move", Progress: 0}))
++	current.Progress = 10
++	saved, err := s.GetKnowledgeMoveProgress(ctx, "move")
++	require.NoError(t, err)
++	require.Equal(t, 100, saved.Progress)
++	require.Equal(t, "source", saved.SourceKBID)
++	s.moveProgress.Store("expired", liteMoveProgress{expires: time.Now().Add(-time.Second)})
++	_, err = s.GetKnowledgeMoveProgress(ctx, "expired")
++	require.Error(t, err)
++	_, err = (&knowledgeService{}).GetKnowledgeMoveProgress(ctx, "move")
++	require.Error(t, err)
++}

@@ -1,0 +1,12 @@
+{
+  "wiki": {
+    "repository": "https://github.com/Tencent/WeKnora.git",
+    "commit": "9842e51d40a54ca2dbb61153f3fb587da1265b7a",
+    "version": "v0.8.2",
+    "edition": "lite"
+  },
+  "python": "3.12",
+  "uv": "0.10.7",
+  "node": "24.19.0",
+  "go": "1.26.0"
+}

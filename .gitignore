@@ -16,3 +16,7 @@ dist/
 # macOS metadata files
 .DS_Store
 ._*
+
+# Private deployment configuration and records
+edmore.deploy.env
+deployment/private/

@@ -1,0 +1,22 @@
+{
+  "captured_on": "2026-10-06",
+  "cloud_access": "read-only; no service or data changes",
+  "wiki": {
+    "repository": "https://github.com/Tencent/WeKnora.git",
+    "commit": "9842e51d40a54ca2dbb61153f3fb587da1265b7a",
+    "patch_sha256": "4c8fd89d4fc98def6459c5df70ee149ab3ef51a1147a21a2f8af097f0a1ddeec",
+    "build": "Go CGO; sqlite_fts5; edition lite; version v0.8.2; bundled frontend and Jieba assets"
+  },
+  "tango": {
+    "source": "deployed tem-digital-twin/source/tem_twin_autoscript",
+    "archive_sha256": "e038f67f4494ef221065fefbe944a494a909128946c3c50febcf549d766d2875",
+    "files_sha256": {
+      "tem_twin_autoscript/tango_mcp.py": "48f55ce1893c7e8242aeac9e4fd103ad13c532795ae27d30773f71cba2de629b",
+      "tem_twin_autoscript/tango_stack.py": "9c7ac883446494aff62cc421f6f81a97009c0e6f614751735d12bf6bb4b138f9",
+      "tem_twin_autoscript/cloud.py": "d48ad13c2316736e7ae2636a85d176f394e1c1f341f46ff37455af067f3a2029",
+      "tem_twin_autoscript/http_tango_device.py": "ae01ff5e6ca86aa5b2766791182c8e02c154e79251ddf9fdac998bd5033ffcda"
+    },
+    "local_adapter": "Empty registry allowed; loopback-only native owner; no implicit hardware enrollment",
+    "excluded": ["licensed SDK wheels", "node_modules", "bytecode", "runtime configuration", "databases", "credentials", "Slurm scripts", "Apptainer definitions"]
+  }
+}

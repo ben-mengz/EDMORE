@@ -19,8 +19,9 @@ NionSwift UI <-> EDMORE client <-> EDMORE MCP server <-> microscope tools
 - `client/packages/`: the current Harness-based EDMORE implementation: agents, planning,
   review, execution, projects, conversations, event replay, and UI APIs.
 - `client/skills/`: microscopy workflow definitions.
-- `client/runtime/`: pinned upstream runtime packages, with source and built artifacts.
-  See `client/runtime/provenance.json` for their origin.
+- `client/package-lock.json`: pins the active published Harness runtime and plugins.
+- `client/runtime/`: inactive legacy runtime snapshot retained for provenance and rollback.
+  See `client/runtime/provenance.json` for its origin.
 - NionSwift's separate plugin provides its UI and application-local tools.
 - The separate ptycho-sem project owns SEM hardware control and acquisition.
 
@@ -45,6 +46,13 @@ npm start
 ```
 
 The client listens on `http://127.0.0.1:7380` and serves its UI at `/edmore/`.
+
+For optional username/password login and concurrent users, see
+[EDMORE Auth](client/packages/auth/README.md). `EDMORE_AUTH=1` selects the login
+gateway with isolated user runtimes; unset or `0` retains the existing default
+user. HU LLM/Bonsai are shared through a protected model proxy; OpenAI keys and
+supported plugin preferences belong to each user. Network deployments must set
+`EDMORE_PUBLIC_URL`. Validate with `npm run test:auth` in `client`.
 It discovers the NionSwift MCP server at `http://127.0.0.1:7300`.
 After editable Python installation, `edmore-client` launches the same Node client.
 Python wheels do not bundle the Node client; set `EDMORE_CLIENT_DIR` when installed separately.
@@ -53,6 +61,12 @@ NionSwift's start button launches `EDMORE/client/start.mjs`. In a different dire
 layout, set `EDMORE_CLIENT_DIR` to the client directory before starting NionSwift.
 
 ## Configuration and Existing Data
+
+For native local Tango and WeKnora Wiki backends, run
+`bash deployment/native/deploy.sh up` from this repository. See
+[Native Deployment](deployment/native/README.md) for dependencies, isolated data,
+port selection and lifecycle commands. No Slurm, Apptainer or Docker is needed;
+cloud credentials and existing local databases are not copied.
 
 | Variable | Purpose |
 | --- | --- |

@@ -1,0 +1,5 @@
+.state/
+!tests/
+!tests/*.py
+__pycache__/
+*.pyc

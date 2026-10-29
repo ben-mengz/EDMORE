@@ -1,0 +1,43 @@
+Bootstrap: docker
+From: node:24-bookworm-slim
+
+%labels
+    Description EDMORE Harness and TEM Digital Twin runtime; sources mounted at runtime
+
+%post
+    set -eu
+
+    apt-get update
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+        ca-certificates \
+        git \
+        curl \
+        bash \
+        python3 \
+        python3-pip \
+        chromium \
+        build-essential \
+        pkg-config \
+        ripgrep
+
+    rm -rf /var/lib/apt/lists/*
+
+    mkdir -p /opt/edmore /data /workspace
+
+%environment
+    export DSH_HOME=/data
+    export EDMORE_WORKSPACE=/workspace
+    export EDMORE_CLIENT_HOST=127.0.0.1
+    export EDMORE_CLIENT_PORT=7380
+
+%test
+    node --version
+    npm --version
+    git --version
+    python3 -c 'import sys; assert sys.version_info >= (3, 11)'
+    chromium --version
+
+%runscript
+    set -eu
+    cd /opt/edmore/client
+    exec npm start "$@"
