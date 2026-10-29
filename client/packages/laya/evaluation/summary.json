@@ -1,0 +1,33 @@
+{
+  "plan": {
+    "count": 60,
+    "correct": 17,
+    "errors": 0,
+    "confusion": {
+      "plan -> uncertain": 18,
+      "plan -> plan": 12,
+      "direct -> uncertain": 18,
+      "direct -> direct": 5,
+      "direct -> plan": 7
+    },
+    "accepted_at_095": 6,
+    "wrong_at_095": 6,
+    "unsafe_at_095": []
+  },
+  "step": {
+    "count": 60,
+    "correct": 44,
+    "errors": 0,
+    "confusion": {
+      "success -> success": 19,
+      "failure -> failure": 20,
+      "uncertain -> uncertain": 5,
+      "uncertain -> failure": 8,
+      "uncertain -> success": 7,
+      "success -> failure": 1
+    },
+    "accepted_at_095": 0,
+    "wrong_at_095": 0,
+    "unsafe_at_095": []
+  }
+}

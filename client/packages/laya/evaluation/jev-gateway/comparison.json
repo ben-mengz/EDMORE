@@ -1,0 +1,61 @@
+{
+  "routing": {
+    "root": {
+      "count": 40,
+      "correct": 19,
+      "confusion": {
+        "plan -> plan": 15,
+        "direct -> direct": 4,
+        "direct -> plan": 21
+      }
+    },
+    "typed-decisions": {
+      "count": 40,
+      "correct": 27,
+      "confusion": {
+        "plan -> plan": 15,
+        "direct -> direct": 12,
+        "direct -> plan": 13
+      }
+    },
+    "jev": {
+      "count": 40,
+      "correct": 39,
+      "confusion": {
+        "plan -> plan": 15,
+        "direct -> direct": 24,
+        "direct -> plan": 1
+      }
+    }
+  },
+  "step": {
+    "laya": {
+      "count": 60,
+      "correct": 43,
+      "confusion": {
+        "success -> success": 19,
+        "failure -> failure": 20,
+        "uncertain -> uncertain": 4,
+        "uncertain -> failure": 8,
+        "uncertain -> success": 7,
+        "failure -> uncertain": 1,
+        "success -> failure": 1
+      },
+      "false_success": 7
+    },
+    "jev": {
+      "count": 60,
+      "correct": 48,
+      "confusion": {
+        "success -> success": 20,
+        "failure -> failure": 20,
+        "uncertain -> success": 3,
+        "uncertain -> failure": 8,
+        "uncertain -> uncertain": 8,
+        "failure -> success": 1
+      },
+      "false_success": 4
+    }
+  },
+  "reported_gateway_cost": 0.0
+}

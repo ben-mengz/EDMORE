@@ -1,0 +1,64 @@
+{
+  "original-forward": {
+    "count": 40,
+    "correct": 39,
+    "confusion": {
+      "plan -> plan": 15,
+      "direct -> direct": 24,
+      "direct -> plan": 1
+    },
+    "median_ms": 309.85,
+    "false_success": []
+  },
+  "original-reverse": {
+    "count": 40,
+    "correct": 40,
+    "confusion": {
+      "plan -> plan": 15,
+      "direct -> direct": 25
+    },
+    "median_ms": 2341.15,
+    "false_success": []
+  },
+  "explicit-forward": {
+    "count": 40,
+    "correct": 38,
+    "confusion": {
+      "plan -> plan": 15,
+      "direct -> direct": 23,
+      "direct -> plan": 2
+    },
+    "median_ms": 2344.945,
+    "false_success": []
+  },
+  "explicit-reverse": {
+    "count": 40,
+    "correct": 37,
+    "confusion": {
+      "plan -> plan": 15,
+      "direct -> direct": 22,
+      "direct -> plan": 3
+    },
+    "median_ms": 2334.7749999999996,
+    "false_success": []
+  },
+  "step": {
+    "count": 60,
+    "correct": 48,
+    "confusion": {
+      "success -> success": 20,
+      "failure -> failure": 20,
+      "uncertain -> success": 3,
+      "uncertain -> failure": 8,
+      "uncertain -> uncertain": 8,
+      "failure -> success": 1
+    },
+    "median_ms": 2338.95,
+    "false_success": [
+      "step-01-uncertain",
+      "step-04-failure",
+      "step-04-uncertain",
+      "step-10-uncertain"
+    ]
+  }
+}

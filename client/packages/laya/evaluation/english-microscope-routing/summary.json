@@ -1,0 +1,20 @@
+{
+  "root": {
+    "count": 40,
+    "correct": 19,
+    "confusion": {
+      "plan -> plan": 15,
+      "direct -> direct": 4,
+      "direct -> plan": 21
+    }
+  },
+  "typed-decisions": {
+    "count": 40,
+    "correct": 27,
+    "confusion": {
+      "plan -> plan": 15,
+      "direct -> direct": 12,
+      "direct -> plan": 13
+    }
+  }
+}

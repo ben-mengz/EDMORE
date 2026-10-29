@@ -1,0 +1,6 @@
+{
+  "step-06-uncertain": {
+    "expected": "failure",
+    "reason": "Current acquire-4d-stem/SKILL.md:75 explicitly defines missing scan-grid errors as failed acquisition. Initial label was incorrect; preserve it for audit."
+  }
+}

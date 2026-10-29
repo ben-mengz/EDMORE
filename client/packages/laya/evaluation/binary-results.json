@@ -1,0 +1,1802 @@
+[
+  {
+    "id": "route-01-en",
+    "expected": "plan",
+    "language": "en",
+    "response": {
+      "model": "laya-rl-agent",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "plan",
+          "probabilities": {
+            "plan": 0.748,
+            "direct": 0.252
+          },
+          "confidence": 0.1856,
+          "action": {
+            "act_probability": 1.0
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 137,
+        "output_tokens": 0
+      }
+    },
+    "predicted": "plan",
+    "correct": true,
+    "elapsed_ms": 248.72,
+    "revision": "1c5edc17a7acd8701df6fc341c0d179f1c62c982"
+  },
+  {
+    "id": "route-01-zh",
+    "expected": "plan",
+    "language": "zh",
+    "response": {
+      "model": "laya-rl-agent",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "plan",
+          "probabilities": {
+            "plan": 0.713,
+            "direct": 0.287
+          },
+          "confidence": 0.1352,
+          "action": {
+            "act_probability": 1.0
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 129,
+        "output_tokens": 0
+      }
+    },
+    "predicted": "plan",
+    "correct": true,
+    "elapsed_ms": 60.89,
+    "revision": "1c5edc17a7acd8701df6fc341c0d179f1c62c982"
+  },
+  {
+    "id": "route-02-en",
+    "expected": "plan",
+    "language": "en",
+    "response": {
+      "model": "laya-rl-agent",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "plan",
+          "probabilities": {
+            "plan": 0.8711,
+            "direct": 0.1289
+          },
+          "confidence": 0.4456,
+          "action": {
+            "act_probability": 1.0
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 141,
+        "output_tokens": 0
+      }
+    },
+    "predicted": "plan",
+    "correct": true,
+    "elapsed_ms": 164.25,
+    "revision": "1c5edc17a7acd8701df6fc341c0d179f1c62c982"
+  },
+  {
+    "id": "route-02-zh",
+    "expected": "plan",
+    "language": "zh",
+    "response": {
+      "model": "laya-rl-agent",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "direct",
+          "probabilities": {
+            "plan": 0.1929,
+            "direct": 0.8071
+          },
+          "confidence": 0.2924,
+          "action": {
+            "act_probability": 1.0
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 134,
+        "output_tokens": 0
+      }
+    },
+    "predicted": "direct",
+    "correct": false,
+    "elapsed_ms": 73.76,
+    "revision": "1c5edc17a7acd8701df6fc341c0d179f1c62c982"
+  },
+  {
+    "id": "route-03-en",
+    "expected": "plan",
+    "language": "en",
+    "response": {
+      "model": "laya-rl-agent",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "plan",
+          "probabilities": {
+            "plan": 0.7462,
+            "direct": 0.2538
+          },
+          "confidence": 0.1827,
+          "action": {
+            "act_probability": 1.0
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 140,
+        "output_tokens": 0
+      }
+    },
+    "predicted": "plan",
+    "correct": true,
+    "elapsed_ms": 148.12,
+    "revision": "1c5edc17a7acd8701df6fc341c0d179f1c62c982"
+  },
+  {
+    "id": "route-03-zh",
+    "expected": "plan",
+    "language": "zh",
+    "response": {
+      "model": "laya-rl-agent",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "plan",
+          "probabilities": {
+            "plan": 0.9652,
+            "direct": 0.0348
+          },
+          "confidence": 0.7823,
+          "action": {
+            "act_probability": 1.0
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 131,
+        "output_tokens": 0
+      }
+    },
+    "predicted": "plan",
+    "correct": true,
+    "elapsed_ms": 52.41,
+    "revision": "1c5edc17a7acd8701df6fc341c0d179f1c62c982"
+  },
+  {
+    "id": "route-04-en",
+    "expected": "plan",
+    "language": "en",
+    "response": {
+      "model": "laya-rl-agent",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "plan",
+          "probabilities": {
+            "plan": 0.8389,
+            "direct": 0.1611
+          },
+          "confidence": 0.3631,
+          "action": {
+            "act_probability": 1.0
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 145,
+        "output_tokens": 0
+      }
+    },
+    "predicted": "plan",
+    "correct": true,
+    "elapsed_ms": 144.4,
+    "revision": "1c5edc17a7acd8701df6fc341c0d179f1c62c982"
+  },
+  {
+    "id": "route-04-zh",
+    "expected": "plan",
+    "language": "zh",
+    "response": {
+      "model": "laya-rl-agent",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "plan",
+          "probabilities": {
+            "plan": 0.6807,
+            "direct": 0.3193
+          },
+          "confidence": 0.0964,
+          "action": {
+            "act_probability": 1.0
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 142,
+        "output_tokens": 0
+      }
+    },
+    "predicted": "plan",
+    "correct": true,
+    "elapsed_ms": 53.61,
+    "revision": "1c5edc17a7acd8701df6fc341c0d179f1c62c982"
+  },
+  {
+    "id": "route-05-en",
+    "expected": "plan",
+    "language": "en",
+    "response": {
+      "model": "laya-rl-agent",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "plan",
+          "probabilities": {
+            "plan": 0.7242,
+            "direct": 0.2758
+          },
+          "confidence": 0.1503,
+          "action": {
+            "act_probability": 1.0
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 133,
+        "output_tokens": 0
+      }
+    },
+    "predicted": "plan",
+    "correct": true,
+    "elapsed_ms": 143.23,
+    "revision": "1c5edc17a7acd8701df6fc341c0d179f1c62c982"
+  },
+  {
+    "id": "route-05-zh",
+    "expected": "plan",
+    "language": "zh",
+    "response": {
+      "model": "laya-rl-agent",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "plan",
+          "probabilities": {
+            "plan": 0.7401,
+            "direct": 0.2599
+          },
+          "confidence": 0.1734,
+          "action": {
+            "act_probability": 1.0
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 125,
+        "output_tokens": 0
+      }
+    },
+    "predicted": "plan",
+    "correct": true,
+    "elapsed_ms": 46.83,
+    "revision": "1c5edc17a7acd8701df6fc341c0d179f1c62c982"
+  },
+  {
+    "id": "route-06-en",
+    "expected": "plan",
+    "language": "en",
+    "response": {
+      "model": "laya-rl-agent",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "plan",
+          "probabilities": {
+            "plan": 0.7712,
+            "direct": 0.2288
+          },
+          "confidence": 0.2241,
+          "action": {
+            "act_probability": 1.0
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 135,
+        "output_tokens": 0
+      }
+    },
+    "predicted": "plan",
+    "correct": true,
+    "elapsed_ms": 139.97,
+    "revision": "1c5edc17a7acd8701df6fc341c0d179f1c62c982"
+  },
+  {
+    "id": "route-06-zh",
+    "expected": "plan",
+    "language": "zh",
+    "response": {
+      "model": "laya-rl-agent",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "plan",
+          "probabilities": {
+            "plan": 0.9826,
+            "direct": 0.0174
+          },
+          "confidence": 0.8737,
+          "action": {
+            "act_probability": 1.0
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 130,
+        "output_tokens": 0
+      }
+    },
+    "predicted": "plan",
+    "correct": true,
+    "elapsed_ms": 51.86,
+    "revision": "1c5edc17a7acd8701df6fc341c0d179f1c62c982"
+  },
+  {
+    "id": "route-07-en",
+    "expected": "plan",
+    "language": "en",
+    "response": {
+      "model": "laya-rl-agent",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "plan",
+          "probabilities": {
+            "plan": 0.7754,
+            "direct": 0.2246
+          },
+          "confidence": 0.2315,
+          "action": {
+            "act_probability": 1.0
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 138,
+        "output_tokens": 0
+      }
+    },
+    "predicted": "plan",
+    "correct": true,
+    "elapsed_ms": 143.42,
+    "revision": "1c5edc17a7acd8701df6fc341c0d179f1c62c982"
+  },
+  {
+    "id": "route-07-zh",
+    "expected": "plan",
+    "language": "zh",
+    "response": {
+      "model": "laya-rl-agent",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "plan",
+          "probabilities": {
+            "plan": 0.7104,
+            "direct": 0.2896
+          },
+          "confidence": 0.1318,
+          "action": {
+            "act_probability": 1.0
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 129,
+        "output_tokens": 0
+      }
+    },
+    "predicted": "plan",
+    "correct": true,
+    "elapsed_ms": 51.82,
+    "revision": "1c5edc17a7acd8701df6fc341c0d179f1c62c982"
+  },
+  {
+    "id": "route-08-en",
+    "expected": "plan",
+    "language": "en",
+    "response": {
+      "model": "laya-rl-agent",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "plan",
+          "probabilities": {
+            "plan": 0.8318,
+            "direct": 0.1682
+          },
+          "confidence": 0.3463,
+          "action": {
+            "act_probability": 1.0
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 138,
+        "output_tokens": 0
+      }
+    },
+    "predicted": "plan",
+    "correct": true,
+    "elapsed_ms": 147.32,
+    "revision": "1c5edc17a7acd8701df6fc341c0d179f1c62c982"
+  },
+  {
+    "id": "route-08-zh",
+    "expected": "plan",
+    "language": "zh",
+    "response": {
+      "model": "laya-rl-agent",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "plan",
+          "probabilities": {
+            "plan": 0.88,
+            "direct": 0.12
+          },
+          "confidence": 0.4706,
+          "action": {
+            "act_probability": 1.0
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 129,
+        "output_tokens": 0
+      }
+    },
+    "predicted": "plan",
+    "correct": true,
+    "elapsed_ms": 51.6,
+    "revision": "1c5edc17a7acd8701df6fc341c0d179f1c62c982"
+  },
+  {
+    "id": "route-09-en",
+    "expected": "plan",
+    "language": "en",
+    "response": {
+      "model": "laya-rl-agent",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "plan",
+          "probabilities": {
+            "plan": 0.8369,
+            "direct": 0.1631
+          },
+          "confidence": 0.3584,
+          "action": {
+            "act_probability": 1.0
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 138,
+        "output_tokens": 0
+      }
+    },
+    "predicted": "plan",
+    "correct": true,
+    "elapsed_ms": 142.65,
+    "revision": "1c5edc17a7acd8701df6fc341c0d179f1c62c982"
+  },
+  {
+    "id": "route-09-zh",
+    "expected": "plan",
+    "language": "zh",
+    "response": {
+      "model": "laya-rl-agent",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "plan",
+          "probabilities": {
+            "plan": 0.6897,
+            "direct": 0.3103
+          },
+          "confidence": 0.1064,
+          "action": {
+            "act_probability": 1.0
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 128,
+        "output_tokens": 0
+      }
+    },
+    "predicted": "plan",
+    "correct": true,
+    "elapsed_ms": 46.73,
+    "revision": "1c5edc17a7acd8701df6fc341c0d179f1c62c982"
+  },
+  {
+    "id": "route-10-en",
+    "expected": "plan",
+    "language": "en",
+    "response": {
+      "model": "laya-rl-agent",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "plan",
+          "probabilities": {
+            "plan": 0.6943,
+            "direct": 0.3057
+          },
+          "confidence": 0.1119,
+          "action": {
+            "act_probability": 1.0
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 136,
+        "output_tokens": 0
+      }
+    },
+    "predicted": "plan",
+    "correct": true,
+    "elapsed_ms": 148.73,
+    "revision": "1c5edc17a7acd8701df6fc341c0d179f1c62c982"
+  },
+  {
+    "id": "route-10-zh",
+    "expected": "plan",
+    "language": "zh",
+    "response": {
+      "model": "laya-rl-agent",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "plan",
+          "probabilities": {
+            "plan": 0.6543,
+            "direct": 0.3457
+          },
+          "confidence": 0.0699,
+          "action": {
+            "act_probability": 1.0
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 127,
+        "output_tokens": 0
+      }
+    },
+    "predicted": "plan",
+    "correct": true,
+    "elapsed_ms": 46.52,
+    "revision": "1c5edc17a7acd8701df6fc341c0d179f1c62c982"
+  },
+  {
+    "id": "route-11-en",
+    "expected": "plan",
+    "language": "en",
+    "response": {
+      "model": "laya-rl-agent",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "plan",
+          "probabilities": {
+            "plan": 0.8985,
+            "direct": 0.1015
+          },
+          "confidence": 0.5264,
+          "action": {
+            "act_probability": 1.0
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 138,
+        "output_tokens": 0
+      }
+    },
+    "predicted": "plan",
+    "correct": true,
+    "elapsed_ms": 143.12,
+    "revision": "1c5edc17a7acd8701df6fc341c0d179f1c62c982"
+  },
+  {
+    "id": "route-11-zh",
+    "expected": "plan",
+    "language": "zh",
+    "response": {
+      "model": "laya-rl-agent",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "plan",
+          "probabilities": {
+            "plan": 0.6081,
+            "direct": 0.3919
+          },
+          "confidence": 0.034,
+          "action": {
+            "act_probability": 1.0
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 128,
+        "output_tokens": 0
+      }
+    },
+    "predicted": "plan",
+    "correct": true,
+    "elapsed_ms": 46.35,
+    "revision": "1c5edc17a7acd8701df6fc341c0d179f1c62c982"
+  },
+  {
+    "id": "route-12-en",
+    "expected": "plan",
+    "language": "en",
+    "response": {
+      "model": "laya-rl-agent",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "plan",
+          "probabilities": {
+            "plan": 0.7374,
+            "direct": 0.2626
+          },
+          "confidence": 0.1694,
+          "action": {
+            "act_probability": 1.0
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 143,
+        "output_tokens": 0
+      }
+    },
+    "predicted": "plan",
+    "correct": true,
+    "elapsed_ms": 143.29,
+    "revision": "1c5edc17a7acd8701df6fc341c0d179f1c62c982"
+  },
+  {
+    "id": "route-12-zh",
+    "expected": "plan",
+    "language": "zh",
+    "response": {
+      "model": "laya-rl-agent",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "plan",
+          "probabilities": {
+            "plan": 0.9218,
+            "direct": 0.0782
+          },
+          "confidence": 0.6043,
+          "action": {
+            "act_probability": 1.0
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 136,
+        "output_tokens": 0
+      }
+    },
+    "predicted": "plan",
+    "correct": true,
+    "elapsed_ms": 52.08,
+    "revision": "1c5edc17a7acd8701df6fc341c0d179f1c62c982"
+  },
+  {
+    "id": "route-13-en",
+    "expected": "plan",
+    "language": "en",
+    "response": {
+      "model": "laya-rl-agent",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "plan",
+          "probabilities": {
+            "plan": 0.7474,
+            "direct": 0.2526
+          },
+          "confidence": 0.1846,
+          "action": {
+            "act_probability": 1.0
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 140,
+        "output_tokens": 0
+      }
+    },
+    "predicted": "plan",
+    "correct": true,
+    "elapsed_ms": 142.4,
+    "revision": "1c5edc17a7acd8701df6fc341c0d179f1c62c982"
+  },
+  {
+    "id": "route-13-zh",
+    "expected": "plan",
+    "language": "zh",
+    "response": {
+      "model": "laya-rl-agent",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "plan",
+          "probabilities": {
+            "plan": 0.9479,
+            "direct": 0.0521
+          },
+          "confidence": 0.7046,
+          "action": {
+            "act_probability": 1.0
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 133,
+        "output_tokens": 0
+      }
+    },
+    "predicted": "plan",
+    "correct": true,
+    "elapsed_ms": 51.61,
+    "revision": "1c5edc17a7acd8701df6fc341c0d179f1c62c982"
+  },
+  {
+    "id": "route-14-en",
+    "expected": "plan",
+    "language": "en",
+    "response": {
+      "model": "laya-rl-agent",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "plan",
+          "probabilities": {
+            "plan": 0.8123,
+            "direct": 0.1877
+          },
+          "confidence": 0.3033,
+          "action": {
+            "act_probability": 1.0
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 137,
+        "output_tokens": 0
+      }
+    },
+    "predicted": "plan",
+    "correct": true,
+    "elapsed_ms": 141.86,
+    "revision": "1c5edc17a7acd8701df6fc341c0d179f1c62c982"
+  },
+  {
+    "id": "route-14-zh",
+    "expected": "plan",
+    "language": "zh",
+    "response": {
+      "model": "laya-rl-agent",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "plan",
+          "probabilities": {
+            "plan": 0.9055,
+            "direct": 0.0945
+          },
+          "confidence": 0.5488,
+          "action": {
+            "act_probability": 1.0
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 130,
+        "output_tokens": 0
+      }
+    },
+    "predicted": "plan",
+    "correct": true,
+    "elapsed_ms": 51.51,
+    "revision": "1c5edc17a7acd8701df6fc341c0d179f1c62c982"
+  },
+  {
+    "id": "route-15-en",
+    "expected": "plan",
+    "language": "en",
+    "response": {
+      "model": "laya-rl-agent",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "plan",
+          "probabilities": {
+            "plan": 0.8986,
+            "direct": 0.1014
+          },
+          "confidence": 0.5266,
+          "action": {
+            "act_probability": 1.0
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 139,
+        "output_tokens": 0
+      }
+    },
+    "predicted": "plan",
+    "correct": true,
+    "elapsed_ms": 143.68,
+    "revision": "1c5edc17a7acd8701df6fc341c0d179f1c62c982"
+  },
+  {
+    "id": "route-15-zh",
+    "expected": "plan",
+    "language": "zh",
+    "response": {
+      "model": "laya-rl-agent",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "plan",
+          "probabilities": {
+            "plan": 0.8835,
+            "direct": 0.1165
+          },
+          "confidence": 0.4807,
+          "action": {
+            "act_probability": 1.0
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 130,
+        "output_tokens": 0
+      }
+    },
+    "predicted": "plan",
+    "correct": true,
+    "elapsed_ms": 53.09,
+    "revision": "1c5edc17a7acd8701df6fc341c0d179f1c62c982"
+  },
+  {
+    "id": "route-16-en",
+    "expected": "direct",
+    "language": "en",
+    "response": {
+      "model": "laya-rl-agent",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "plan",
+          "probabilities": {
+            "plan": 0.5879,
+            "direct": 0.4121
+          },
+          "confidence": 0.0224,
+          "action": {
+            "act_probability": 1.0
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 138,
+        "output_tokens": 0
+      }
+    },
+    "predicted": "plan",
+    "correct": false,
+    "elapsed_ms": 142.76,
+    "revision": "1c5edc17a7acd8701df6fc341c0d179f1c62c982"
+  },
+  {
+    "id": "route-16-zh",
+    "expected": "direct",
+    "language": "zh",
+    "response": {
+      "model": "laya-rl-agent",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "plan",
+          "probabilities": {
+            "plan": 0.5982,
+            "direct": 0.4018
+          },
+          "confidence": 0.028,
+          "action": {
+            "act_probability": 1.0
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 130,
+        "output_tokens": 0
+      }
+    },
+    "predicted": "plan",
+    "correct": false,
+    "elapsed_ms": 51.74,
+    "revision": "1c5edc17a7acd8701df6fc341c0d179f1c62c982"
+  },
+  {
+    "id": "route-17-en",
+    "expected": "direct",
+    "language": "en",
+    "response": {
+      "model": "laya-rl-agent",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "plan",
+          "probabilities": {
+            "plan": 0.8674,
+            "direct": 0.1326
+          },
+          "confidence": 0.4355,
+          "action": {
+            "act_probability": 1.0
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 142,
+        "output_tokens": 0
+      }
+    },
+    "predicted": "plan",
+    "correct": false,
+    "elapsed_ms": 148.07,
+    "revision": "1c5edc17a7acd8701df6fc341c0d179f1c62c982"
+  },
+  {
+    "id": "route-17-zh",
+    "expected": "direct",
+    "language": "zh",
+    "response": {
+      "model": "laya-rl-agent",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "direct",
+          "probabilities": {
+            "plan": 0.2694,
+            "direct": 0.7306
+          },
+          "confidence": 0.1594,
+          "action": {
+            "act_probability": 1.0
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 130,
+        "output_tokens": 0
+      }
+    },
+    "predicted": "direct",
+    "correct": true,
+    "elapsed_ms": 77.06,
+    "revision": "1c5edc17a7acd8701df6fc341c0d179f1c62c982"
+  },
+  {
+    "id": "route-18-en",
+    "expected": "direct",
+    "language": "en",
+    "response": {
+      "model": "laya-rl-agent",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "plan",
+          "probabilities": {
+            "plan": 0.7768,
+            "direct": 0.2232
+          },
+          "confidence": 0.2341,
+          "action": {
+            "act_probability": 1.0
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 140,
+        "output_tokens": 0
+      }
+    },
+    "predicted": "plan",
+    "correct": false,
+    "elapsed_ms": 150.13,
+    "revision": "1c5edc17a7acd8701df6fc341c0d179f1c62c982"
+  },
+  {
+    "id": "route-18-zh",
+    "expected": "direct",
+    "language": "zh",
+    "response": {
+      "model": "laya-rl-agent",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "direct",
+          "probabilities": {
+            "plan": 0.109,
+            "direct": 0.891
+          },
+          "confidence": 0.5031,
+          "action": {
+            "act_probability": 1.0
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 129,
+        "output_tokens": 0
+      }
+    },
+    "predicted": "direct",
+    "correct": true,
+    "elapsed_ms": 51.52,
+    "revision": "1c5edc17a7acd8701df6fc341c0d179f1c62c982"
+  },
+  {
+    "id": "route-19-en",
+    "expected": "direct",
+    "language": "en",
+    "response": {
+      "model": "laya-rl-agent",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "plan",
+          "probabilities": {
+            "plan": 0.7162,
+            "direct": 0.2838
+          },
+          "confidence": 0.1394,
+          "action": {
+            "act_probability": 1.0
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 139,
+        "output_tokens": 0
+      }
+    },
+    "predicted": "plan",
+    "correct": false,
+    "elapsed_ms": 142.77,
+    "revision": "1c5edc17a7acd8701df6fc341c0d179f1c62c982"
+  },
+  {
+    "id": "route-19-zh",
+    "expected": "direct",
+    "language": "zh",
+    "response": {
+      "model": "laya-rl-agent",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "direct",
+          "probabilities": {
+            "plan": 0.3755,
+            "direct": 0.6245
+          },
+          "confidence": 0.0452,
+          "action": {
+            "act_probability": 1.0
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 131,
+        "output_tokens": 0
+      }
+    },
+    "predicted": "direct",
+    "correct": true,
+    "elapsed_ms": 52.57,
+    "revision": "1c5edc17a7acd8701df6fc341c0d179f1c62c982"
+  },
+  {
+    "id": "route-20-en",
+    "expected": "direct",
+    "language": "en",
+    "response": {
+      "model": "laya-rl-agent",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "plan",
+          "probabilities": {
+            "plan": 0.6575,
+            "direct": 0.3425
+          },
+          "confidence": 0.0728,
+          "action": {
+            "act_probability": 1.0
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 138,
+        "output_tokens": 0
+      }
+    },
+    "predicted": "plan",
+    "correct": false,
+    "elapsed_ms": 151.16,
+    "revision": "1c5edc17a7acd8701df6fc341c0d179f1c62c982"
+  },
+  {
+    "id": "route-20-zh",
+    "expected": "direct",
+    "language": "zh",
+    "response": {
+      "model": "laya-rl-agent",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "direct",
+          "probabilities": {
+            "plan": 0.4189,
+            "direct": 0.5811
+          },
+          "confidence": 0.0191,
+          "action": {
+            "act_probability": 1.0
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 128,
+        "output_tokens": 0
+      }
+    },
+    "predicted": "direct",
+    "correct": true,
+    "elapsed_ms": 46.87,
+    "revision": "1c5edc17a7acd8701df6fc341c0d179f1c62c982"
+  },
+  {
+    "id": "route-21-en",
+    "expected": "direct",
+    "language": "en",
+    "response": {
+      "model": "laya-rl-agent",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "plan",
+          "probabilities": {
+            "plan": 0.6539,
+            "direct": 0.3461
+          },
+          "confidence": 0.0695,
+          "action": {
+            "act_probability": 1.0
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 135,
+        "output_tokens": 0
+      }
+    },
+    "predicted": "plan",
+    "correct": false,
+    "elapsed_ms": 140.25,
+    "revision": "1c5edc17a7acd8701df6fc341c0d179f1c62c982"
+  },
+  {
+    "id": "route-21-zh",
+    "expected": "direct",
+    "language": "zh",
+    "response": {
+      "model": "laya-rl-agent",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "plan",
+          "probabilities": {
+            "plan": 0.6161,
+            "direct": 0.3839
+          },
+          "confidence": 0.0392,
+          "action": {
+            "act_probability": 1.0
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 126,
+        "output_tokens": 0
+      }
+    },
+    "predicted": "plan",
+    "correct": false,
+    "elapsed_ms": 46.65,
+    "revision": "1c5edc17a7acd8701df6fc341c0d179f1c62c982"
+  },
+  {
+    "id": "route-22-en",
+    "expected": "direct",
+    "language": "en",
+    "response": {
+      "model": "laya-rl-agent",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "plan",
+          "probabilities": {
+            "plan": 0.8318,
+            "direct": 0.1682
+          },
+          "confidence": 0.3465,
+          "action": {
+            "act_probability": 1.0
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 140,
+        "output_tokens": 0
+      }
+    },
+    "predicted": "plan",
+    "correct": false,
+    "elapsed_ms": 142.31,
+    "revision": "1c5edc17a7acd8701df6fc341c0d179f1c62c982"
+  },
+  {
+    "id": "route-22-zh",
+    "expected": "direct",
+    "language": "zh",
+    "response": {
+      "model": "laya-rl-agent",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "direct",
+          "probabilities": {
+            "plan": 0.3834,
+            "direct": 0.6166
+          },
+          "confidence": 0.0396,
+          "action": {
+            "act_probability": 1.0
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 130,
+        "output_tokens": 0
+      }
+    },
+    "predicted": "direct",
+    "correct": true,
+    "elapsed_ms": 52.39,
+    "revision": "1c5edc17a7acd8701df6fc341c0d179f1c62c982"
+  },
+  {
+    "id": "route-23-en",
+    "expected": "direct",
+    "language": "en",
+    "response": {
+      "model": "laya-rl-agent",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "plan",
+          "probabilities": {
+            "plan": 0.8196,
+            "direct": 0.1804
+          },
+          "confidence": 0.319,
+          "action": {
+            "act_probability": 1.0
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 141,
+        "output_tokens": 0
+      }
+    },
+    "predicted": "plan",
+    "correct": false,
+    "elapsed_ms": 142.85,
+    "revision": "1c5edc17a7acd8701df6fc341c0d179f1c62c982"
+  },
+  {
+    "id": "route-23-zh",
+    "expected": "direct",
+    "language": "zh",
+    "response": {
+      "model": "laya-rl-agent",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "plan",
+          "probabilities": {
+            "plan": 0.7602,
+            "direct": 0.2398
+          },
+          "confidence": 0.2053,
+          "action": {
+            "act_probability": 1.0
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 132,
+        "output_tokens": 0
+      }
+    },
+    "predicted": "plan",
+    "correct": false,
+    "elapsed_ms": 51.46,
+    "revision": "1c5edc17a7acd8701df6fc341c0d179f1c62c982"
+  },
+  {
+    "id": "route-24-en",
+    "expected": "direct",
+    "language": "en",
+    "response": {
+      "model": "laya-rl-agent",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "plan",
+          "probabilities": {
+            "plan": 0.8929,
+            "direct": 0.1071
+          },
+          "confidence": 0.5088,
+          "action": {
+            "act_probability": 1.0
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 139,
+        "output_tokens": 0
+      }
+    },
+    "predicted": "plan",
+    "correct": false,
+    "elapsed_ms": 142.6,
+    "revision": "1c5edc17a7acd8701df6fc341c0d179f1c62c982"
+  },
+  {
+    "id": "route-24-zh",
+    "expected": "direct",
+    "language": "zh",
+    "response": {
+      "model": "laya-rl-agent",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "direct",
+          "probabilities": {
+            "plan": 0.4079,
+            "direct": 0.5921
+          },
+          "confidence": 0.0246,
+          "action": {
+            "act_probability": 1.0
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 130,
+        "output_tokens": 0
+      }
+    },
+    "predicted": "direct",
+    "correct": true,
+    "elapsed_ms": 51.59,
+    "revision": "1c5edc17a7acd8701df6fc341c0d179f1c62c982"
+  },
+  {
+    "id": "route-25-en",
+    "expected": "direct",
+    "language": "en",
+    "response": {
+      "model": "laya-rl-agent",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "plan",
+          "probabilities": {
+            "plan": 0.7189,
+            "direct": 0.2811
+          },
+          "confidence": 0.1431,
+          "action": {
+            "act_probability": 1.0
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 143,
+        "output_tokens": 0
+      }
+    },
+    "predicted": "plan",
+    "correct": false,
+    "elapsed_ms": 145.88,
+    "revision": "1c5edc17a7acd8701df6fc341c0d179f1c62c982"
+  },
+  {
+    "id": "route-25-zh",
+    "expected": "direct",
+    "language": "zh",
+    "response": {
+      "model": "laya-rl-agent",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "plan",
+          "probabilities": {
+            "plan": 0.5876,
+            "direct": 0.4124
+          },
+          "confidence": 0.0222,
+          "action": {
+            "act_probability": 1.0
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 132,
+        "output_tokens": 0
+      }
+    },
+    "predicted": "plan",
+    "correct": false,
+    "elapsed_ms": 53.09,
+    "revision": "1c5edc17a7acd8701df6fc341c0d179f1c62c982"
+  },
+  {
+    "id": "route-26-en",
+    "expected": "direct",
+    "language": "en",
+    "response": {
+      "model": "laya-rl-agent",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "plan",
+          "probabilities": {
+            "plan": 0.7659,
+            "direct": 0.2341
+          },
+          "confidence": 0.2148,
+          "action": {
+            "act_probability": 1.0
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 142,
+        "output_tokens": 0
+      }
+    },
+    "predicted": "plan",
+    "correct": false,
+    "elapsed_ms": 144.61,
+    "revision": "1c5edc17a7acd8701df6fc341c0d179f1c62c982"
+  },
+  {
+    "id": "route-26-zh",
+    "expected": "direct",
+    "language": "zh",
+    "response": {
+      "model": "laya-rl-agent",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "direct",
+          "probabilities": {
+            "plan": 0.3995,
+            "direct": 0.6005
+          },
+          "confidence": 0.0293,
+          "action": {
+            "act_probability": 1.0
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 132,
+        "output_tokens": 0
+      }
+    },
+    "predicted": "direct",
+    "correct": true,
+    "elapsed_ms": 51.98,
+    "revision": "1c5edc17a7acd8701df6fc341c0d179f1c62c982"
+  },
+  {
+    "id": "route-27-en",
+    "expected": "direct",
+    "language": "en",
+    "response": {
+      "model": "laya-rl-agent",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "plan",
+          "probabilities": {
+            "plan": 0.8792,
+            "direct": 0.1208
+          },
+          "confidence": 0.4682,
+          "action": {
+            "act_probability": 1.0
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 140,
+        "output_tokens": 0
+      }
+    },
+    "predicted": "plan",
+    "correct": false,
+    "elapsed_ms": 148.28,
+    "revision": "1c5edc17a7acd8701df6fc341c0d179f1c62c982"
+  },
+  {
+    "id": "route-27-zh",
+    "expected": "direct",
+    "language": "zh",
+    "response": {
+      "model": "laya-rl-agent",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "direct",
+          "probabilities": {
+            "plan": 0.3688,
+            "direct": 0.6312
+          },
+          "confidence": 0.0502,
+          "action": {
+            "act_probability": 1.0
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 131,
+        "output_tokens": 0
+      }
+    },
+    "predicted": "direct",
+    "correct": true,
+    "elapsed_ms": 52.33,
+    "revision": "1c5edc17a7acd8701df6fc341c0d179f1c62c982"
+  },
+  {
+    "id": "route-28-en",
+    "expected": "direct",
+    "language": "en",
+    "response": {
+      "model": "laya-rl-agent",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "plan",
+          "probabilities": {
+            "plan": 0.916,
+            "direct": 0.084
+          },
+          "confidence": 0.584,
+          "action": {
+            "act_probability": 1.0
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 139,
+        "output_tokens": 0
+      }
+    },
+    "predicted": "plan",
+    "correct": false,
+    "elapsed_ms": 143.46,
+    "revision": "1c5edc17a7acd8701df6fc341c0d179f1c62c982"
+  },
+  {
+    "id": "route-28-zh",
+    "expected": "direct",
+    "language": "zh",
+    "response": {
+      "model": "laya-rl-agent",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "plan",
+          "probabilities": {
+            "plan": 0.7943,
+            "direct": 0.2057
+          },
+          "confidence": 0.2668,
+          "action": {
+            "act_probability": 1.0
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 132,
+        "output_tokens": 0
+      }
+    },
+    "predicted": "plan",
+    "correct": false,
+    "elapsed_ms": 52.68,
+    "revision": "1c5edc17a7acd8701df6fc341c0d179f1c62c982"
+  },
+  {
+    "id": "route-29-en",
+    "expected": "direct",
+    "language": "en",
+    "response": {
+      "model": "laya-rl-agent",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "plan",
+          "probabilities": {
+            "plan": 0.6958,
+            "direct": 0.3042
+          },
+          "confidence": 0.1136,
+          "action": {
+            "act_probability": 1.0
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 142,
+        "output_tokens": 0
+      }
+    },
+    "predicted": "plan",
+    "correct": false,
+    "elapsed_ms": 145.17,
+    "revision": "1c5edc17a7acd8701df6fc341c0d179f1c62c982"
+  },
+  {
+    "id": "route-29-zh",
+    "expected": "direct",
+    "language": "zh",
+    "response": {
+      "model": "laya-rl-agent",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "plan",
+          "probabilities": {
+            "plan": 0.707,
+            "direct": 0.293
+          },
+          "confidence": 0.1275,
+          "action": {
+            "act_probability": 1.0
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 133,
+        "output_tokens": 0
+      }
+    },
+    "predicted": "plan",
+    "correct": false,
+    "elapsed_ms": 53.2,
+    "revision": "1c5edc17a7acd8701df6fc341c0d179f1c62c982"
+  },
+  {
+    "id": "route-30-en",
+    "expected": "direct",
+    "language": "en",
+    "response": {
+      "model": "laya-rl-agent",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "plan",
+          "probabilities": {
+            "plan": 0.7792,
+            "direct": 0.2208
+          },
+          "confidence": 0.2383,
+          "action": {
+            "act_probability": 1.0
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 138,
+        "output_tokens": 0
+      }
+    },
+    "predicted": "plan",
+    "correct": false,
+    "elapsed_ms": 143.88,
+    "revision": "1c5edc17a7acd8701df6fc341c0d179f1c62c982"
+  },
+  {
+    "id": "route-30-zh",
+    "expected": "direct",
+    "language": "zh",
+    "response": {
+      "model": "laya-rl-agent",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "plan",
+          "probabilities": {
+            "plan": 0.7125,
+            "direct": 0.2875
+          },
+          "confidence": 0.1346,
+          "action": {
+            "act_probability": 1.0
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 128,
+        "output_tokens": 0
+      }
+    },
+    "predicted": "plan",
+    "correct": false,
+    "elapsed_ms": 49.0,
+    "revision": "1c5edc17a7acd8701df6fc341c0d179f1c62c982"
+  }
+]

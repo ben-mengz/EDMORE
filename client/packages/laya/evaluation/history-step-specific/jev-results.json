@@ -1,0 +1,4391 @@
+[
+  {
+    "id": "history-11168",
+    "model": "jev",
+    "revision": "hosted-unpinned",
+    "dataset_sha256": "f3985cac5cd3f33dcd10468677fcc1c8db3009bf58cdf63be8af311c00c36088",
+    "input_sha256": "063900132d7b5843561fd3503508108c44ca0c36b812b16577d5b24a03d80848",
+    "expected": "success",
+    "predicted": "success",
+    "correct": true,
+    "response": {
+      "model": "typesafe-ai/jev",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "success",
+          "confidence": 1,
+          "probabilities": {
+            "success": 1,
+            "uncertain": 0,
+            "failure": 0
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 460,
+        "output_tokens": 40
+      },
+      "provider_metadata": {
+        "typesafe": {
+          "confidence": {
+            "decision": 1
+          }
+        },
+        "gateway": {
+          "routing": {
+            "originalModelId": "typesafe-ai/jev",
+            "resolvedProvider": "typesafe-ai",
+            "fallbacksAvailable": [],
+            "planningReasoning": "System credentials planned for: typesafe-ai. Total execution order: typesafe-ai(system)",
+            "canonicalSlug": "typesafe-ai/jev",
+            "finalProvider": "typesafe-ai",
+            "modelAttemptCount": 1,
+            "modelAttempts": [
+              {
+                "canonicalSlug": "typesafe-ai/jev",
+                "success": true,
+                "providerAttemptCount": 1,
+                "providerAttempts": [
+                  {
+                    "provider": "typesafe-ai",
+                    "credentialType": "system",
+                    "success": true,
+                    "startTime": 1790240258950,
+                    "endTime": 1790240259818,
+                    "statusCode": 200
+                  }
+                ]
+              }
+            ],
+            "totalProviderAttemptCount": 1
+          },
+          "cost": "0",
+          "marketCost": "0.00001932",
+          "surchargeCost": "0",
+          "gatewayCost": "0",
+          "generationId": "gen_01M39A4YC4N0BH1YGH8XTPQZEW"
+        }
+      }
+    },
+    "request_ms": 1540.21,
+    "attempts": [
+      {
+        "status": 200,
+        "request_ms": 1540.21
+      }
+    ]
+  },
+  {
+    "id": "history-17885",
+    "model": "jev",
+    "revision": "hosted-unpinned",
+    "dataset_sha256": "f3985cac5cd3f33dcd10468677fcc1c8db3009bf58cdf63be8af311c00c36088",
+    "input_sha256": "063900132d7b5843561fd3503508108c44ca0c36b812b16577d5b24a03d80848",
+    "expected": "success",
+    "predicted": "success",
+    "correct": true,
+    "response": {
+      "model": "typesafe-ai/jev",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "success",
+          "confidence": 1,
+          "probabilities": {
+            "success": 1,
+            "uncertain": 0,
+            "failure": 0
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 460,
+        "output_tokens": 40
+      },
+      "provider_metadata": {
+        "typesafe": {
+          "confidence": {
+            "decision": 1
+          }
+        },
+        "gateway": {
+          "routing": {
+            "originalModelId": "typesafe-ai/jev",
+            "resolvedProvider": "typesafe-ai",
+            "fallbacksAvailable": [],
+            "planningReasoning": "System credentials planned for: typesafe-ai. Total execution order: typesafe-ai(system)",
+            "canonicalSlug": "typesafe-ai/jev",
+            "finalProvider": "typesafe-ai",
+            "modelAttemptCount": 1,
+            "modelAttempts": [
+              {
+                "canonicalSlug": "typesafe-ai/jev",
+                "success": true,
+                "providerAttemptCount": 1,
+                "providerAttempts": [
+                  {
+                    "provider": "typesafe-ai",
+                    "credentialType": "system",
+                    "success": true,
+                    "startTime": 1790240261940,
+                    "endTime": 1790240262349,
+                    "statusCode": 200
+                  }
+                ]
+              }
+            ],
+            "totalProviderAttemptCount": 1
+          },
+          "cost": "0",
+          "marketCost": "0.00001932",
+          "surchargeCost": "0",
+          "gatewayCost": "0",
+          "generationId": "gen_01M39A51RE5ZXQKFB5QJGTWXN7"
+        }
+      }
+    },
+    "request_ms": 587.42,
+    "attempts": [
+      {
+        "status": 200,
+        "request_ms": 587.42
+      }
+    ]
+  },
+  {
+    "id": "history-18014",
+    "model": "jev",
+    "revision": "hosted-unpinned",
+    "dataset_sha256": "f3985cac5cd3f33dcd10468677fcc1c8db3009bf58cdf63be8af311c00c36088",
+    "input_sha256": "31f90c718b8675e9e7565b8821a34ccf0aa93a72ff6d515625f69bb4af51ed69",
+    "expected": "success",
+    "predicted": "success",
+    "correct": true,
+    "response": {
+      "model": "typesafe-ai/jev",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "success",
+          "confidence": 1,
+          "probabilities": {
+            "uncertain": 0,
+            "failure": 0,
+            "success": 1
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 452,
+        "output_tokens": 40
+      },
+      "provider_metadata": {
+        "typesafe": {
+          "confidence": {
+            "decision": 1
+          }
+        },
+        "gateway": {
+          "routing": {
+            "originalModelId": "typesafe-ai/jev",
+            "resolvedProvider": "typesafe-ai",
+            "fallbacksAvailable": [],
+            "planningReasoning": "System credentials planned for: typesafe-ai. Total execution order: typesafe-ai(system)",
+            "canonicalSlug": "typesafe-ai/jev",
+            "finalProvider": "typesafe-ai",
+            "modelAttemptCount": 1,
+            "modelAttempts": [
+              {
+                "canonicalSlug": "typesafe-ai/jev",
+                "success": true,
+                "providerAttemptCount": 1,
+                "providerAttempts": [
+                  {
+                    "provider": "typesafe-ai",
+                    "credentialType": "system",
+                    "success": true,
+                    "startTime": 1790240264532,
+                    "endTime": 1790240264730,
+                    "statusCode": 200
+                  }
+                ]
+              }
+            ],
+            "totalProviderAttemptCount": 1
+          },
+          "cost": "0",
+          "marketCost": "0.000018984",
+          "surchargeCost": "0",
+          "gatewayCost": "0",
+          "generationId": "gen_01M39A5496Q5K2XK8HZ9W9DVET"
+        }
+      }
+    },
+    "request_ms": 279.9,
+    "attempts": [
+      {
+        "status": 200,
+        "request_ms": 279.9
+      }
+    ]
+  },
+  {
+    "id": "history-18128",
+    "model": "jev",
+    "revision": "hosted-unpinned",
+    "dataset_sha256": "f3985cac5cd3f33dcd10468677fcc1c8db3009bf58cdf63be8af311c00c36088",
+    "input_sha256": "b7954bda3ecca0873d5d463bba7610d6bc839195121bfb82648375a83c120910",
+    "expected": "success",
+    "predicted": "success",
+    "correct": true,
+    "response": {
+      "model": "typesafe-ai/jev",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "success",
+          "confidence": 1,
+          "probabilities": {
+            "success": 1,
+            "uncertain": 0,
+            "failure": 0
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 509,
+        "output_tokens": 40
+      },
+      "provider_metadata": {
+        "typesafe": {
+          "confidence": {
+            "decision": 1
+          }
+        },
+        "gateway": {
+          "routing": {
+            "originalModelId": "typesafe-ai/jev",
+            "resolvedProvider": "typesafe-ai",
+            "fallbacksAvailable": [],
+            "planningReasoning": "System credentials planned for: typesafe-ai. Total execution order: typesafe-ai(system)",
+            "canonicalSlug": "typesafe-ai/jev",
+            "finalProvider": "typesafe-ai",
+            "modelAttemptCount": 1,
+            "modelAttempts": [
+              {
+                "canonicalSlug": "typesafe-ai/jev",
+                "success": true,
+                "providerAttemptCount": 1,
+                "providerAttempts": [
+                  {
+                    "provider": "typesafe-ai",
+                    "credentialType": "system",
+                    "success": true,
+                    "startTime": 1790240266828,
+                    "endTime": 1790240267043,
+                    "statusCode": 200
+                  }
+                ]
+              }
+            ],
+            "totalProviderAttemptCount": 1
+          },
+          "cost": "0",
+          "marketCost": "0.000021378",
+          "surchargeCost": "0",
+          "gatewayCost": "0",
+          "generationId": "gen_01M39A56GR93M9SJ1EEB5QFAVN"
+        }
+      }
+    },
+    "request_ms": 299.58,
+    "attempts": [
+      {
+        "status": 200,
+        "request_ms": 299.58
+      }
+    ]
+  },
+  {
+    "id": "history-18375",
+    "model": "jev",
+    "revision": "hosted-unpinned",
+    "dataset_sha256": "f3985cac5cd3f33dcd10468677fcc1c8db3009bf58cdf63be8af311c00c36088",
+    "input_sha256": "827e04af3f7b073353348b0edaf5a100e53fa0769e6a701b79bc92ab45898c32",
+    "expected": "success",
+    "predicted": "success",
+    "correct": true,
+    "response": {
+      "model": "typesafe-ai/jev",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "success",
+          "confidence": 0.92,
+          "probabilities": {
+            "uncertain": 0.05,
+            "failure": 0,
+            "success": 0.95
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 491,
+        "output_tokens": 40
+      },
+      "provider_metadata": {
+        "typesafe": {
+          "confidence": {
+            "decision": 0.92
+          }
+        },
+        "gateway": {
+          "routing": {
+            "originalModelId": "typesafe-ai/jev",
+            "resolvedProvider": "typesafe-ai",
+            "fallbacksAvailable": [],
+            "planningReasoning": "System credentials planned for: typesafe-ai. Total execution order: typesafe-ai(system)",
+            "canonicalSlug": "typesafe-ai/jev",
+            "finalProvider": "typesafe-ai",
+            "modelAttemptCount": 1,
+            "modelAttempts": [
+              {
+                "canonicalSlug": "typesafe-ai/jev",
+                "success": true,
+                "providerAttemptCount": 1,
+                "providerAttempts": [
+                  {
+                    "provider": "typesafe-ai",
+                    "credentialType": "system",
+                    "success": true,
+                    "startTime": 1790240269144,
+                    "endTime": 1790240269330,
+                    "statusCode": 200
+                  }
+                ]
+              }
+            ],
+            "totalProviderAttemptCount": 1
+          },
+          "cost": "0",
+          "marketCost": "0.000020622",
+          "surchargeCost": "0",
+          "gatewayCost": "0",
+          "generationId": "gen_01M39A58S6Y0S9KD5PVETXQ5J5"
+        }
+      }
+    },
+    "request_ms": 284.0,
+    "attempts": [
+      {
+        "status": 200,
+        "request_ms": 284.0
+      }
+    ]
+  },
+  {
+    "id": "history-18567",
+    "model": "jev",
+    "revision": "hosted-unpinned",
+    "dataset_sha256": "f3985cac5cd3f33dcd10468677fcc1c8db3009bf58cdf63be8af311c00c36088",
+    "input_sha256": "0581d087c98a7cd44df525d0c61604ea147bd73f4a3e53d210a41caf680ab94e",
+    "expected": "success",
+    "predicted": "success",
+    "correct": true,
+    "response": {
+      "model": "typesafe-ai/jev",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "success",
+          "confidence": 1,
+          "probabilities": {
+            "success": 1,
+            "failure": 0,
+            "uncertain": 0
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 447,
+        "output_tokens": 40
+      },
+      "provider_metadata": {
+        "typesafe": {
+          "confidence": {
+            "decision": 1
+          }
+        },
+        "gateway": {
+          "routing": {
+            "originalModelId": "typesafe-ai/jev",
+            "resolvedProvider": "typesafe-ai",
+            "fallbacksAvailable": [],
+            "planningReasoning": "System credentials planned for: typesafe-ai. Total execution order: typesafe-ai(system)",
+            "canonicalSlug": "typesafe-ai/jev",
+            "finalProvider": "typesafe-ai",
+            "modelAttemptCount": 1,
+            "modelAttempts": [
+              {
+                "canonicalSlug": "typesafe-ai/jev",
+                "success": true,
+                "providerAttemptCount": 1,
+                "providerAttempts": [
+                  {
+                    "provider": "typesafe-ai",
+                    "credentialType": "system",
+                    "success": true,
+                    "startTime": 1790240271398,
+                    "endTime": 1790240272069,
+                    "statusCode": 200
+                  }
+                ]
+              }
+            ],
+            "totalProviderAttemptCount": 1
+          },
+          "cost": "0",
+          "marketCost": "0.000018774",
+          "surchargeCost": "0",
+          "gatewayCost": "0",
+          "generationId": "gen_01M39A5B0AY60R0N0AW57A0NGZ"
+        }
+      }
+    },
+    "request_ms": 751.21,
+    "attempts": [
+      {
+        "status": 200,
+        "request_ms": 751.21
+      }
+    ]
+  },
+  {
+    "id": "history-18713",
+    "model": "jev",
+    "revision": "hosted-unpinned",
+    "dataset_sha256": "f3985cac5cd3f33dcd10468677fcc1c8db3009bf58cdf63be8af311c00c36088",
+    "input_sha256": "31f90c718b8675e9e7565b8821a34ccf0aa93a72ff6d515625f69bb4af51ed69",
+    "expected": "success",
+    "predicted": "success",
+    "correct": true,
+    "response": {
+      "model": "typesafe-ai/jev",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "success",
+          "confidence": 1,
+          "probabilities": {
+            "uncertain": 0,
+            "failure": 0,
+            "success": 1
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 452,
+        "output_tokens": 40
+      },
+      "provider_metadata": {
+        "typesafe": {
+          "confidence": {
+            "decision": 1
+          }
+        },
+        "gateway": {
+          "routing": {
+            "originalModelId": "typesafe-ai/jev",
+            "resolvedProvider": "typesafe-ai",
+            "fallbacksAvailable": [],
+            "planningReasoning": "System credentials planned for: typesafe-ai. Total execution order: typesafe-ai(system)",
+            "canonicalSlug": "typesafe-ai/jev",
+            "finalProvider": "typesafe-ai",
+            "modelAttemptCount": 1,
+            "modelAttempts": [
+              {
+                "canonicalSlug": "typesafe-ai/jev",
+                "success": true,
+                "providerAttemptCount": 1,
+                "providerAttempts": [
+                  {
+                    "provider": "typesafe-ai",
+                    "credentialType": "system",
+                    "success": true,
+                    "startTime": 1790240274149,
+                    "endTime": 1790240274349,
+                    "statusCode": 200
+                  }
+                ]
+              }
+            ],
+            "totalProviderAttemptCount": 1
+          },
+          "cost": "0",
+          "marketCost": "0.000018984",
+          "surchargeCost": "0",
+          "gatewayCost": "0",
+          "generationId": "gen_01M39A5DPGTSNEF93AP9S430WN"
+        }
+      }
+    },
+    "request_ms": 255.3,
+    "attempts": [
+      {
+        "status": 200,
+        "request_ms": 255.3
+      }
+    ]
+  },
+  {
+    "id": "history-18829",
+    "model": "jev",
+    "revision": "hosted-unpinned",
+    "dataset_sha256": "f3985cac5cd3f33dcd10468677fcc1c8db3009bf58cdf63be8af311c00c36088",
+    "input_sha256": "484704b22624eb6d01d7d6e2b1a75e2c759b27db83b9855ef6294844fc5f56c3",
+    "expected": "failure",
+    "predicted": "failure",
+    "correct": true,
+    "response": {
+      "model": "typesafe-ai/jev",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "failure",
+          "confidence": 1,
+          "probabilities": {
+            "failure": 1,
+            "success": 0,
+            "uncertain": 0
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 551,
+        "output_tokens": 40
+      },
+      "provider_metadata": {
+        "typesafe": {
+          "confidence": {
+            "decision": 1
+          }
+        },
+        "gateway": {
+          "routing": {
+            "originalModelId": "typesafe-ai/jev",
+            "resolvedProvider": "typesafe-ai",
+            "fallbacksAvailable": [],
+            "planningReasoning": "System credentials planned for: typesafe-ai. Total execution order: typesafe-ai(system)",
+            "canonicalSlug": "typesafe-ai/jev",
+            "finalProvider": "typesafe-ai",
+            "modelAttemptCount": 1,
+            "modelAttempts": [
+              {
+                "canonicalSlug": "typesafe-ai/jev",
+                "success": true,
+                "providerAttemptCount": 1,
+                "providerAttempts": [
+                  {
+                    "provider": "typesafe-ai",
+                    "credentialType": "system",
+                    "success": true,
+                    "startTime": 1790240276472,
+                    "endTime": 1790240276666,
+                    "statusCode": 200
+                  }
+                ]
+              }
+            ],
+            "totalProviderAttemptCount": 1
+          },
+          "cost": "0",
+          "marketCost": "0.000023142",
+          "surchargeCost": "0",
+          "gatewayCost": "0",
+          "generationId": "gen_01M39A5FYMSCGAFMY8PAWRES7G"
+        }
+      }
+    },
+    "request_ms": 325.46,
+    "attempts": [
+      {
+        "status": 200,
+        "request_ms": 325.46
+      }
+    ]
+  },
+  {
+    "id": "history-21188",
+    "model": "jev",
+    "revision": "hosted-unpinned",
+    "dataset_sha256": "f3985cac5cd3f33dcd10468677fcc1c8db3009bf58cdf63be8af311c00c36088",
+    "input_sha256": "484704b22624eb6d01d7d6e2b1a75e2c759b27db83b9855ef6294844fc5f56c3",
+    "expected": "failure",
+    "predicted": "failure",
+    "correct": true,
+    "response": {
+      "model": "typesafe-ai/jev",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "failure",
+          "confidence": 1,
+          "probabilities": {
+            "failure": 1,
+            "success": 0,
+            "uncertain": 0
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 551,
+        "output_tokens": 40
+      },
+      "provider_metadata": {
+        "typesafe": {
+          "confidence": {
+            "decision": 1
+          }
+        },
+        "gateway": {
+          "routing": {
+            "originalModelId": "typesafe-ai/jev",
+            "resolvedProvider": "typesafe-ai",
+            "fallbacksAvailable": [],
+            "planningReasoning": "System credentials planned for: typesafe-ai. Total execution order: typesafe-ai(system)",
+            "canonicalSlug": "typesafe-ai/jev",
+            "finalProvider": "typesafe-ai",
+            "modelAttemptCount": 1,
+            "modelAttempts": [
+              {
+                "canonicalSlug": "typesafe-ai/jev",
+                "success": true,
+                "providerAttemptCount": 1,
+                "providerAttempts": [
+                  {
+                    "provider": "typesafe-ai",
+                    "credentialType": "system",
+                    "success": true,
+                    "startTime": 1790240278750,
+                    "endTime": 1790240278962,
+                    "statusCode": 200
+                  }
+                ]
+              }
+            ],
+            "totalProviderAttemptCount": 1
+          },
+          "cost": "0",
+          "marketCost": "0.000023142",
+          "surchargeCost": "0",
+          "gatewayCost": "0",
+          "generationId": "gen_01M39A5J5XZWDSYK45VJ26SK6N"
+        }
+      }
+    },
+    "request_ms": 349.74,
+    "attempts": [
+      {
+        "status": 200,
+        "request_ms": 349.74
+      }
+    ]
+  },
+  {
+    "id": "history-31032",
+    "model": "jev",
+    "revision": "hosted-unpinned",
+    "dataset_sha256": "f3985cac5cd3f33dcd10468677fcc1c8db3009bf58cdf63be8af311c00c36088",
+    "input_sha256": "063900132d7b5843561fd3503508108c44ca0c36b812b16577d5b24a03d80848",
+    "expected": "success",
+    "predicted": "success",
+    "correct": true,
+    "response": {
+      "model": "typesafe-ai/jev",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "success",
+          "confidence": 1,
+          "probabilities": {
+            "failure": 0,
+            "success": 1,
+            "uncertain": 0
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 460,
+        "output_tokens": 40
+      },
+      "provider_metadata": {
+        "typesafe": {
+          "confidence": {
+            "decision": 1
+          }
+        },
+        "gateway": {
+          "routing": {
+            "originalModelId": "typesafe-ai/jev",
+            "resolvedProvider": "typesafe-ai",
+            "fallbacksAvailable": [],
+            "planningReasoning": "System credentials planned for: typesafe-ai. Total execution order: typesafe-ai(system)",
+            "canonicalSlug": "typesafe-ai/jev",
+            "finalProvider": "typesafe-ai",
+            "modelAttemptCount": 1,
+            "modelAttempts": [
+              {
+                "canonicalSlug": "typesafe-ai/jev",
+                "success": true,
+                "providerAttemptCount": 1,
+                "providerAttempts": [
+                  {
+                    "provider": "typesafe-ai",
+                    "credentialType": "system",
+                    "success": true,
+                    "startTime": 1790240281199,
+                    "endTime": 1790240281396,
+                    "statusCode": 200
+                  }
+                ]
+              }
+            ],
+            "totalProviderAttemptCount": 1
+          },
+          "cost": "0",
+          "marketCost": "0.00001932",
+          "surchargeCost": "0",
+          "gatewayCost": "0",
+          "generationId": "gen_01M39A5MJ10X8S708GCX7FAJVA"
+        }
+      }
+    },
+    "request_ms": 366.26,
+    "attempts": [
+      {
+        "status": 200,
+        "request_ms": 366.26
+      }
+    ]
+  },
+  {
+    "id": "history-31160",
+    "model": "jev",
+    "revision": "hosted-unpinned",
+    "dataset_sha256": "f3985cac5cd3f33dcd10468677fcc1c8db3009bf58cdf63be8af311c00c36088",
+    "input_sha256": "31f90c718b8675e9e7565b8821a34ccf0aa93a72ff6d515625f69bb4af51ed69",
+    "expected": "success",
+    "predicted": "success",
+    "correct": true,
+    "response": {
+      "model": "typesafe-ai/jev",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "success",
+          "confidence": 1,
+          "probabilities": {
+            "success": 1,
+            "failure": 0,
+            "uncertain": 0
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 452,
+        "output_tokens": 40
+      },
+      "provider_metadata": {
+        "typesafe": {
+          "confidence": {
+            "decision": 1
+          }
+        },
+        "gateway": {
+          "routing": {
+            "originalModelId": "typesafe-ai/jev",
+            "resolvedProvider": "typesafe-ai",
+            "fallbacksAvailable": [],
+            "planningReasoning": "System credentials planned for: typesafe-ai. Total execution order: typesafe-ai(system)",
+            "canonicalSlug": "typesafe-ai/jev",
+            "finalProvider": "typesafe-ai",
+            "modelAttemptCount": 1,
+            "modelAttempts": [
+              {
+                "canonicalSlug": "typesafe-ai/jev",
+                "success": true,
+                "providerAttemptCount": 1,
+                "providerAttempts": [
+                  {
+                    "provider": "typesafe-ai",
+                    "credentialType": "system",
+                    "success": true,
+                    "startTime": 1790240283497,
+                    "endTime": 1790240283709,
+                    "statusCode": 200
+                  }
+                ]
+              }
+            ],
+            "totalProviderAttemptCount": 1
+          },
+          "cost": "0",
+          "marketCost": "0.000018984",
+          "surchargeCost": "0",
+          "gatewayCost": "0",
+          "generationId": "gen_01M39A5PSYHCHVCMGY4800DMA6"
+        }
+      }
+    },
+    "request_ms": 435.84,
+    "attempts": [
+      {
+        "status": 200,
+        "request_ms": 435.84
+      }
+    ]
+  },
+  {
+    "id": "history-31272",
+    "model": "jev",
+    "revision": "hosted-unpinned",
+    "dataset_sha256": "f3985cac5cd3f33dcd10468677fcc1c8db3009bf58cdf63be8af311c00c36088",
+    "input_sha256": "b7954bda3ecca0873d5d463bba7610d6bc839195121bfb82648375a83c120910",
+    "expected": "success",
+    "predicted": "success",
+    "correct": true,
+    "response": {
+      "model": "typesafe-ai/jev",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "success",
+          "confidence": 1,
+          "probabilities": {
+            "uncertain": 0,
+            "failure": 0,
+            "success": 1
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 509,
+        "output_tokens": 40
+      },
+      "provider_metadata": {
+        "typesafe": {
+          "confidence": {
+            "decision": 1
+          }
+        },
+        "gateway": {
+          "routing": {
+            "originalModelId": "typesafe-ai/jev",
+            "resolvedProvider": "typesafe-ai",
+            "fallbacksAvailable": [],
+            "planningReasoning": "System credentials planned for: typesafe-ai. Total execution order: typesafe-ai(system)",
+            "canonicalSlug": "typesafe-ai/jev",
+            "finalProvider": "typesafe-ai",
+            "modelAttemptCount": 1,
+            "modelAttempts": [
+              {
+                "canonicalSlug": "typesafe-ai/jev",
+                "success": true,
+                "providerAttemptCount": 1,
+                "providerAttempts": [
+                  {
+                    "provider": "typesafe-ai",
+                    "credentialType": "system",
+                    "success": true,
+                    "startTime": 1790240285907,
+                    "endTime": 1790240286093,
+                    "statusCode": 200
+                  }
+                ]
+              }
+            ],
+            "totalProviderAttemptCount": 1
+          },
+          "cost": "0",
+          "marketCost": "0.000021378",
+          "surchargeCost": "0",
+          "gatewayCost": "0",
+          "generationId": "gen_01M39A5S5YH2E5MW27C7PAVEC4"
+        }
+      }
+    },
+    "request_ms": 241.29,
+    "attempts": [
+      {
+        "status": 200,
+        "request_ms": 241.29
+      }
+    ]
+  },
+  {
+    "id": "history-31528",
+    "model": "jev",
+    "revision": "hosted-unpinned",
+    "dataset_sha256": "f3985cac5cd3f33dcd10468677fcc1c8db3009bf58cdf63be8af311c00c36088",
+    "input_sha256": "827e04af3f7b073353348b0edaf5a100e53fa0769e6a701b79bc92ab45898c32",
+    "expected": "success",
+    "predicted": "success",
+    "correct": true,
+    "response": {
+      "model": "typesafe-ai/jev",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "success",
+          "confidence": 0.91,
+          "probabilities": {
+            "failure": 0,
+            "success": 0.94,
+            "uncertain": 0.06
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 491,
+        "output_tokens": 40
+      },
+      "provider_metadata": {
+        "typesafe": {
+          "confidence": {
+            "decision": 0.91
+          }
+        },
+        "gateway": {
+          "routing": {
+            "originalModelId": "typesafe-ai/jev",
+            "resolvedProvider": "typesafe-ai",
+            "fallbacksAvailable": [],
+            "planningReasoning": "System credentials planned for: typesafe-ai. Total execution order: typesafe-ai(system)",
+            "canonicalSlug": "typesafe-ai/jev",
+            "finalProvider": "typesafe-ai",
+            "modelAttemptCount": 1,
+            "modelAttempts": [
+              {
+                "canonicalSlug": "typesafe-ai/jev",
+                "success": true,
+                "providerAttemptCount": 1,
+                "providerAttempts": [
+                  {
+                    "provider": "typesafe-ai",
+                    "credentialType": "system",
+                    "success": true,
+                    "startTime": 1790240288174,
+                    "endTime": 1790240288366,
+                    "statusCode": 200
+                  }
+                ]
+              }
+            ],
+            "totalProviderAttemptCount": 1
+          },
+          "cost": "0",
+          "marketCost": "0.000020622",
+          "surchargeCost": "0",
+          "gatewayCost": "0",
+          "generationId": "gen_01M39A5VCDGE6AV68CSFC8J8FC"
+        }
+      }
+    },
+    "request_ms": 271.02,
+    "attempts": [
+      {
+        "status": 200,
+        "request_ms": 271.02
+      }
+    ]
+  },
+  {
+    "id": "history-31714",
+    "model": "jev",
+    "revision": "hosted-unpinned",
+    "dataset_sha256": "f3985cac5cd3f33dcd10468677fcc1c8db3009bf58cdf63be8af311c00c36088",
+    "input_sha256": "0581d087c98a7cd44df525d0c61604ea147bd73f4a3e53d210a41caf680ab94e",
+    "expected": "success",
+    "predicted": "success",
+    "correct": true,
+    "response": {
+      "model": "typesafe-ai/jev",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "success",
+          "confidence": 1,
+          "probabilities": {
+            "failure": 0,
+            "success": 1,
+            "uncertain": 0
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 447,
+        "output_tokens": 40
+      },
+      "provider_metadata": {
+        "typesafe": {
+          "confidence": {
+            "decision": 1
+          }
+        },
+        "gateway": {
+          "routing": {
+            "originalModelId": "typesafe-ai/jev",
+            "resolvedProvider": "typesafe-ai",
+            "fallbacksAvailable": [],
+            "planningReasoning": "System credentials planned for: typesafe-ai. Total execution order: typesafe-ai(system)",
+            "canonicalSlug": "typesafe-ai/jev",
+            "finalProvider": "typesafe-ai",
+            "modelAttemptCount": 1,
+            "modelAttempts": [
+              {
+                "canonicalSlug": "typesafe-ai/jev",
+                "success": true,
+                "providerAttemptCount": 1,
+                "providerAttempts": [
+                  {
+                    "provider": "typesafe-ai",
+                    "credentialType": "system",
+                    "success": true,
+                    "startTime": 1790240290433,
+                    "endTime": 1790240290651,
+                    "statusCode": 200
+                  }
+                ]
+              }
+            ],
+            "totalProviderAttemptCount": 1
+          },
+          "cost": "0",
+          "marketCost": "0.000018774",
+          "surchargeCost": "0",
+          "gatewayCost": "0",
+          "generationId": "gen_01M39A5XK9WJD6T1X8WNT1GXPH"
+        }
+      }
+    },
+    "request_ms": 286.18,
+    "attempts": [
+      {
+        "status": 200,
+        "request_ms": 286.18
+      }
+    ]
+  },
+  {
+    "id": "history-31858",
+    "model": "jev",
+    "revision": "hosted-unpinned",
+    "dataset_sha256": "f3985cac5cd3f33dcd10468677fcc1c8db3009bf58cdf63be8af311c00c36088",
+    "input_sha256": "31f90c718b8675e9e7565b8821a34ccf0aa93a72ff6d515625f69bb4af51ed69",
+    "expected": "success",
+    "predicted": "success",
+    "correct": true,
+    "response": {
+      "model": "typesafe-ai/jev",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "success",
+          "confidence": 1,
+          "probabilities": {
+            "failure": 0,
+            "success": 1,
+            "uncertain": 0
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 452,
+        "output_tokens": 40
+      },
+      "provider_metadata": {
+        "typesafe": {
+          "confidence": {
+            "decision": 1
+          }
+        },
+        "gateway": {
+          "routing": {
+            "originalModelId": "typesafe-ai/jev",
+            "resolvedProvider": "typesafe-ai",
+            "fallbacksAvailable": [],
+            "planningReasoning": "System credentials planned for: typesafe-ai. Total execution order: typesafe-ai(system)",
+            "canonicalSlug": "typesafe-ai/jev",
+            "finalProvider": "typesafe-ai",
+            "modelAttemptCount": 1,
+            "modelAttempts": [
+              {
+                "canonicalSlug": "typesafe-ai/jev",
+                "success": true,
+                "providerAttemptCount": 1,
+                "providerAttempts": [
+                  {
+                    "provider": "typesafe-ai",
+                    "credentialType": "system",
+                    "success": true,
+                    "startTime": 1790240292745,
+                    "endTime": 1790240292980,
+                    "statusCode": 200
+                  }
+                ]
+              }
+            ],
+            "totalProviderAttemptCount": 1
+          },
+          "cost": "0",
+          "marketCost": "0.000018984",
+          "surchargeCost": "0",
+          "gatewayCost": "0",
+          "generationId": "gen_01M39A5ZTPMS4ERDE9T1ATPM6M"
+        }
+      }
+    },
+    "request_ms": 320.37,
+    "attempts": [
+      {
+        "status": 200,
+        "request_ms": 320.37
+      }
+    ]
+  },
+  {
+    "id": "history-31975",
+    "model": "jev",
+    "revision": "hosted-unpinned",
+    "dataset_sha256": "f3985cac5cd3f33dcd10468677fcc1c8db3009bf58cdf63be8af311c00c36088",
+    "input_sha256": "484704b22624eb6d01d7d6e2b1a75e2c759b27db83b9855ef6294844fc5f56c3",
+    "expected": "failure",
+    "predicted": "failure",
+    "correct": true,
+    "response": {
+      "model": "typesafe-ai/jev",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "failure",
+          "confidence": 1,
+          "probabilities": {
+            "failure": 1,
+            "success": 0,
+            "uncertain": 0
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 551,
+        "output_tokens": 40
+      },
+      "provider_metadata": {
+        "typesafe": {
+          "confidence": {
+            "decision": 1
+          }
+        },
+        "gateway": {
+          "routing": {
+            "originalModelId": "typesafe-ai/jev",
+            "resolvedProvider": "typesafe-ai",
+            "fallbacksAvailable": [],
+            "planningReasoning": "System credentials planned for: typesafe-ai. Total execution order: typesafe-ai(system)",
+            "canonicalSlug": "typesafe-ai/jev",
+            "finalProvider": "typesafe-ai",
+            "modelAttemptCount": 1,
+            "modelAttempts": [
+              {
+                "canonicalSlug": "typesafe-ai/jev",
+                "success": true,
+                "providerAttemptCount": 1,
+                "providerAttempts": [
+                  {
+                    "provider": "typesafe-ai",
+                    "credentialType": "system",
+                    "success": true,
+                    "startTime": 1790240295060,
+                    "endTime": 1790240295274,
+                    "statusCode": 200
+                  }
+                ]
+              }
+            ],
+            "totalProviderAttemptCount": 1
+          },
+          "cost": "0",
+          "marketCost": "0.000023142",
+          "surchargeCost": "0",
+          "gatewayCost": "0",
+          "generationId": "gen_01M39A623KH88TRD90RKPDW3GK"
+        }
+      }
+    },
+    "request_ms": 293.38,
+    "attempts": [
+      {
+        "status": 200,
+        "request_ms": 293.38
+      }
+    ]
+  },
+  {
+    "id": "history-35412",
+    "model": "jev",
+    "revision": "hosted-unpinned",
+    "dataset_sha256": "f3985cac5cd3f33dcd10468677fcc1c8db3009bf58cdf63be8af311c00c36088",
+    "input_sha256": "7cdb3e5790f66fb272e5125412252c787a9871d9d74b17163db4602b19d35d83",
+    "expected": "success",
+    "predicted": "success",
+    "correct": true,
+    "response": {
+      "model": "typesafe-ai/jev",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "success",
+          "confidence": 1,
+          "probabilities": {
+            "uncertain": 0,
+            "success": 1,
+            "failure": 0
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 702,
+        "output_tokens": 40
+      },
+      "provider_metadata": {
+        "typesafe": {
+          "confidence": {
+            "decision": 1
+          }
+        },
+        "gateway": {
+          "routing": {
+            "originalModelId": "typesafe-ai/jev",
+            "resolvedProvider": "typesafe-ai",
+            "fallbacksAvailable": [],
+            "planningReasoning": "System credentials planned for: typesafe-ai. Total execution order: typesafe-ai(system)",
+            "canonicalSlug": "typesafe-ai/jev",
+            "finalProvider": "typesafe-ai",
+            "modelAttemptCount": 1,
+            "modelAttempts": [
+              {
+                "canonicalSlug": "typesafe-ai/jev",
+                "success": true,
+                "providerAttemptCount": 1,
+                "providerAttempts": [
+                  {
+                    "provider": "typesafe-ai",
+                    "credentialType": "system",
+                    "success": true,
+                    "startTime": 1790240297437,
+                    "endTime": 1790240297652,
+                    "statusCode": 200
+                  }
+                ]
+              }
+            ],
+            "totalProviderAttemptCount": 1
+          },
+          "cost": "0",
+          "marketCost": "0.000029484",
+          "surchargeCost": "0",
+          "gatewayCost": "0",
+          "generationId": "gen_01M39A64DVKX87ZZEZAF5PRSVV"
+        }
+      }
+    },
+    "request_ms": 367.7,
+    "attempts": [
+      {
+        "status": 200,
+        "request_ms": 367.7
+      }
+    ]
+  },
+  {
+    "id": "history-36073",
+    "model": "jev",
+    "revision": "hosted-unpinned",
+    "dataset_sha256": "f3985cac5cd3f33dcd10468677fcc1c8db3009bf58cdf63be8af311c00c36088",
+    "input_sha256": "a196241a50d55296e84ebb0d76ab22cb6a4cf35624bdbbad7fdabe26b89c24be",
+    "expected": "success",
+    "predicted": "success",
+    "correct": true,
+    "response": {
+      "model": "typesafe-ai/jev",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "success",
+          "confidence": 1,
+          "probabilities": {
+            "success": 1,
+            "uncertain": 0,
+            "failure": 0
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 737,
+        "output_tokens": 40
+      },
+      "provider_metadata": {
+        "typesafe": {
+          "confidence": {
+            "decision": 1
+          }
+        },
+        "gateway": {
+          "routing": {
+            "originalModelId": "typesafe-ai/jev",
+            "resolvedProvider": "typesafe-ai",
+            "fallbacksAvailable": [],
+            "planningReasoning": "System credentials planned for: typesafe-ai. Total execution order: typesafe-ai(system)",
+            "canonicalSlug": "typesafe-ai/jev",
+            "finalProvider": "typesafe-ai",
+            "modelAttemptCount": 1,
+            "modelAttempts": [
+              {
+                "canonicalSlug": "typesafe-ai/jev",
+                "success": true,
+                "providerAttemptCount": 1,
+                "providerAttempts": [
+                  {
+                    "provider": "typesafe-ai",
+                    "credentialType": "system",
+                    "success": true,
+                    "startTime": 1790240299733,
+                    "endTime": 1790240299929,
+                    "statusCode": 200
+                  }
+                ]
+              }
+            ],
+            "totalProviderAttemptCount": 1
+          },
+          "cost": "0",
+          "marketCost": "0.000030954",
+          "surchargeCost": "0",
+          "gatewayCost": "0",
+          "generationId": "gen_01M39A66NE36H8HTHAGX0V5WZH"
+        }
+      }
+    },
+    "request_ms": 341.76,
+    "attempts": [
+      {
+        "status": 200,
+        "request_ms": 341.76
+      }
+    ]
+  },
+  {
+    "id": "history-36449",
+    "model": "jev",
+    "revision": "hosted-unpinned",
+    "dataset_sha256": "f3985cac5cd3f33dcd10468677fcc1c8db3009bf58cdf63be8af311c00c36088",
+    "input_sha256": "24ea1d76aa98dcd133fcccc732b5767103c388d4f426f1af5a1f4febb12da3c8",
+    "expected": "success",
+    "predicted": "success",
+    "correct": true,
+    "response": {
+      "model": "typesafe-ai/jev",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "success",
+          "confidence": 1,
+          "probabilities": {
+            "uncertain": 0,
+            "success": 1,
+            "failure": 0
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 939,
+        "output_tokens": 40
+      },
+      "provider_metadata": {
+        "typesafe": {
+          "confidence": {
+            "decision": 1
+          }
+        },
+        "gateway": {
+          "routing": {
+            "originalModelId": "typesafe-ai/jev",
+            "resolvedProvider": "typesafe-ai",
+            "fallbacksAvailable": [],
+            "planningReasoning": "System credentials planned for: typesafe-ai. Total execution order: typesafe-ai(system)",
+            "canonicalSlug": "typesafe-ai/jev",
+            "finalProvider": "typesafe-ai",
+            "modelAttemptCount": 1,
+            "modelAttempts": [
+              {
+                "canonicalSlug": "typesafe-ai/jev",
+                "success": true,
+                "providerAttemptCount": 1,
+                "providerAttempts": [
+                  {
+                    "provider": "typesafe-ai",
+                    "credentialType": "system",
+                    "success": true,
+                    "startTime": 1790240302201,
+                    "endTime": 1790240302395,
+                    "statusCode": 200
+                  }
+                ]
+              }
+            ],
+            "totalProviderAttemptCount": 1
+          },
+          "cost": "0",
+          "marketCost": "0.000039438",
+          "surchargeCost": "0",
+          "gatewayCost": "0",
+          "generationId": "gen_01M39A691J0QT3KMBDSZ1R9DX4"
+        }
+      }
+    },
+    "request_ms": 378.8,
+    "attempts": [
+      {
+        "status": 200,
+        "request_ms": 378.8
+      }
+    ]
+  },
+  {
+    "id": "history-37119",
+    "model": "jev",
+    "revision": "hosted-unpinned",
+    "dataset_sha256": "f3985cac5cd3f33dcd10468677fcc1c8db3009bf58cdf63be8af311c00c36088",
+    "input_sha256": "80d7de13b41b64183556b9f6fddcb8bbce1bdadd2af0ee130a94b91c71be54d3",
+    "expected": "success",
+    "predicted": "success",
+    "correct": true,
+    "response": {
+      "model": "typesafe-ai/jev",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "success",
+          "confidence": 0.92,
+          "probabilities": {
+            "failure": 0,
+            "success": 0.95,
+            "uncertain": 0.05
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 519,
+        "output_tokens": 40
+      },
+      "provider_metadata": {
+        "typesafe": {
+          "confidence": {
+            "decision": 0.92
+          }
+        },
+        "gateway": {
+          "routing": {
+            "originalModelId": "typesafe-ai/jev",
+            "resolvedProvider": "typesafe-ai",
+            "fallbacksAvailable": [],
+            "planningReasoning": "System credentials planned for: typesafe-ai. Total execution order: typesafe-ai(system)",
+            "canonicalSlug": "typesafe-ai/jev",
+            "finalProvider": "typesafe-ai",
+            "modelAttemptCount": 1,
+            "modelAttempts": [
+              {
+                "canonicalSlug": "typesafe-ai/jev",
+                "success": true,
+                "providerAttemptCount": 1,
+                "providerAttempts": [
+                  {
+                    "provider": "typesafe-ai",
+                    "credentialType": "system",
+                    "success": true,
+                    "startTime": 1790240304506,
+                    "endTime": 1790240304716,
+                    "statusCode": 200
+                  }
+                ]
+              }
+            ],
+            "totalProviderAttemptCount": 1
+          },
+          "cost": "0",
+          "marketCost": "0.000021798",
+          "surchargeCost": "0",
+          "gatewayCost": "0",
+          "generationId": "gen_01M39A6B9J8GB7PPNNYC0MQTFX"
+        }
+      }
+    },
+    "request_ms": 320.87,
+    "attempts": [
+      {
+        "status": 200,
+        "request_ms": 320.87
+      }
+    ]
+  },
+  {
+    "id": "history-38254",
+    "model": "jev",
+    "revision": "hosted-unpinned",
+    "dataset_sha256": "f3985cac5cd3f33dcd10468677fcc1c8db3009bf58cdf63be8af311c00c36088",
+    "input_sha256": "9694336597b68a7159564e8b64af7f5193e9ba177d5b233788f99c41085d2f65",
+    "expected": "uncertain",
+    "predicted": "uncertain",
+    "correct": true,
+    "response": {
+      "model": "typesafe-ai/jev",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "uncertain",
+          "confidence": 0.51,
+          "probabilities": {
+            "success": 0.31,
+            "failure": 0.01,
+            "uncertain": 0.68
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 533,
+        "output_tokens": 42
+      },
+      "provider_metadata": {
+        "typesafe": {
+          "confidence": {
+            "decision": 0.51
+          }
+        },
+        "gateway": {
+          "routing": {
+            "originalModelId": "typesafe-ai/jev",
+            "resolvedProvider": "typesafe-ai",
+            "fallbacksAvailable": [],
+            "planningReasoning": "System credentials planned for: typesafe-ai. Total execution order: typesafe-ai(system)",
+            "canonicalSlug": "typesafe-ai/jev",
+            "finalProvider": "typesafe-ai",
+            "modelAttemptCount": 1,
+            "modelAttempts": [
+              {
+                "canonicalSlug": "typesafe-ai/jev",
+                "success": true,
+                "providerAttemptCount": 1,
+                "providerAttempts": [
+                  {
+                    "provider": "typesafe-ai",
+                    "credentialType": "system",
+                    "success": true,
+                    "startTime": 1790240306865,
+                    "endTime": 1790240307145,
+                    "statusCode": 200
+                  }
+                ]
+              }
+            ],
+            "totalProviderAttemptCount": 1
+          },
+          "cost": "0",
+          "marketCost": "0.000022386",
+          "surchargeCost": "0",
+          "gatewayCost": "0",
+          "generationId": "gen_01M39A6DMW41J6GXBFE5001WWS"
+        }
+      }
+    },
+    "request_ms": 434.52,
+    "attempts": [
+      {
+        "status": 200,
+        "request_ms": 434.52
+      }
+    ]
+  },
+  {
+    "id": "history-60544",
+    "model": "jev",
+    "revision": "hosted-unpinned",
+    "dataset_sha256": "f3985cac5cd3f33dcd10468677fcc1c8db3009bf58cdf63be8af311c00c36088",
+    "input_sha256": "063900132d7b5843561fd3503508108c44ca0c36b812b16577d5b24a03d80848",
+    "expected": "success",
+    "predicted": "success",
+    "correct": true,
+    "response": {
+      "model": "typesafe-ai/jev",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "success",
+          "confidence": 1,
+          "probabilities": {
+            "failure": 0,
+            "uncertain": 0,
+            "success": 1
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 460,
+        "output_tokens": 40
+      },
+      "provider_metadata": {
+        "typesafe": {
+          "confidence": {
+            "decision": 1
+          }
+        },
+        "gateway": {
+          "routing": {
+            "originalModelId": "typesafe-ai/jev",
+            "resolvedProvider": "typesafe-ai",
+            "fallbacksAvailable": [],
+            "planningReasoning": "System credentials planned for: typesafe-ai. Total execution order: typesafe-ai(system)",
+            "canonicalSlug": "typesafe-ai/jev",
+            "finalProvider": "typesafe-ai",
+            "modelAttemptCount": 1,
+            "modelAttempts": [
+              {
+                "canonicalSlug": "typesafe-ai/jev",
+                "success": true,
+                "providerAttemptCount": 1,
+                "providerAttempts": [
+                  {
+                    "provider": "typesafe-ai",
+                    "credentialType": "system",
+                    "success": true,
+                    "startTime": 1790240309252,
+                    "endTime": 1790240309482,
+                    "statusCode": 200
+                  }
+                ]
+              }
+            ],
+            "totalProviderAttemptCount": 1
+          },
+          "cost": "0",
+          "marketCost": "0.00001932",
+          "surchargeCost": "0",
+          "gatewayCost": "0",
+          "generationId": "gen_01M39A6FYZSY85JTRYAGH3ZJDT"
+        }
+      }
+    },
+    "request_ms": 304.39,
+    "attempts": [
+      {
+        "status": 200,
+        "request_ms": 304.39
+      }
+    ]
+  },
+  {
+    "id": "history-60672",
+    "model": "jev",
+    "revision": "hosted-unpinned",
+    "dataset_sha256": "f3985cac5cd3f33dcd10468677fcc1c8db3009bf58cdf63be8af311c00c36088",
+    "input_sha256": "31f90c718b8675e9e7565b8821a34ccf0aa93a72ff6d515625f69bb4af51ed69",
+    "expected": "success",
+    "predicted": "success",
+    "correct": true,
+    "response": {
+      "model": "typesafe-ai/jev",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "success",
+          "confidence": 1,
+          "probabilities": {
+            "failure": 0,
+            "success": 1,
+            "uncertain": 0
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 452,
+        "output_tokens": 40
+      },
+      "provider_metadata": {
+        "typesafe": {
+          "confidence": {
+            "decision": 1
+          }
+        },
+        "gateway": {
+          "routing": {
+            "originalModelId": "typesafe-ai/jev",
+            "resolvedProvider": "typesafe-ai",
+            "fallbacksAvailable": [],
+            "planningReasoning": "System credentials planned for: typesafe-ai. Total execution order: typesafe-ai(system)",
+            "canonicalSlug": "typesafe-ai/jev",
+            "finalProvider": "typesafe-ai",
+            "modelAttemptCount": 1,
+            "modelAttempts": [
+              {
+                "canonicalSlug": "typesafe-ai/jev",
+                "success": true,
+                "providerAttemptCount": 1,
+                "providerAttempts": [
+                  {
+                    "provider": "typesafe-ai",
+                    "credentialType": "system",
+                    "success": true,
+                    "startTime": 1790240311601,
+                    "endTime": 1790240311805,
+                    "statusCode": 200
+                  }
+                ]
+              }
+            ],
+            "totalProviderAttemptCount": 1
+          },
+          "cost": "0",
+          "marketCost": "0.000018984",
+          "surchargeCost": "0",
+          "gatewayCost": "0",
+          "generationId": "gen_01M39A6J8MQ93RTSF2S5ECRSH5"
+        }
+      }
+    },
+    "request_ms": 313.32,
+    "attempts": [
+      {
+        "status": 200,
+        "request_ms": 313.32
+      }
+    ]
+  },
+  {
+    "id": "history-60782",
+    "model": "jev",
+    "revision": "hosted-unpinned",
+    "dataset_sha256": "f3985cac5cd3f33dcd10468677fcc1c8db3009bf58cdf63be8af311c00c36088",
+    "input_sha256": "b7954bda3ecca0873d5d463bba7610d6bc839195121bfb82648375a83c120910",
+    "expected": "success",
+    "predicted": "success",
+    "correct": true,
+    "response": {
+      "model": "typesafe-ai/jev",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "success",
+          "confidence": 1,
+          "probabilities": {
+            "success": 1,
+            "uncertain": 0,
+            "failure": 0
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 509,
+        "output_tokens": 40
+      },
+      "provider_metadata": {
+        "typesafe": {
+          "confidence": {
+            "decision": 1
+          }
+        },
+        "gateway": {
+          "routing": {
+            "originalModelId": "typesafe-ai/jev",
+            "resolvedProvider": "typesafe-ai",
+            "fallbacksAvailable": [],
+            "planningReasoning": "System credentials planned for: typesafe-ai. Total execution order: typesafe-ai(system)",
+            "canonicalSlug": "typesafe-ai/jev",
+            "finalProvider": "typesafe-ai",
+            "modelAttemptCount": 1,
+            "modelAttempts": [
+              {
+                "canonicalSlug": "typesafe-ai/jev",
+                "success": true,
+                "providerAttemptCount": 1,
+                "providerAttempts": [
+                  {
+                    "provider": "typesafe-ai",
+                    "credentialType": "system",
+                    "success": true,
+                    "startTime": 1790240313873,
+                    "endTime": 1790240314114,
+                    "statusCode": 200
+                  }
+                ]
+              }
+            ],
+            "totalProviderAttemptCount": 1
+          },
+          "cost": "0",
+          "marketCost": "0.000021378",
+          "surchargeCost": "0",
+          "gatewayCost": "0",
+          "generationId": "gen_01M39A6MFRMAC0JFMRV0G6GNNW"
+        }
+      }
+    },
+    "request_ms": 349.63,
+    "attempts": [
+      {
+        "status": 200,
+        "request_ms": 349.63
+      }
+    ]
+  },
+  {
+    "id": "history-61034",
+    "model": "jev",
+    "revision": "hosted-unpinned",
+    "dataset_sha256": "f3985cac5cd3f33dcd10468677fcc1c8db3009bf58cdf63be8af311c00c36088",
+    "input_sha256": "827e04af3f7b073353348b0edaf5a100e53fa0769e6a701b79bc92ab45898c32",
+    "expected": "success",
+    "predicted": "success",
+    "correct": true,
+    "response": {
+      "model": "typesafe-ai/jev",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "success",
+          "confidence": 0.92,
+          "probabilities": {
+            "failure": 0,
+            "success": 0.95,
+            "uncertain": 0.05
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 491,
+        "output_tokens": 40
+      },
+      "provider_metadata": {
+        "typesafe": {
+          "confidence": {
+            "decision": 0.92
+          }
+        },
+        "gateway": {
+          "routing": {
+            "originalModelId": "typesafe-ai/jev",
+            "resolvedProvider": "typesafe-ai",
+            "fallbacksAvailable": [],
+            "planningReasoning": "System credentials planned for: typesafe-ai. Total execution order: typesafe-ai(system)",
+            "canonicalSlug": "typesafe-ai/jev",
+            "finalProvider": "typesafe-ai",
+            "modelAttemptCount": 1,
+            "modelAttempts": [
+              {
+                "canonicalSlug": "typesafe-ai/jev",
+                "success": true,
+                "providerAttemptCount": 1,
+                "providerAttempts": [
+                  {
+                    "provider": "typesafe-ai",
+                    "credentialType": "system",
+                    "success": true,
+                    "startTime": 1790240316320,
+                    "endTime": 1790240316542,
+                    "statusCode": 200
+                  }
+                ]
+              }
+            ],
+            "totalProviderAttemptCount": 1
+          },
+          "cost": "0",
+          "marketCost": "0.000020622",
+          "surchargeCost": "0",
+          "gatewayCost": "0",
+          "generationId": "gen_01M39A6PVY325XQ646PSSSE7NJ"
+        }
+      }
+    },
+    "request_ms": 373.56,
+    "attempts": [
+      {
+        "status": 200,
+        "request_ms": 373.56
+      }
+    ]
+  },
+  {
+    "id": "history-61178",
+    "model": "jev",
+    "revision": "hosted-unpinned",
+    "dataset_sha256": "f3985cac5cd3f33dcd10468677fcc1c8db3009bf58cdf63be8af311c00c36088",
+    "input_sha256": "0581d087c98a7cd44df525d0c61604ea147bd73f4a3e53d210a41caf680ab94e",
+    "expected": "success",
+    "predicted": "success",
+    "correct": true,
+    "response": {
+      "model": "typesafe-ai/jev",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "success",
+          "confidence": 1,
+          "probabilities": {
+            "failure": 0,
+            "success": 1,
+            "uncertain": 0
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 447,
+        "output_tokens": 40
+      },
+      "provider_metadata": {
+        "typesafe": {
+          "confidence": {
+            "decision": 1
+          }
+        },
+        "gateway": {
+          "routing": {
+            "originalModelId": "typesafe-ai/jev",
+            "resolvedProvider": "typesafe-ai",
+            "fallbacksAvailable": [],
+            "planningReasoning": "System credentials planned for: typesafe-ai. Total execution order: typesafe-ai(system)",
+            "canonicalSlug": "typesafe-ai/jev",
+            "finalProvider": "typesafe-ai",
+            "modelAttemptCount": 1,
+            "modelAttempts": [
+              {
+                "canonicalSlug": "typesafe-ai/jev",
+                "success": true,
+                "providerAttemptCount": 1,
+                "providerAttempts": [
+                  {
+                    "provider": "typesafe-ai",
+                    "credentialType": "system",
+                    "success": true,
+                    "startTime": 1790240318776,
+                    "endTime": 1790240318988,
+                    "statusCode": 200
+                  }
+                ]
+              }
+            ],
+            "totalProviderAttemptCount": 1
+          },
+          "cost": "0",
+          "marketCost": "0.000018774",
+          "surchargeCost": "0",
+          "gatewayCost": "0",
+          "generationId": "gen_01M39A6S3P03KTE8WXTVXV1D1C"
+        }
+      }
+    },
+    "request_ms": 442.55,
+    "attempts": [
+      {
+        "status": 200,
+        "request_ms": 442.55
+      }
+    ]
+  },
+  {
+    "id": "history-61320",
+    "model": "jev",
+    "revision": "hosted-unpinned",
+    "dataset_sha256": "f3985cac5cd3f33dcd10468677fcc1c8db3009bf58cdf63be8af311c00c36088",
+    "input_sha256": "31f90c718b8675e9e7565b8821a34ccf0aa93a72ff6d515625f69bb4af51ed69",
+    "expected": "success",
+    "predicted": "success",
+    "correct": true,
+    "response": {
+      "model": "typesafe-ai/jev",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "success",
+          "confidence": 1,
+          "probabilities": {
+            "success": 1,
+            "uncertain": 0,
+            "failure": 0
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 452,
+        "output_tokens": 40
+      },
+      "provider_metadata": {
+        "typesafe": {
+          "confidence": {
+            "decision": 1
+          }
+        },
+        "gateway": {
+          "routing": {
+            "originalModelId": "typesafe-ai/jev",
+            "resolvedProvider": "typesafe-ai",
+            "fallbacksAvailable": [],
+            "planningReasoning": "System credentials planned for: typesafe-ai. Total execution order: typesafe-ai(system)",
+            "canonicalSlug": "typesafe-ai/jev",
+            "finalProvider": "typesafe-ai",
+            "modelAttemptCount": 1,
+            "modelAttempts": [
+              {
+                "canonicalSlug": "typesafe-ai/jev",
+                "success": true,
+                "providerAttemptCount": 1,
+                "providerAttempts": [
+                  {
+                    "provider": "typesafe-ai",
+                    "credentialType": "system",
+                    "success": true,
+                    "startTime": 1790240321082,
+                    "endTime": 1790240321300,
+                    "statusCode": 200
+                  }
+                ]
+              }
+            ],
+            "totalProviderAttemptCount": 1
+          },
+          "cost": "0",
+          "marketCost": "0.000018984",
+          "surchargeCost": "0",
+          "gatewayCost": "0",
+          "generationId": "gen_01M39A6VGK6Y0G7PWDWPR45C0G"
+        }
+      }
+    },
+    "request_ms": 296.38,
+    "attempts": [
+      {
+        "status": 200,
+        "request_ms": 296.38
+      }
+    ]
+  },
+  {
+    "id": "history-61446",
+    "model": "jev",
+    "revision": "hosted-unpinned",
+    "dataset_sha256": "f3985cac5cd3f33dcd10468677fcc1c8db3009bf58cdf63be8af311c00c36088",
+    "input_sha256": "484704b22624eb6d01d7d6e2b1a75e2c759b27db83b9855ef6294844fc5f56c3",
+    "expected": "failure",
+    "predicted": "failure",
+    "correct": true,
+    "response": {
+      "model": "typesafe-ai/jev",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "failure",
+          "confidence": 1,
+          "probabilities": {
+            "success": 0,
+            "uncertain": 0,
+            "failure": 1
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 551,
+        "output_tokens": 40
+      },
+      "provider_metadata": {
+        "typesafe": {
+          "confidence": {
+            "decision": 1
+          }
+        },
+        "gateway": {
+          "routing": {
+            "originalModelId": "typesafe-ai/jev",
+            "resolvedProvider": "typesafe-ai",
+            "fallbacksAvailable": [],
+            "planningReasoning": "System credentials planned for: typesafe-ai. Total execution order: typesafe-ai(system)",
+            "canonicalSlug": "typesafe-ai/jev",
+            "finalProvider": "typesafe-ai",
+            "modelAttemptCount": 1,
+            "modelAttempts": [
+              {
+                "canonicalSlug": "typesafe-ai/jev",
+                "success": true,
+                "providerAttemptCount": 1,
+                "providerAttempts": [
+                  {
+                    "provider": "typesafe-ai",
+                    "credentialType": "system",
+                    "success": true,
+                    "startTime": 1790240323369,
+                    "endTime": 1790240323594,
+                    "statusCode": 200
+                  }
+                ]
+              }
+            ],
+            "totalProviderAttemptCount": 1
+          },
+          "cost": "0",
+          "marketCost": "0.000023142",
+          "surchargeCost": "0",
+          "gatewayCost": "0",
+          "generationId": "gen_01M39A6XRG20TZATH7845PVX3G"
+        }
+      }
+    },
+    "request_ms": 300.44,
+    "attempts": [
+      {
+        "status": 200,
+        "request_ms": 300.44
+      }
+    ]
+  },
+  {
+    "id": "history-65461",
+    "model": "jev",
+    "revision": "hosted-unpinned",
+    "dataset_sha256": "f3985cac5cd3f33dcd10468677fcc1c8db3009bf58cdf63be8af311c00c36088",
+    "input_sha256": "063900132d7b5843561fd3503508108c44ca0c36b812b16577d5b24a03d80848",
+    "expected": "success",
+    "predicted": "success",
+    "correct": true,
+    "response": {
+      "model": "typesafe-ai/jev",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "success",
+          "confidence": 1,
+          "probabilities": {
+            "success": 1,
+            "uncertain": 0,
+            "failure": 0
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 460,
+        "output_tokens": 40
+      },
+      "provider_metadata": {
+        "typesafe": {
+          "confidence": {
+            "decision": 1
+          }
+        },
+        "gateway": {
+          "routing": {
+            "originalModelId": "typesafe-ai/jev",
+            "resolvedProvider": "typesafe-ai",
+            "fallbacksAvailable": [],
+            "planningReasoning": "System credentials planned for: typesafe-ai. Total execution order: typesafe-ai(system)",
+            "canonicalSlug": "typesafe-ai/jev",
+            "finalProvider": "typesafe-ai",
+            "modelAttemptCount": 1,
+            "modelAttempts": [
+              {
+                "canonicalSlug": "typesafe-ai/jev",
+                "success": true,
+                "providerAttemptCount": 1,
+                "providerAttempts": [
+                  {
+                    "provider": "typesafe-ai",
+                    "credentialType": "system",
+                    "success": true,
+                    "startTime": 1790240325743,
+                    "endTime": 1790240325979,
+                    "statusCode": 200
+                  }
+                ]
+              }
+            ],
+            "totalProviderAttemptCount": 1
+          },
+          "cost": "0",
+          "marketCost": "0.00001932",
+          "surchargeCost": "0",
+          "gatewayCost": "0",
+          "generationId": "gen_01M39A702SN29E8C05P0WMFZTP"
+        }
+      }
+    },
+    "request_ms": 372.69,
+    "attempts": [
+      {
+        "status": 200,
+        "request_ms": 372.69
+      }
+    ]
+  },
+  {
+    "id": "history-65585",
+    "model": "jev",
+    "revision": "hosted-unpinned",
+    "dataset_sha256": "f3985cac5cd3f33dcd10468677fcc1c8db3009bf58cdf63be8af311c00c36088",
+    "input_sha256": "31f90c718b8675e9e7565b8821a34ccf0aa93a72ff6d515625f69bb4af51ed69",
+    "expected": "success",
+    "predicted": "success",
+    "correct": true,
+    "response": {
+      "model": "typesafe-ai/jev",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "success",
+          "confidence": 1,
+          "probabilities": {
+            "failure": 0,
+            "uncertain": 0,
+            "success": 1
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 452,
+        "output_tokens": 40
+      },
+      "provider_metadata": {
+        "typesafe": {
+          "confidence": {
+            "decision": 1
+          }
+        },
+        "gateway": {
+          "routing": {
+            "originalModelId": "typesafe-ai/jev",
+            "resolvedProvider": "typesafe-ai",
+            "fallbacksAvailable": [],
+            "planningReasoning": "System credentials planned for: typesafe-ai. Total execution order: typesafe-ai(system)",
+            "canonicalSlug": "typesafe-ai/jev",
+            "finalProvider": "typesafe-ai",
+            "modelAttemptCount": 1,
+            "modelAttempts": [
+              {
+                "canonicalSlug": "typesafe-ai/jev",
+                "success": true,
+                "providerAttemptCount": 1,
+                "providerAttempts": [
+                  {
+                    "provider": "typesafe-ai",
+                    "credentialType": "system",
+                    "success": true,
+                    "startTime": 1790240328198,
+                    "endTime": 1790240328392,
+                    "statusCode": 200
+                  }
+                ]
+              }
+            ],
+            "totalProviderAttemptCount": 1
+          },
+          "cost": "0",
+          "marketCost": "0.000018984",
+          "surchargeCost": "0",
+          "gatewayCost": "0",
+          "generationId": "gen_01M39A72C612KPWG72H60PY2MX"
+        }
+      }
+    },
+    "request_ms": 400.79,
+    "attempts": [
+      {
+        "status": 200,
+        "request_ms": 400.79
+      }
+    ]
+  },
+  {
+    "id": "history-65685",
+    "model": "jev",
+    "revision": "hosted-unpinned",
+    "dataset_sha256": "f3985cac5cd3f33dcd10468677fcc1c8db3009bf58cdf63be8af311c00c36088",
+    "input_sha256": "b7954bda3ecca0873d5d463bba7610d6bc839195121bfb82648375a83c120910",
+    "expected": "success",
+    "predicted": "success",
+    "correct": true,
+    "response": {
+      "model": "typesafe-ai/jev",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "success",
+          "confidence": 1,
+          "probabilities": {
+            "success": 1,
+            "failure": 0,
+            "uncertain": 0
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 509,
+        "output_tokens": 40
+      },
+      "provider_metadata": {
+        "typesafe": {
+          "confidence": {
+            "decision": 1
+          }
+        },
+        "gateway": {
+          "routing": {
+            "originalModelId": "typesafe-ai/jev",
+            "resolvedProvider": "typesafe-ai",
+            "fallbacksAvailable": [],
+            "planningReasoning": "System credentials planned for: typesafe-ai. Total execution order: typesafe-ai(system)",
+            "canonicalSlug": "typesafe-ai/jev",
+            "finalProvider": "typesafe-ai",
+            "modelAttemptCount": 1,
+            "modelAttempts": [
+              {
+                "canonicalSlug": "typesafe-ai/jev",
+                "success": true,
+                "providerAttemptCount": 1,
+                "providerAttempts": [
+                  {
+                    "provider": "typesafe-ai",
+                    "credentialType": "system",
+                    "success": true,
+                    "startTime": 1790240330468,
+                    "endTime": 1790240330774,
+                    "statusCode": 200
+                  }
+                ]
+              }
+            ],
+            "totalProviderAttemptCount": 1
+          },
+          "cost": "0",
+          "marketCost": "0.000021378",
+          "surchargeCost": "0",
+          "gatewayCost": "0",
+          "generationId": "gen_01M39A74PB3VMFP3AV07Z5YJVP"
+        }
+      }
+    },
+    "request_ms": 374.4,
+    "attempts": [
+      {
+        "status": 200,
+        "request_ms": 374.4
+      }
+    ]
+  },
+  {
+    "id": "history-65922",
+    "model": "jev",
+    "revision": "hosted-unpinned",
+    "dataset_sha256": "f3985cac5cd3f33dcd10468677fcc1c8db3009bf58cdf63be8af311c00c36088",
+    "input_sha256": "827e04af3f7b073353348b0edaf5a100e53fa0769e6a701b79bc92ab45898c32",
+    "expected": "success",
+    "predicted": "success",
+    "correct": true,
+    "response": {
+      "model": "typesafe-ai/jev",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "success",
+          "confidence": 0.85,
+          "probabilities": {
+            "uncertain": 0.1,
+            "failure": 0,
+            "success": 0.9
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 491,
+        "output_tokens": 40
+      },
+      "provider_metadata": {
+        "typesafe": {
+          "confidence": {
+            "decision": 0.85
+          }
+        },
+        "gateway": {
+          "routing": {
+            "originalModelId": "typesafe-ai/jev",
+            "resolvedProvider": "typesafe-ai",
+            "fallbacksAvailable": [],
+            "planningReasoning": "System credentials planned for: typesafe-ai. Total execution order: typesafe-ai(system)",
+            "canonicalSlug": "typesafe-ai/jev",
+            "finalProvider": "typesafe-ai",
+            "modelAttemptCount": 1,
+            "modelAttempts": [
+              {
+                "canonicalSlug": "typesafe-ai/jev",
+                "success": true,
+                "providerAttemptCount": 1,
+                "providerAttempts": [
+                  {
+                    "provider": "typesafe-ai",
+                    "credentialType": "system",
+                    "success": true,
+                    "startTime": 1790240332862,
+                    "endTime": 1790240333075,
+                    "statusCode": 200
+                  }
+                ]
+              }
+            ],
+            "totalProviderAttemptCount": 1
+          },
+          "cost": "0",
+          "marketCost": "0.000020622",
+          "surchargeCost": "0",
+          "gatewayCost": "0",
+          "generationId": "gen_01M39A770YGAPG7Z0HPSP1XEMH"
+        }
+      }
+    },
+    "request_ms": 289.41,
+    "attempts": [
+      {
+        "status": 200,
+        "request_ms": 289.41
+      }
+    ]
+  },
+  {
+    "id": "history-66048",
+    "model": "jev",
+    "revision": "hosted-unpinned",
+    "dataset_sha256": "f3985cac5cd3f33dcd10468677fcc1c8db3009bf58cdf63be8af311c00c36088",
+    "input_sha256": "0581d087c98a7cd44df525d0c61604ea147bd73f4a3e53d210a41caf680ab94e",
+    "expected": "success",
+    "predicted": "success",
+    "correct": true,
+    "response": {
+      "model": "typesafe-ai/jev",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "success",
+          "confidence": 1,
+          "probabilities": {
+            "success": 1,
+            "uncertain": 0,
+            "failure": 0
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 447,
+        "output_tokens": 40
+      },
+      "provider_metadata": {
+        "typesafe": {
+          "confidence": {
+            "decision": 1
+          }
+        },
+        "gateway": {
+          "routing": {
+            "originalModelId": "typesafe-ai/jev",
+            "resolvedProvider": "typesafe-ai",
+            "fallbacksAvailable": [],
+            "planningReasoning": "System credentials planned for: typesafe-ai. Total execution order: typesafe-ai(system)",
+            "canonicalSlug": "typesafe-ai/jev",
+            "finalProvider": "typesafe-ai",
+            "modelAttemptCount": 1,
+            "modelAttempts": [
+              {
+                "canonicalSlug": "typesafe-ai/jev",
+                "success": true,
+                "providerAttemptCount": 1,
+                "providerAttempts": [
+                  {
+                    "provider": "typesafe-ai",
+                    "credentialType": "system",
+                    "success": true,
+                    "startTime": 1790240335186,
+                    "endTime": 1790240335376,
+                    "statusCode": 200
+                  }
+                ]
+              }
+            ],
+            "totalProviderAttemptCount": 1
+          },
+          "cost": "0",
+          "marketCost": "0.000018774",
+          "surchargeCost": "0",
+          "gatewayCost": "0",
+          "generationId": "gen_01M39A799K1SYV7V4SV35M4WA7"
+        }
+      }
+    },
+    "request_ms": 302.92,
+    "attempts": [
+      {
+        "status": 200,
+        "request_ms": 302.92
+      }
+    ]
+  },
+  {
+    "id": "history-66190",
+    "model": "jev",
+    "revision": "hosted-unpinned",
+    "dataset_sha256": "f3985cac5cd3f33dcd10468677fcc1c8db3009bf58cdf63be8af311c00c36088",
+    "input_sha256": "31f90c718b8675e9e7565b8821a34ccf0aa93a72ff6d515625f69bb4af51ed69",
+    "expected": "success",
+    "predicted": "success",
+    "correct": true,
+    "response": {
+      "model": "typesafe-ai/jev",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "success",
+          "confidence": 1,
+          "probabilities": {
+            "success": 1,
+            "uncertain": 0,
+            "failure": 0
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 452,
+        "output_tokens": 40
+      },
+      "provider_metadata": {
+        "typesafe": {
+          "confidence": {
+            "decision": 1
+          }
+        },
+        "gateway": {
+          "routing": {
+            "originalModelId": "typesafe-ai/jev",
+            "resolvedProvider": "typesafe-ai",
+            "fallbacksAvailable": [],
+            "planningReasoning": "System credentials planned for: typesafe-ai. Total execution order: typesafe-ai(system)",
+            "canonicalSlug": "typesafe-ai/jev",
+            "finalProvider": "typesafe-ai",
+            "modelAttemptCount": 1,
+            "modelAttempts": [
+              {
+                "canonicalSlug": "typesafe-ai/jev",
+                "success": true,
+                "providerAttemptCount": 1,
+                "providerAttempts": [
+                  {
+                    "provider": "typesafe-ai",
+                    "credentialType": "system",
+                    "success": true,
+                    "startTime": 1790240337467,
+                    "endTime": 1790240337722,
+                    "statusCode": 200
+                  }
+                ]
+              }
+            ],
+            "totalProviderAttemptCount": 1
+          },
+          "cost": "0",
+          "marketCost": "0.000018984",
+          "surchargeCost": "0",
+          "gatewayCost": "0",
+          "generationId": "gen_01M39A7BGAEC6QENM54T4F8V5T"
+        }
+      }
+    },
+    "request_ms": 369.37,
+    "attempts": [
+      {
+        "status": 200,
+        "request_ms": 369.37
+      }
+    ]
+  },
+  {
+    "id": "history-66298",
+    "model": "jev",
+    "revision": "hosted-unpinned",
+    "dataset_sha256": "f3985cac5cd3f33dcd10468677fcc1c8db3009bf58cdf63be8af311c00c36088",
+    "input_sha256": "9cdd03d5ae83081f7d8705872fb521fb9b095b5cff46fb6727a3666c6f2e964f",
+    "expected": "failure",
+    "predicted": "failure",
+    "correct": true,
+    "response": {
+      "model": "typesafe-ai/jev",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "failure",
+          "confidence": 1,
+          "probabilities": {
+            "uncertain": 0,
+            "success": 0,
+            "failure": 1
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 502,
+        "output_tokens": 40
+      },
+      "provider_metadata": {
+        "typesafe": {
+          "confidence": {
+            "decision": 1
+          }
+        },
+        "gateway": {
+          "routing": {
+            "originalModelId": "typesafe-ai/jev",
+            "resolvedProvider": "typesafe-ai",
+            "fallbacksAvailable": [],
+            "planningReasoning": "System credentials planned for: typesafe-ai. Total execution order: typesafe-ai(system)",
+            "canonicalSlug": "typesafe-ai/jev",
+            "finalProvider": "typesafe-ai",
+            "modelAttemptCount": 1,
+            "modelAttempts": [
+              {
+                "canonicalSlug": "typesafe-ai/jev",
+                "success": true,
+                "providerAttemptCount": 1,
+                "providerAttempts": [
+                  {
+                    "provider": "typesafe-ai",
+                    "credentialType": "system",
+                    "success": true,
+                    "startTime": 1790240339921,
+                    "endTime": 1790240340119,
+                    "statusCode": 200
+                  }
+                ]
+              }
+            ],
+            "totalProviderAttemptCount": 1
+          },
+          "cost": "0",
+          "marketCost": "0.000021084",
+          "surchargeCost": "0",
+          "gatewayCost": "0",
+          "generationId": "gen_01M39A7DX4AFYXB7R0XVM4E55P"
+        }
+      }
+    },
+    "request_ms": 414.9,
+    "attempts": [
+      {
+        "status": 200,
+        "request_ms": 414.9
+      }
+    ]
+  },
+  {
+    "id": "history-66920",
+    "model": "jev",
+    "revision": "hosted-unpinned",
+    "dataset_sha256": "f3985cac5cd3f33dcd10468677fcc1c8db3009bf58cdf63be8af311c00c36088",
+    "input_sha256": "3975dee8cc0e6b7d0813cce0d2c86639714863c9f228beb0a14ecec2d7e59cbb",
+    "expected": "failure",
+    "predicted": "failure",
+    "correct": true,
+    "response": {
+      "model": "typesafe-ai/jev",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "failure",
+          "confidence": 1,
+          "probabilities": {
+            "uncertain": 0,
+            "success": 0,
+            "failure": 1
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 528,
+        "output_tokens": 40
+      },
+      "provider_metadata": {
+        "typesafe": {
+          "confidence": {
+            "decision": 1
+          }
+        },
+        "gateway": {
+          "routing": {
+            "originalModelId": "typesafe-ai/jev",
+            "resolvedProvider": "typesafe-ai",
+            "fallbacksAvailable": [],
+            "planningReasoning": "System credentials planned for: typesafe-ai. Total execution order: typesafe-ai(system)",
+            "canonicalSlug": "typesafe-ai/jev",
+            "finalProvider": "typesafe-ai",
+            "modelAttemptCount": 1,
+            "modelAttempts": [
+              {
+                "canonicalSlug": "typesafe-ai/jev",
+                "success": true,
+                "providerAttemptCount": 1,
+                "providerAttempts": [
+                  {
+                    "provider": "typesafe-ai",
+                    "credentialType": "system",
+                    "success": true,
+                    "startTime": 1790240342233,
+                    "endTime": 1790240342448,
+                    "statusCode": 200
+                  }
+                ]
+              }
+            ],
+            "totalProviderAttemptCount": 1
+          },
+          "cost": "0",
+          "marketCost": "0.000022176",
+          "surchargeCost": "0",
+          "gatewayCost": "0",
+          "generationId": "gen_01M39A7G6796XGK8GWH502K6PP"
+        }
+      }
+    },
+    "request_ms": 288.33,
+    "attempts": [
+      {
+        "status": 200,
+        "request_ms": 288.33
+      }
+    ]
+  },
+  {
+    "id": "history-67619",
+    "model": "jev",
+    "revision": "hosted-unpinned",
+    "dataset_sha256": "f3985cac5cd3f33dcd10468677fcc1c8db3009bf58cdf63be8af311c00c36088",
+    "input_sha256": "11ce43820099eb579500e8276aca789a67465d68b6d614bb95dfda6ef504e5d0",
+    "expected": "failure",
+    "predicted": "failure",
+    "correct": true,
+    "response": {
+      "model": "typesafe-ai/jev",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "failure",
+          "confidence": 1,
+          "probabilities": {
+            "uncertain": 0,
+            "failure": 1,
+            "success": 0
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 631,
+        "output_tokens": 40
+      },
+      "provider_metadata": {
+        "typesafe": {
+          "confidence": {
+            "decision": 1
+          }
+        },
+        "gateway": {
+          "routing": {
+            "originalModelId": "typesafe-ai/jev",
+            "resolvedProvider": "typesafe-ai",
+            "fallbacksAvailable": [],
+            "planningReasoning": "System credentials planned for: typesafe-ai. Total execution order: typesafe-ai(system)",
+            "canonicalSlug": "typesafe-ai/jev",
+            "finalProvider": "typesafe-ai",
+            "modelAttemptCount": 1,
+            "modelAttempts": [
+              {
+                "canonicalSlug": "typesafe-ai/jev",
+                "success": true,
+                "providerAttemptCount": 1,
+                "providerAttempts": [
+                  {
+                    "provider": "typesafe-ai",
+                    "credentialType": "system",
+                    "success": true,
+                    "startTime": 1790240344642,
+                    "endTime": 1790240344852,
+                    "statusCode": 200
+                  }
+                ]
+              }
+            ],
+            "totalProviderAttemptCount": 1
+          },
+          "cost": "0",
+          "marketCost": "0.000026502",
+          "surchargeCost": "0",
+          "gatewayCost": "0",
+          "generationId": "gen_01M39A7JGKQNGJF519E2CT6Q8N"
+        }
+      }
+    },
+    "request_ms": 372.42,
+    "attempts": [
+      {
+        "status": 200,
+        "request_ms": 372.42
+      }
+    ]
+  },
+  {
+    "id": "history-68389",
+    "model": "jev",
+    "revision": "hosted-unpinned",
+    "dataset_sha256": "f3985cac5cd3f33dcd10468677fcc1c8db3009bf58cdf63be8af311c00c36088",
+    "input_sha256": "ccfa39a22dfa5f1653451c6d1d288dc2dc132c1cc2096e0c22352143cee7806c",
+    "expected": "failure",
+    "predicted": "failure",
+    "correct": true,
+    "response": {
+      "model": "typesafe-ai/jev",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "failure",
+          "confidence": 1,
+          "probabilities": {
+            "uncertain": 0,
+            "success": 0,
+            "failure": 1
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 528,
+        "output_tokens": 40
+      },
+      "provider_metadata": {
+        "typesafe": {
+          "confidence": {
+            "decision": 1
+          }
+        },
+        "gateway": {
+          "routing": {
+            "originalModelId": "typesafe-ai/jev",
+            "resolvedProvider": "typesafe-ai",
+            "fallbacksAvailable": [],
+            "planningReasoning": "System credentials planned for: typesafe-ai. Total execution order: typesafe-ai(system)",
+            "canonicalSlug": "typesafe-ai/jev",
+            "finalProvider": "typesafe-ai",
+            "modelAttemptCount": 1,
+            "modelAttempts": [
+              {
+                "canonicalSlug": "typesafe-ai/jev",
+                "success": true,
+                "providerAttemptCount": 1,
+                "providerAttempts": [
+                  {
+                    "provider": "typesafe-ai",
+                    "credentialType": "system",
+                    "success": true,
+                    "startTime": 1790240346920,
+                    "endTime": 1790240347111,
+                    "statusCode": 200
+                  }
+                ]
+              }
+            ],
+            "totalProviderAttemptCount": 1
+          },
+          "cost": "0",
+          "marketCost": "0.000022176",
+          "surchargeCost": "0",
+          "gatewayCost": "0",
+          "generationId": "gen_01M39A7MRMVWKK8NBGSD2BMZFY"
+        }
+      }
+    },
+    "request_ms": 332.97,
+    "attempts": [
+      {
+        "status": 200,
+        "request_ms": 332.97
+      }
+    ]
+  },
+  {
+    "id": "history-69120",
+    "model": "jev",
+    "revision": "hosted-unpinned",
+    "dataset_sha256": "f3985cac5cd3f33dcd10468677fcc1c8db3009bf58cdf63be8af311c00c36088",
+    "input_sha256": "c6bbdfa16f879221534a9d456c8aa32c85becd360d8d709a2b39be8412e9c149",
+    "expected": "success",
+    "predicted": "success",
+    "correct": true,
+    "response": {
+      "model": "typesafe-ai/jev",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "success",
+          "confidence": 0.99,
+          "probabilities": {
+            "failure": 0,
+            "success": 1,
+            "uncertain": 0
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 542,
+        "output_tokens": 40
+      },
+      "provider_metadata": {
+        "typesafe": {
+          "confidence": {
+            "decision": 0.99
+          }
+        },
+        "gateway": {
+          "routing": {
+            "originalModelId": "typesafe-ai/jev",
+            "resolvedProvider": "typesafe-ai",
+            "fallbacksAvailable": [],
+            "planningReasoning": "System credentials planned for: typesafe-ai. Total execution order: typesafe-ai(system)",
+            "canonicalSlug": "typesafe-ai/jev",
+            "finalProvider": "typesafe-ai",
+            "modelAttemptCount": 1,
+            "modelAttempts": [
+              {
+                "canonicalSlug": "typesafe-ai/jev",
+                "success": true,
+                "providerAttemptCount": 1,
+                "providerAttempts": [
+                  {
+                    "provider": "typesafe-ai",
+                    "credentialType": "system",
+                    "success": true,
+                    "startTime": 1790240349341,
+                    "endTime": 1790240349547,
+                    "statusCode": 200
+                  }
+                ]
+              }
+            ],
+            "totalProviderAttemptCount": 1
+          },
+          "cost": "0",
+          "marketCost": "0.000022764",
+          "surchargeCost": "0",
+          "gatewayCost": "0",
+          "generationId": "gen_01M39A7Q43S8J5Z6YJQ6AFY2QC"
+        }
+      }
+    },
+    "request_ms": 350.2,
+    "attempts": [
+      {
+        "status": 200,
+        "request_ms": 350.2
+      }
+    ]
+  },
+  {
+    "id": "history-69286",
+    "model": "jev",
+    "revision": "hosted-unpinned",
+    "dataset_sha256": "f3985cac5cd3f33dcd10468677fcc1c8db3009bf58cdf63be8af311c00c36088",
+    "input_sha256": "a22e09f0795f6b2ef5248f5bde58f3f0b1e538ebbbe629d633a7cec7d7ebd6f4",
+    "expected": "uncertain",
+    "predicted": "uncertain",
+    "correct": true,
+    "response": {
+      "model": "typesafe-ai/jev",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "uncertain",
+          "confidence": 0.99,
+          "probabilities": {
+            "failure": 0.01,
+            "success": 0,
+            "uncertain": 0.99
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 650,
+        "output_tokens": 42
+      },
+      "provider_metadata": {
+        "typesafe": {
+          "confidence": {
+            "decision": 0.99
+          }
+        },
+        "gateway": {
+          "routing": {
+            "originalModelId": "typesafe-ai/jev",
+            "resolvedProvider": "typesafe-ai",
+            "fallbacksAvailable": [],
+            "planningReasoning": "System credentials planned for: typesafe-ai. Total execution order: typesafe-ai(system)",
+            "canonicalSlug": "typesafe-ai/jev",
+            "finalProvider": "typesafe-ai",
+            "modelAttemptCount": 1,
+            "modelAttempts": [
+              {
+                "canonicalSlug": "typesafe-ai/jev",
+                "success": true,
+                "providerAttemptCount": 1,
+                "providerAttempts": [
+                  {
+                    "provider": "typesafe-ai",
+                    "credentialType": "system",
+                    "success": true,
+                    "startTime": 1790240351689,
+                    "endTime": 1790240351908,
+                    "statusCode": 200
+                  }
+                ]
+              }
+            ],
+            "totalProviderAttemptCount": 1
+          },
+          "cost": "0",
+          "marketCost": "0.0000273",
+          "surchargeCost": "0",
+          "gatewayCost": "0",
+          "generationId": "gen_01M39A7SBX6R1VAM6MPZ0937TV"
+        }
+      }
+    },
+    "request_ms": 368.0,
+    "attempts": [
+      {
+        "status": 200,
+        "request_ms": 368.0
+      }
+    ]
+  },
+  {
+    "id": "history-79309",
+    "model": "jev",
+    "revision": "hosted-unpinned",
+    "dataset_sha256": "f3985cac5cd3f33dcd10468677fcc1c8db3009bf58cdf63be8af311c00c36088",
+    "input_sha256": "063900132d7b5843561fd3503508108c44ca0c36b812b16577d5b24a03d80848",
+    "expected": "success",
+    "predicted": "success",
+    "correct": true,
+    "response": {
+      "model": "typesafe-ai/jev",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "success",
+          "confidence": 1,
+          "probabilities": {
+            "uncertain": 0,
+            "success": 1,
+            "failure": 0
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 460,
+        "output_tokens": 40
+      },
+      "provider_metadata": {
+        "typesafe": {
+          "confidence": {
+            "decision": 1
+          }
+        },
+        "gateway": {
+          "routing": {
+            "originalModelId": "typesafe-ai/jev",
+            "resolvedProvider": "typesafe-ai",
+            "fallbacksAvailable": [],
+            "planningReasoning": "System credentials planned for: typesafe-ai. Total execution order: typesafe-ai(system)",
+            "canonicalSlug": "typesafe-ai/jev",
+            "finalProvider": "typesafe-ai",
+            "modelAttemptCount": 1,
+            "modelAttempts": [
+              {
+                "canonicalSlug": "typesafe-ai/jev",
+                "success": true,
+                "providerAttemptCount": 1,
+                "providerAttempts": [
+                  {
+                    "provider": "typesafe-ai",
+                    "credentialType": "system",
+                    "success": true,
+                    "startTime": 1790240354079,
+                    "endTime": 1790240354276,
+                    "statusCode": 200
+                  }
+                ]
+              }
+            ],
+            "totalProviderAttemptCount": 1
+          },
+          "cost": "0",
+          "marketCost": "0.00001932",
+          "surchargeCost": "0",
+          "gatewayCost": "0",
+          "generationId": "gen_01M39A7VR4F4YK8WG71VSGS75M"
+        }
+      }
+    },
+    "request_ms": 422.62,
+    "attempts": [
+      {
+        "status": 200,
+        "request_ms": 422.62
+      }
+    ]
+  },
+  {
+    "id": "history-79410",
+    "model": "jev",
+    "revision": "hosted-unpinned",
+    "dataset_sha256": "f3985cac5cd3f33dcd10468677fcc1c8db3009bf58cdf63be8af311c00c36088",
+    "input_sha256": "31f90c718b8675e9e7565b8821a34ccf0aa93a72ff6d515625f69bb4af51ed69",
+    "expected": "success",
+    "predicted": "success",
+    "correct": true,
+    "response": {
+      "model": "typesafe-ai/jev",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "success",
+          "confidence": 1,
+          "probabilities": {
+            "failure": 0,
+            "success": 1,
+            "uncertain": 0
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 452,
+        "output_tokens": 40
+      },
+      "provider_metadata": {
+        "typesafe": {
+          "confidence": {
+            "decision": 1
+          }
+        },
+        "gateway": {
+          "routing": {
+            "originalModelId": "typesafe-ai/jev",
+            "resolvedProvider": "typesafe-ai",
+            "fallbacksAvailable": [],
+            "planningReasoning": "System credentials planned for: typesafe-ai. Total execution order: typesafe-ai(system)",
+            "canonicalSlug": "typesafe-ai/jev",
+            "finalProvider": "typesafe-ai",
+            "modelAttemptCount": 1,
+            "modelAttempts": [
+              {
+                "canonicalSlug": "typesafe-ai/jev",
+                "success": true,
+                "providerAttemptCount": 1,
+                "providerAttempts": [
+                  {
+                    "provider": "typesafe-ai",
+                    "credentialType": "system",
+                    "success": true,
+                    "startTime": 1790240356474,
+                    "endTime": 1790240356661,
+                    "statusCode": 200
+                  }
+                ]
+              }
+            ],
+            "totalProviderAttemptCount": 1
+          },
+          "cost": "0",
+          "marketCost": "0.000018984",
+          "surchargeCost": "0",
+          "gatewayCost": "0",
+          "generationId": "gen_01M39A7Y2WVRK2N1JQANAQCG9S"
+        }
+      }
+    },
+    "request_ms": 262.97,
+    "attempts": [
+      {
+        "status": 200,
+        "request_ms": 262.97
+      }
+    ]
+  },
+  {
+    "id": "history-79498",
+    "model": "jev",
+    "revision": "hosted-unpinned",
+    "dataset_sha256": "f3985cac5cd3f33dcd10468677fcc1c8db3009bf58cdf63be8af311c00c36088",
+    "input_sha256": "b7954bda3ecca0873d5d463bba7610d6bc839195121bfb82648375a83c120910",
+    "expected": "success",
+    "predicted": "success",
+    "correct": true,
+    "response": {
+      "model": "typesafe-ai/jev",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "success",
+          "confidence": 1,
+          "probabilities": {
+            "failure": 0,
+            "uncertain": 0,
+            "success": 1
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 509,
+        "output_tokens": 40
+      },
+      "provider_metadata": {
+        "typesafe": {
+          "confidence": {
+            "decision": 1
+          }
+        },
+        "gateway": {
+          "routing": {
+            "originalModelId": "typesafe-ai/jev",
+            "resolvedProvider": "typesafe-ai",
+            "fallbacksAvailable": [],
+            "planningReasoning": "System credentials planned for: typesafe-ai. Total execution order: typesafe-ai(system)",
+            "canonicalSlug": "typesafe-ai/jev",
+            "finalProvider": "typesafe-ai",
+            "modelAttemptCount": 1,
+            "modelAttempts": [
+              {
+                "canonicalSlug": "typesafe-ai/jev",
+                "success": true,
+                "providerAttemptCount": 1,
+                "providerAttempts": [
+                  {
+                    "provider": "typesafe-ai",
+                    "credentialType": "system",
+                    "success": true,
+                    "startTime": 1790240358830,
+                    "endTime": 1790240359039,
+                    "statusCode": 200
+                  }
+                ]
+              }
+            ],
+            "totalProviderAttemptCount": 1
+          },
+          "cost": "0",
+          "marketCost": "0.000021378",
+          "surchargeCost": "0",
+          "gatewayCost": "0",
+          "generationId": "gen_01M39A80CBN8QF0KFKWYBP8EP2"
+        }
+      }
+    },
+    "request_ms": 378.47,
+    "attempts": [
+      {
+        "status": 200,
+        "request_ms": 378.47
+      }
+    ]
+  },
+  {
+    "id": "history-79708",
+    "model": "jev",
+    "revision": "hosted-unpinned",
+    "dataset_sha256": "f3985cac5cd3f33dcd10468677fcc1c8db3009bf58cdf63be8af311c00c36088",
+    "input_sha256": "827e04af3f7b073353348b0edaf5a100e53fa0769e6a701b79bc92ab45898c32",
+    "expected": "success",
+    "predicted": "success",
+    "correct": true,
+    "response": {
+      "model": "typesafe-ai/jev",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "success",
+          "confidence": 0.91,
+          "probabilities": {
+            "failure": 0,
+            "uncertain": 0.06,
+            "success": 0.94
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 491,
+        "output_tokens": 40
+      },
+      "provider_metadata": {
+        "typesafe": {
+          "confidence": {
+            "decision": 0.91
+          }
+        },
+        "gateway": {
+          "routing": {
+            "originalModelId": "typesafe-ai/jev",
+            "resolvedProvider": "typesafe-ai",
+            "fallbacksAvailable": [],
+            "planningReasoning": "System credentials planned for: typesafe-ai. Total execution order: typesafe-ai(system)",
+            "canonicalSlug": "typesafe-ai/jev",
+            "finalProvider": "typesafe-ai",
+            "modelAttemptCount": 1,
+            "modelAttempts": [
+              {
+                "canonicalSlug": "typesafe-ai/jev",
+                "success": true,
+                "providerAttemptCount": 1,
+                "providerAttempts": [
+                  {
+                    "provider": "typesafe-ai",
+                    "credentialType": "system",
+                    "success": true,
+                    "startTime": 1790240361129,
+                    "endTime": 1790240361341,
+                    "statusCode": 200
+                  }
+                ]
+              }
+            ],
+            "totalProviderAttemptCount": 1
+          },
+          "cost": "0",
+          "marketCost": "0.000020622",
+          "surchargeCost": "0",
+          "gatewayCost": "0",
+          "generationId": "gen_01M39A82MA58X17VKTX8HC66R3"
+        }
+      }
+    },
+    "request_ms": 291.08,
+    "attempts": [
+      {
+        "status": 200,
+        "request_ms": 291.08
+      }
+    ]
+  },
+  {
+    "id": "history-79821",
+    "model": "jev",
+    "revision": "hosted-unpinned",
+    "dataset_sha256": "f3985cac5cd3f33dcd10468677fcc1c8db3009bf58cdf63be8af311c00c36088",
+    "input_sha256": "0581d087c98a7cd44df525d0c61604ea147bd73f4a3e53d210a41caf680ab94e",
+    "expected": "success",
+    "predicted": "success",
+    "correct": true,
+    "response": {
+      "model": "typesafe-ai/jev",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "success",
+          "confidence": 1,
+          "probabilities": {
+            "failure": 0,
+            "success": 1,
+            "uncertain": 0
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 447,
+        "output_tokens": 40
+      },
+      "provider_metadata": {
+        "typesafe": {
+          "confidence": {
+            "decision": 1
+          }
+        },
+        "gateway": {
+          "routing": {
+            "originalModelId": "typesafe-ai/jev",
+            "resolvedProvider": "typesafe-ai",
+            "fallbacksAvailable": [],
+            "planningReasoning": "System credentials planned for: typesafe-ai. Total execution order: typesafe-ai(system)",
+            "canonicalSlug": "typesafe-ai/jev",
+            "finalProvider": "typesafe-ai",
+            "modelAttemptCount": 1,
+            "modelAttempts": [
+              {
+                "canonicalSlug": "typesafe-ai/jev",
+                "success": true,
+                "providerAttemptCount": 1,
+                "providerAttempts": [
+                  {
+                    "provider": "typesafe-ai",
+                    "credentialType": "system",
+                    "success": true,
+                    "startTime": 1790240363534,
+                    "endTime": 1790240363786,
+                    "statusCode": 200
+                  }
+                ]
+              }
+            ],
+            "totalProviderAttemptCount": 1
+          },
+          "cost": "0",
+          "marketCost": "0.000018774",
+          "surchargeCost": "0",
+          "gatewayCost": "0",
+          "generationId": "gen_01M39A84YRXXFBMNRV0EE7N2V9"
+        }
+      }
+    },
+    "request_ms": 427.61,
+    "attempts": [
+      {
+        "status": 200,
+        "request_ms": 427.61
+      }
+    ]
+  },
+  {
+    "id": "history-79942",
+    "model": "jev",
+    "revision": "hosted-unpinned",
+    "dataset_sha256": "f3985cac5cd3f33dcd10468677fcc1c8db3009bf58cdf63be8af311c00c36088",
+    "input_sha256": "31f90c718b8675e9e7565b8821a34ccf0aa93a72ff6d515625f69bb4af51ed69",
+    "expected": "success",
+    "predicted": "success",
+    "correct": true,
+    "response": {
+      "model": "typesafe-ai/jev",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "success",
+          "confidence": 1,
+          "probabilities": {
+            "success": 1,
+            "uncertain": 0,
+            "failure": 0
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 452,
+        "output_tokens": 40
+      },
+      "provider_metadata": {
+        "typesafe": {
+          "confidence": {
+            "decision": 1
+          }
+        },
+        "gateway": {
+          "routing": {
+            "originalModelId": "typesafe-ai/jev",
+            "resolvedProvider": "typesafe-ai",
+            "fallbacksAvailable": [],
+            "planningReasoning": "System credentials planned for: typesafe-ai. Total execution order: typesafe-ai(system)",
+            "canonicalSlug": "typesafe-ai/jev",
+            "finalProvider": "typesafe-ai",
+            "modelAttemptCount": 1,
+            "modelAttempts": [
+              {
+                "canonicalSlug": "typesafe-ai/jev",
+                "success": true,
+                "providerAttemptCount": 1,
+                "providerAttempts": [
+                  {
+                    "provider": "typesafe-ai",
+                    "credentialType": "system",
+                    "success": true,
+                    "startTime": 1790240365863,
+                    "endTime": 1790240366046,
+                    "statusCode": 200
+                  }
+                ]
+              }
+            ],
+            "totalProviderAttemptCount": 1
+          },
+          "cost": "0",
+          "marketCost": "0.000018984",
+          "surchargeCost": "0",
+          "gatewayCost": "0",
+          "generationId": "gen_01M39A8783143728DB13VPRQSE"
+        }
+      }
+    },
+    "request_ms": 272.95,
+    "attempts": [
+      {
+        "status": 200,
+        "request_ms": 272.95
+      }
+    ]
+  },
+  {
+    "id": "history-80025",
+    "model": "jev",
+    "revision": "hosted-unpinned",
+    "dataset_sha256": "f3985cac5cd3f33dcd10468677fcc1c8db3009bf58cdf63be8af311c00c36088",
+    "input_sha256": "9cdd03d5ae83081f7d8705872fb521fb9b095b5cff46fb6727a3666c6f2e964f",
+    "expected": "failure",
+    "predicted": "failure",
+    "correct": true,
+    "response": {
+      "model": "typesafe-ai/jev",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "failure",
+          "confidence": 1,
+          "probabilities": {
+            "uncertain": 0,
+            "failure": 1,
+            "success": 0
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 502,
+        "output_tokens": 40
+      },
+      "provider_metadata": {
+        "typesafe": {
+          "confidence": {
+            "decision": 1
+          }
+        },
+        "gateway": {
+          "routing": {
+            "originalModelId": "typesafe-ai/jev",
+            "resolvedProvider": "typesafe-ai",
+            "fallbacksAvailable": [],
+            "planningReasoning": "System credentials planned for: typesafe-ai. Total execution order: typesafe-ai(system)",
+            "canonicalSlug": "typesafe-ai/jev",
+            "finalProvider": "typesafe-ai",
+            "modelAttemptCount": 1,
+            "modelAttempts": [
+              {
+                "canonicalSlug": "typesafe-ai/jev",
+                "success": true,
+                "providerAttemptCount": 1,
+                "providerAttempts": [
+                  {
+                    "provider": "typesafe-ai",
+                    "credentialType": "system",
+                    "success": true,
+                    "startTime": 1790240368232,
+                    "endTime": 1790240368448,
+                    "statusCode": 200
+                  }
+                ]
+              }
+            ],
+            "totalProviderAttemptCount": 1
+          },
+          "cost": "0",
+          "marketCost": "0.000021084",
+          "surchargeCost": "0",
+          "gatewayCost": "0",
+          "generationId": "gen_01M39A89JQMEF0FAFPKJ4PTMVE"
+        }
+      }
+    },
+    "request_ms": 370.27,
+    "attempts": [
+      {
+        "status": 200,
+        "request_ms": 370.27
+      }
+    ]
+  },
+  {
+    "id": "history-83721",
+    "model": "jev",
+    "revision": "hosted-unpinned",
+    "dataset_sha256": "f3985cac5cd3f33dcd10468677fcc1c8db3009bf58cdf63be8af311c00c36088",
+    "input_sha256": "92ccc0044384902a600ee56f08e9690a185edfa9b1536d1d5152ae27a73ef85b",
+    "expected": "failure",
+    "predicted": "failure",
+    "correct": true,
+    "response": {
+      "model": "typesafe-ai/jev",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "failure",
+          "confidence": 1,
+          "probabilities": {
+            "failure": 1,
+            "success": 0,
+            "uncertain": 0
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 557,
+        "output_tokens": 40
+      },
+      "provider_metadata": {
+        "typesafe": {
+          "confidence": {
+            "decision": 1
+          }
+        },
+        "gateway": {
+          "routing": {
+            "originalModelId": "typesafe-ai/jev",
+            "resolvedProvider": "typesafe-ai",
+            "fallbacksAvailable": [],
+            "planningReasoning": "System credentials planned for: typesafe-ai. Total execution order: typesafe-ai(system)",
+            "canonicalSlug": "typesafe-ai/jev",
+            "finalProvider": "typesafe-ai",
+            "modelAttemptCount": 1,
+            "modelAttempts": [
+              {
+                "canonicalSlug": "typesafe-ai/jev",
+                "success": true,
+                "providerAttemptCount": 1,
+                "providerAttempts": [
+                  {
+                    "provider": "typesafe-ai",
+                    "credentialType": "system",
+                    "success": true,
+                    "startTime": 1790240370522,
+                    "endTime": 1790240370723,
+                    "statusCode": 200
+                  }
+                ]
+              }
+            ],
+            "totalProviderAttemptCount": 1
+          },
+          "cost": "0",
+          "marketCost": "0.000023394",
+          "surchargeCost": "0",
+          "gatewayCost": "0",
+          "generationId": "gen_01M39A8BSYSWPEARG26KXA9AC6"
+        }
+      }
+    },
+    "request_ms": 325.55,
+    "attempts": [
+      {
+        "status": 200,
+        "request_ms": 325.55
+      }
+    ]
+  },
+  {
+    "id": "history-90994",
+    "model": "jev",
+    "revision": "hosted-unpinned",
+    "dataset_sha256": "f3985cac5cd3f33dcd10468677fcc1c8db3009bf58cdf63be8af311c00c36088",
+    "input_sha256": "71b652c9afacb840460eb865801b3bf67e70333290fbcfeb2492d3181822f182",
+    "expected": "success",
+    "predicted": "success",
+    "correct": true,
+    "response": {
+      "model": "typesafe-ai/jev",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "success",
+          "confidence": 1,
+          "probabilities": {
+            "uncertain": 0,
+            "success": 1,
+            "failure": 0
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 520,
+        "output_tokens": 40
+      },
+      "provider_metadata": {
+        "typesafe": {
+          "confidence": {
+            "decision": 1
+          }
+        },
+        "gateway": {
+          "routing": {
+            "originalModelId": "typesafe-ai/jev",
+            "resolvedProvider": "typesafe-ai",
+            "fallbacksAvailable": [],
+            "planningReasoning": "System credentials planned for: typesafe-ai. Total execution order: typesafe-ai(system)",
+            "canonicalSlug": "typesafe-ai/jev",
+            "finalProvider": "typesafe-ai",
+            "modelAttemptCount": 1,
+            "modelAttempts": [
+              {
+                "canonicalSlug": "typesafe-ai/jev",
+                "success": true,
+                "providerAttemptCount": 1,
+                "providerAttempts": [
+                  {
+                    "provider": "typesafe-ai",
+                    "credentialType": "system",
+                    "success": true,
+                    "startTime": 1790240372941,
+                    "endTime": 1790240373137,
+                    "statusCode": 200
+                  }
+                ]
+              }
+            ],
+            "totalProviderAttemptCount": 1
+          },
+          "cost": "0",
+          "marketCost": "0.00002184",
+          "surchargeCost": "0",
+          "gatewayCost": "0",
+          "generationId": "gen_01M39A8E5CG0WEEX8AWRBT18Z0"
+        }
+      }
+    },
+    "request_ms": 362.94,
+    "attempts": [
+      {
+        "status": 200,
+        "request_ms": 362.94
+      }
+    ]
+  },
+  {
+    "id": "history-91760",
+    "model": "jev",
+    "revision": "hosted-unpinned",
+    "dataset_sha256": "f3985cac5cd3f33dcd10468677fcc1c8db3009bf58cdf63be8af311c00c36088",
+    "input_sha256": "71b652c9afacb840460eb865801b3bf67e70333290fbcfeb2492d3181822f182",
+    "expected": "success",
+    "predicted": "success",
+    "correct": true,
+    "response": {
+      "model": "typesafe-ai/jev",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "success",
+          "confidence": 1,
+          "probabilities": {
+            "uncertain": 0,
+            "failure": 0,
+            "success": 1
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 520,
+        "output_tokens": 40
+      },
+      "provider_metadata": {
+        "typesafe": {
+          "confidence": {
+            "decision": 1
+          }
+        },
+        "gateway": {
+          "routing": {
+            "originalModelId": "typesafe-ai/jev",
+            "resolvedProvider": "typesafe-ai",
+            "fallbacksAvailable": [],
+            "planningReasoning": "System credentials planned for: typesafe-ai. Total execution order: typesafe-ai(system)",
+            "canonicalSlug": "typesafe-ai/jev",
+            "finalProvider": "typesafe-ai",
+            "modelAttemptCount": 1,
+            "modelAttempts": [
+              {
+                "canonicalSlug": "typesafe-ai/jev",
+                "success": true,
+                "providerAttemptCount": 1,
+                "providerAttempts": [
+                  {
+                    "provider": "typesafe-ai",
+                    "credentialType": "system",
+                    "success": true,
+                    "startTime": 1790240375245,
+                    "endTime": 1790240375448,
+                    "statusCode": 200
+                  }
+                ]
+              }
+            ],
+            "totalProviderAttemptCount": 1
+          },
+          "cost": "0",
+          "marketCost": "0.00002184",
+          "surchargeCost": "0",
+          "gatewayCost": "0",
+          "generationId": "gen_01M39A8GD48NY6S82KTQ2V17WA"
+        }
+      }
+    },
+    "request_ms": 330.58,
+    "attempts": [
+      {
+        "status": 200,
+        "request_ms": 330.58
+      }
+    ]
+  },
+  {
+    "id": "history-92893",
+    "model": "jev",
+    "revision": "hosted-unpinned",
+    "dataset_sha256": "f3985cac5cd3f33dcd10468677fcc1c8db3009bf58cdf63be8af311c00c36088",
+    "input_sha256": "241e72742a237e948ea4a58bbcd72da7bdb6a5381294677ef2019f4adde55274",
+    "expected": "success",
+    "predicted": "success",
+    "correct": true,
+    "response": {
+      "model": "typesafe-ai/jev",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "success",
+          "confidence": 0.97,
+          "probabilities": {
+            "success": 0.98,
+            "failure": 0.01,
+            "uncertain": 0.01
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 466,
+        "output_tokens": 40
+      },
+      "provider_metadata": {
+        "typesafe": {
+          "confidence": {
+            "decision": 0.97
+          }
+        },
+        "gateway": {
+          "routing": {
+            "originalModelId": "typesafe-ai/jev",
+            "resolvedProvider": "typesafe-ai",
+            "fallbacksAvailable": [],
+            "planningReasoning": "System credentials planned for: typesafe-ai. Total execution order: typesafe-ai(system)",
+            "canonicalSlug": "typesafe-ai/jev",
+            "finalProvider": "typesafe-ai",
+            "modelAttemptCount": 1,
+            "modelAttempts": [
+              {
+                "canonicalSlug": "typesafe-ai/jev",
+                "success": true,
+                "providerAttemptCount": 1,
+                "providerAttempts": [
+                  {
+                    "provider": "typesafe-ai",
+                    "credentialType": "system",
+                    "success": true,
+                    "startTime": 1790240377666,
+                    "endTime": 1790240377877,
+                    "statusCode": 200
+                  }
+                ]
+              }
+            ],
+            "totalProviderAttemptCount": 1
+          },
+          "cost": "0",
+          "marketCost": "0.000019572",
+          "surchargeCost": "0",
+          "gatewayCost": "0",
+          "generationId": "gen_01M39A8JRX7HQCGJZNQ00SK7QR"
+        }
+      }
+    },
+    "request_ms": 380.68,
+    "attempts": [
+      {
+        "status": 200,
+        "request_ms": 380.68
+      }
+    ]
+  },
+  {
+    "id": "history-93080",
+    "model": "jev",
+    "revision": "hosted-unpinned",
+    "dataset_sha256": "f3985cac5cd3f33dcd10468677fcc1c8db3009bf58cdf63be8af311c00c36088",
+    "input_sha256": "f0ab3ecae1ea544bc3f2c33d3c2c1148e819d76c857e6758d0544c6ff689d8d2",
+    "expected": "success",
+    "predicted": "success",
+    "correct": true,
+    "response": {
+      "model": "typesafe-ai/jev",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "success",
+          "confidence": 0.98,
+          "probabilities": {
+            "success": 0.99,
+            "failure": 0,
+            "uncertain": 0.01
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 435,
+        "output_tokens": 40
+      },
+      "provider_metadata": {
+        "typesafe": {
+          "confidence": {
+            "decision": 0.98
+          }
+        },
+        "gateway": {
+          "routing": {
+            "originalModelId": "typesafe-ai/jev",
+            "resolvedProvider": "typesafe-ai",
+            "fallbacksAvailable": [],
+            "planningReasoning": "System credentials planned for: typesafe-ai. Total execution order: typesafe-ai(system)",
+            "canonicalSlug": "typesafe-ai/jev",
+            "finalProvider": "typesafe-ai",
+            "modelAttemptCount": 1,
+            "modelAttempts": [
+              {
+                "canonicalSlug": "typesafe-ai/jev",
+                "success": true,
+                "providerAttemptCount": 1,
+                "providerAttempts": [
+                  {
+                    "provider": "typesafe-ai",
+                    "credentialType": "system",
+                    "success": true,
+                    "startTime": 1790240380443,
+                    "endTime": 1790240380651,
+                    "statusCode": 200
+                  }
+                ]
+              }
+            ],
+            "totalProviderAttemptCount": 1
+          },
+          "cost": "0",
+          "marketCost": "0.00001827",
+          "surchargeCost": "0",
+          "gatewayCost": "0",
+          "generationId": "gen_01M39A8N15WAQPAD0W51NHP502"
+        }
+      }
+    },
+    "request_ms": 745.26,
+    "attempts": [
+      {
+        "status": 200,
+        "request_ms": 745.26
+      }
+    ]
+  },
+  {
+    "id": "history-93212",
+    "model": "jev",
+    "revision": "hosted-unpinned",
+    "dataset_sha256": "f3985cac5cd3f33dcd10468677fcc1c8db3009bf58cdf63be8af311c00c36088",
+    "input_sha256": "f1740d7cebd162b8b11d5792282d7ab89a7223671736a0a00e135bb1f7403ed8",
+    "expected": "success",
+    "predicted": "success",
+    "correct": true,
+    "response": {
+      "model": "typesafe-ai/jev",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "success",
+          "confidence": 1,
+          "probabilities": {
+            "failure": 0,
+            "uncertain": 0,
+            "success": 1
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 541,
+        "output_tokens": 40
+      },
+      "provider_metadata": {
+        "typesafe": {
+          "confidence": {
+            "decision": 1
+          }
+        },
+        "gateway": {
+          "routing": {
+            "originalModelId": "typesafe-ai/jev",
+            "resolvedProvider": "typesafe-ai",
+            "fallbacksAvailable": [],
+            "planningReasoning": "System credentials planned for: typesafe-ai. Total execution order: typesafe-ai(system)",
+            "canonicalSlug": "typesafe-ai/jev",
+            "finalProvider": "typesafe-ai",
+            "modelAttemptCount": 1,
+            "modelAttempts": [
+              {
+                "canonicalSlug": "typesafe-ai/jev",
+                "success": true,
+                "providerAttemptCount": 1,
+                "providerAttempts": [
+                  {
+                    "provider": "typesafe-ai",
+                    "credentialType": "system",
+                    "success": true,
+                    "startTime": 1790240382751,
+                    "endTime": 1790240382945,
+                    "statusCode": 200
+                  }
+                ]
+              }
+            ],
+            "totalProviderAttemptCount": 1
+          },
+          "cost": "0",
+          "marketCost": "0.000022722",
+          "surchargeCost": "0",
+          "gatewayCost": "0",
+          "generationId": "gen_01M39A8QQV8BHTYNKKYAT218P6"
+        }
+      }
+    },
+    "request_ms": 300.3,
+    "attempts": [
+      {
+        "status": 200,
+        "request_ms": 300.3
+      }
+    ]
+  },
+  {
+    "id": "history-99733",
+    "model": "jev",
+    "revision": "hosted-unpinned",
+    "dataset_sha256": "f3985cac5cd3f33dcd10468677fcc1c8db3009bf58cdf63be8af311c00c36088",
+    "input_sha256": "71b652c9afacb840460eb865801b3bf67e70333290fbcfeb2492d3181822f182",
+    "expected": "success",
+    "predicted": "success",
+    "correct": true,
+    "response": {
+      "model": "typesafe-ai/jev",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "success",
+          "confidence": 1,
+          "probabilities": {
+            "success": 1,
+            "uncertain": 0,
+            "failure": 0
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 520,
+        "output_tokens": 40
+      },
+      "provider_metadata": {
+        "typesafe": {
+          "confidence": {
+            "decision": 1
+          }
+        },
+        "gateway": {
+          "routing": {
+            "originalModelId": "typesafe-ai/jev",
+            "resolvedProvider": "typesafe-ai",
+            "fallbacksAvailable": [],
+            "planningReasoning": "System credentials planned for: typesafe-ai. Total execution order: typesafe-ai(system)",
+            "canonicalSlug": "typesafe-ai/jev",
+            "finalProvider": "typesafe-ai",
+            "modelAttemptCount": 1,
+            "modelAttempts": [
+              {
+                "canonicalSlug": "typesafe-ai/jev",
+                "success": true,
+                "providerAttemptCount": 1,
+                "providerAttempts": [
+                  {
+                    "provider": "typesafe-ai",
+                    "credentialType": "system",
+                    "success": true,
+                    "startTime": 1790240385059,
+                    "endTime": 1790240385260,
+                    "statusCode": 200
+                  }
+                ]
+              }
+            ],
+            "totalProviderAttemptCount": 1
+          },
+          "cost": "0",
+          "marketCost": "0.00002184",
+          "surchargeCost": "0",
+          "gatewayCost": "0",
+          "generationId": "gen_01M39A8T086H27HTWTFVE8NPM5"
+        }
+      }
+    },
+    "request_ms": 284.79,
+    "attempts": [
+      {
+        "status": 200,
+        "request_ms": 284.79
+      }
+    ]
+  },
+  {
+    "id": "history-100690",
+    "model": "jev",
+    "revision": "hosted-unpinned",
+    "dataset_sha256": "f3985cac5cd3f33dcd10468677fcc1c8db3009bf58cdf63be8af311c00c36088",
+    "input_sha256": "241e72742a237e948ea4a58bbcd72da7bdb6a5381294677ef2019f4adde55274",
+    "expected": "success",
+    "predicted": "success",
+    "correct": true,
+    "response": {
+      "model": "typesafe-ai/jev",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "success",
+          "confidence": 0.97,
+          "probabilities": {
+            "failure": 0.02,
+            "success": 0.97,
+            "uncertain": 0.01
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 466,
+        "output_tokens": 40
+      },
+      "provider_metadata": {
+        "typesafe": {
+          "confidence": {
+            "decision": 0.97
+          }
+        },
+        "gateway": {
+          "routing": {
+            "originalModelId": "typesafe-ai/jev",
+            "resolvedProvider": "typesafe-ai",
+            "fallbacksAvailable": [],
+            "planningReasoning": "System credentials planned for: typesafe-ai. Total execution order: typesafe-ai(system)",
+            "canonicalSlug": "typesafe-ai/jev",
+            "finalProvider": "typesafe-ai",
+            "modelAttemptCount": 1,
+            "modelAttempts": [
+              {
+                "canonicalSlug": "typesafe-ai/jev",
+                "success": true,
+                "providerAttemptCount": 1,
+                "providerAttempts": [
+                  {
+                    "provider": "typesafe-ai",
+                    "credentialType": "system",
+                    "success": true,
+                    "startTime": 1790240387350,
+                    "endTime": 1790240387561,
+                    "statusCode": 200
+                  }
+                ]
+              }
+            ],
+            "totalProviderAttemptCount": 1
+          },
+          "cost": "0",
+          "marketCost": "0.000019572",
+          "surchargeCost": "0",
+          "gatewayCost": "0",
+          "generationId": "gen_01M39A8W72FFHQR7YJ1WV1DTA7"
+        }
+      }
+    },
+    "request_ms": 293.56,
+    "attempts": [
+      {
+        "status": 200,
+        "request_ms": 293.56
+      }
+    ]
+  },
+  {
+    "id": "history-100853",
+    "model": "jev",
+    "revision": "hosted-unpinned",
+    "dataset_sha256": "f3985cac5cd3f33dcd10468677fcc1c8db3009bf58cdf63be8af311c00c36088",
+    "input_sha256": "f0ab3ecae1ea544bc3f2c33d3c2c1148e819d76c857e6758d0544c6ff689d8d2",
+    "expected": "success",
+    "predicted": "success",
+    "correct": true,
+    "response": {
+      "model": "typesafe-ai/jev",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "success",
+          "confidence": 0.97,
+          "probabilities": {
+            "success": 0.98,
+            "uncertain": 0.02,
+            "failure": 0
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 435,
+        "output_tokens": 40
+      },
+      "provider_metadata": {
+        "typesafe": {
+          "confidence": {
+            "decision": 0.97
+          }
+        },
+        "gateway": {
+          "routing": {
+            "originalModelId": "typesafe-ai/jev",
+            "resolvedProvider": "typesafe-ai",
+            "fallbacksAvailable": [],
+            "planningReasoning": "System credentials planned for: typesafe-ai. Total execution order: typesafe-ai(system)",
+            "canonicalSlug": "typesafe-ai/jev",
+            "finalProvider": "typesafe-ai",
+            "modelAttemptCount": 1,
+            "modelAttempts": [
+              {
+                "canonicalSlug": "typesafe-ai/jev",
+                "success": true,
+                "providerAttemptCount": 1,
+                "providerAttempts": [
+                  {
+                    "provider": "typesafe-ai",
+                    "credentialType": "system",
+                    "success": true,
+                    "startTime": 1790240389722,
+                    "endTime": 1790240389942,
+                    "statusCode": 200
+                  }
+                ]
+              }
+            ],
+            "totalProviderAttemptCount": 1
+          },
+          "cost": "0",
+          "marketCost": "0.00001827",
+          "surchargeCost": "0",
+          "gatewayCost": "0",
+          "generationId": "gen_01M39A8YHQBV3DKY3NRSQ2YJ26"
+        }
+      }
+    },
+    "request_ms": 374.04,
+    "attempts": [
+      {
+        "status": 200,
+        "request_ms": 374.04
+      }
+    ]
+  },
+  {
+    "id": "history-100999",
+    "model": "jev",
+    "revision": "hosted-unpinned",
+    "dataset_sha256": "f3985cac5cd3f33dcd10468677fcc1c8db3009bf58cdf63be8af311c00c36088",
+    "input_sha256": "4a73dd08759041358e2e42b6434e3e946c07d6c0601806c4a3406afb26edf614",
+    "expected": "success",
+    "predicted": "success",
+    "correct": true,
+    "response": {
+      "model": "typesafe-ai/jev",
+      "answers": {
+        "decision": {
+          "type": "choice",
+          "choice": "success",
+          "confidence": 1,
+          "probabilities": {
+            "uncertain": 0,
+            "success": 1,
+            "failure": 0
+          }
+        }
+      },
+      "usage": {
+        "input_tokens": 541,
+        "output_tokens": 40
+      },
+      "provider_metadata": {
+        "typesafe": {
+          "confidence": {
+            "decision": 1
+          }
+        },
+        "gateway": {
+          "routing": {
+            "originalModelId": "typesafe-ai/jev",
+            "resolvedProvider": "typesafe-ai",
+            "fallbacksAvailable": [],
+            "planningReasoning": "System credentials planned for: typesafe-ai. Total execution order: typesafe-ai(system)",
+            "canonicalSlug": "typesafe-ai/jev",
+            "finalProvider": "typesafe-ai",
+            "modelAttemptCount": 1,
+            "modelAttempts": [
+              {
+                "canonicalSlug": "typesafe-ai/jev",
+                "success": true,
+                "providerAttemptCount": 1,
+                "providerAttempts": [
+                  {
+                    "provider": "typesafe-ai",
+                    "credentialType": "system",
+                    "success": true,
+                    "startTime": 1790240392021,
+                    "endTime": 1790240392222,
+                    "statusCode": 200
+                  }
+                ]
+              }
+            ],
+            "totalProviderAttemptCount": 1
+          },
+          "cost": "0",
+          "marketCost": "0.000022722",
+          "surchargeCost": "0",
+          "gatewayCost": "0",
+          "generationId": "gen_01M39A90SXMHANSQWPNNJEGHKQ"
+        }
+      }
+    },
+    "request_ms": 320.49,
+    "attempts": [
+      {
+        "status": 200,
+        "request_ms": 320.49
+      }
+    ]
+  }
+]

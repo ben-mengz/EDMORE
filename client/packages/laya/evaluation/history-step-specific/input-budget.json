@@ -1,0 +1,577 @@
+{
+  "dataset_sha256": "f3985cac5cd3f33dcd10468677fcc1c8db3009bf58cdf63be8af311c00c36088",
+  "max_len": 1024,
+  "head_max_len": 256,
+  "cases": [
+    {
+      "id": "history-11168",
+      "tokens": 155,
+      "option_tokens": [
+        25,
+        14,
+        21
+      ],
+      "no_truncation": true
+    },
+    {
+      "id": "history-17885",
+      "tokens": 155,
+      "option_tokens": [
+        25,
+        14,
+        21
+      ],
+      "no_truncation": true
+    },
+    {
+      "id": "history-18014",
+      "tokens": 139,
+      "option_tokens": [
+        26,
+        16,
+        14
+      ],
+      "no_truncation": true
+    },
+    {
+      "id": "history-18128",
+      "tokens": 191,
+      "option_tokens": [
+        31,
+        10,
+        13
+      ],
+      "no_truncation": true
+    },
+    {
+      "id": "history-18375",
+      "tokens": 179,
+      "option_tokens": [
+        33,
+        19,
+        18
+      ],
+      "no_truncation": true
+    },
+    {
+      "id": "history-18567",
+      "tokens": 144,
+      "option_tokens": [
+        27,
+        26,
+        25
+      ],
+      "no_truncation": true
+    },
+    {
+      "id": "history-18713",
+      "tokens": 139,
+      "option_tokens": [
+        26,
+        16,
+        14
+      ],
+      "no_truncation": true
+    },
+    {
+      "id": "history-18829",
+      "tokens": 243,
+      "option_tokens": [
+        25,
+        30,
+        22
+      ],
+      "no_truncation": true
+    },
+    {
+      "id": "history-21188",
+      "tokens": 243,
+      "option_tokens": [
+        25,
+        30,
+        22
+      ],
+      "no_truncation": true
+    },
+    {
+      "id": "history-31032",
+      "tokens": 155,
+      "option_tokens": [
+        25,
+        14,
+        21
+      ],
+      "no_truncation": true
+    },
+    {
+      "id": "history-31160",
+      "tokens": 139,
+      "option_tokens": [
+        26,
+        16,
+        14
+      ],
+      "no_truncation": true
+    },
+    {
+      "id": "history-31272",
+      "tokens": 191,
+      "option_tokens": [
+        31,
+        10,
+        13
+      ],
+      "no_truncation": true
+    },
+    {
+      "id": "history-31528",
+      "tokens": 179,
+      "option_tokens": [
+        33,
+        19,
+        18
+      ],
+      "no_truncation": true
+    },
+    {
+      "id": "history-31714",
+      "tokens": 144,
+      "option_tokens": [
+        27,
+        26,
+        25
+      ],
+      "no_truncation": true
+    },
+    {
+      "id": "history-31858",
+      "tokens": 139,
+      "option_tokens": [
+        26,
+        16,
+        14
+      ],
+      "no_truncation": true
+    },
+    {
+      "id": "history-31975",
+      "tokens": 243,
+      "option_tokens": [
+        25,
+        30,
+        22
+      ],
+      "no_truncation": true
+    },
+    {
+      "id": "history-35412",
+      "tokens": 443,
+      "option_tokens": [
+        33,
+        18,
+        17
+      ],
+      "no_truncation": true
+    },
+    {
+      "id": "history-36073",
+      "tokens": 451,
+      "option_tokens": [
+        30,
+        15,
+        18
+      ],
+      "no_truncation": true
+    },
+    {
+      "id": "history-36449",
+      "tokens": 571,
+      "option_tokens": [
+        32,
+        15,
+        20
+      ],
+      "no_truncation": true
+    },
+    {
+      "id": "history-37119",
+      "tokens": 206,
+      "option_tokens": [
+        39,
+        18,
+        27
+      ],
+      "no_truncation": true
+    },
+    {
+      "id": "history-38254",
+      "tokens": 220,
+      "option_tokens": [
+        39,
+        18,
+        27
+      ],
+      "no_truncation": true
+    },
+    {
+      "id": "history-60544",
+      "tokens": 155,
+      "option_tokens": [
+        25,
+        14,
+        21
+      ],
+      "no_truncation": true
+    },
+    {
+      "id": "history-60672",
+      "tokens": 139,
+      "option_tokens": [
+        26,
+        16,
+        14
+      ],
+      "no_truncation": true
+    },
+    {
+      "id": "history-60782",
+      "tokens": 191,
+      "option_tokens": [
+        31,
+        10,
+        13
+      ],
+      "no_truncation": true
+    },
+    {
+      "id": "history-61034",
+      "tokens": 179,
+      "option_tokens": [
+        33,
+        19,
+        18
+      ],
+      "no_truncation": true
+    },
+    {
+      "id": "history-61178",
+      "tokens": 144,
+      "option_tokens": [
+        27,
+        26,
+        25
+      ],
+      "no_truncation": true
+    },
+    {
+      "id": "history-61320",
+      "tokens": 139,
+      "option_tokens": [
+        26,
+        16,
+        14
+      ],
+      "no_truncation": true
+    },
+    {
+      "id": "history-61446",
+      "tokens": 243,
+      "option_tokens": [
+        25,
+        30,
+        22
+      ],
+      "no_truncation": true
+    },
+    {
+      "id": "history-65461",
+      "tokens": 155,
+      "option_tokens": [
+        25,
+        14,
+        21
+      ],
+      "no_truncation": true
+    },
+    {
+      "id": "history-65585",
+      "tokens": 139,
+      "option_tokens": [
+        26,
+        16,
+        14
+      ],
+      "no_truncation": true
+    },
+    {
+      "id": "history-65685",
+      "tokens": 191,
+      "option_tokens": [
+        31,
+        10,
+        13
+      ],
+      "no_truncation": true
+    },
+    {
+      "id": "history-65922",
+      "tokens": 179,
+      "option_tokens": [
+        33,
+        19,
+        18
+      ],
+      "no_truncation": true
+    },
+    {
+      "id": "history-66048",
+      "tokens": 144,
+      "option_tokens": [
+        27,
+        26,
+        25
+      ],
+      "no_truncation": true
+    },
+    {
+      "id": "history-66190",
+      "tokens": 139,
+      "option_tokens": [
+        26,
+        16,
+        14
+      ],
+      "no_truncation": true
+    },
+    {
+      "id": "history-66298",
+      "tokens": 189,
+      "option_tokens": [
+        25,
+        30,
+        22
+      ],
+      "no_truncation": true
+    },
+    {
+      "id": "history-66920",
+      "tokens": 220,
+      "option_tokens": [
+        25,
+        30,
+        22
+      ],
+      "no_truncation": true
+    },
+    {
+      "id": "history-67619",
+      "tokens": 331,
+      "option_tokens": [
+        25,
+        30,
+        22
+      ],
+      "no_truncation": true
+    },
+    {
+      "id": "history-68389",
+      "tokens": 209,
+      "option_tokens": [
+        25,
+        30,
+        22
+      ],
+      "no_truncation": true
+    },
+    {
+      "id": "history-69120",
+      "tokens": 218,
+      "option_tokens": [
+        25,
+        30,
+        22
+      ],
+      "no_truncation": true
+    },
+    {
+      "id": "history-69286",
+      "tokens": 341,
+      "option_tokens": [
+        22,
+        16,
+        27
+      ],
+      "no_truncation": true
+    },
+    {
+      "id": "history-79309",
+      "tokens": 155,
+      "option_tokens": [
+        25,
+        14,
+        21
+      ],
+      "no_truncation": true
+    },
+    {
+      "id": "history-79410",
+      "tokens": 139,
+      "option_tokens": [
+        26,
+        16,
+        14
+      ],
+      "no_truncation": true
+    },
+    {
+      "id": "history-79498",
+      "tokens": 191,
+      "option_tokens": [
+        31,
+        10,
+        13
+      ],
+      "no_truncation": true
+    },
+    {
+      "id": "history-79708",
+      "tokens": 179,
+      "option_tokens": [
+        33,
+        19,
+        18
+      ],
+      "no_truncation": true
+    },
+    {
+      "id": "history-79821",
+      "tokens": 144,
+      "option_tokens": [
+        27,
+        26,
+        25
+      ],
+      "no_truncation": true
+    },
+    {
+      "id": "history-79942",
+      "tokens": 139,
+      "option_tokens": [
+        26,
+        16,
+        14
+      ],
+      "no_truncation": true
+    },
+    {
+      "id": "history-80025",
+      "tokens": 189,
+      "option_tokens": [
+        25,
+        30,
+        22
+      ],
+      "no_truncation": true
+    },
+    {
+      "id": "history-83721",
+      "tokens": 273,
+      "option_tokens": [
+        33,
+        18,
+        17
+      ],
+      "no_truncation": true
+    },
+    {
+      "id": "history-90994",
+      "tokens": 218,
+      "option_tokens": [
+        28,
+        15,
+        18
+      ],
+      "no_truncation": true
+    },
+    {
+      "id": "history-91760",
+      "tokens": 218,
+      "option_tokens": [
+        28,
+        15,
+        18
+      ],
+      "no_truncation": true
+    },
+    {
+      "id": "history-92893",
+      "tokens": 156,
+      "option_tokens": [
+        34,
+        18,
+        19
+      ],
+      "no_truncation": true
+    },
+    {
+      "id": "history-93080",
+      "tokens": 132,
+      "option_tokens": [
+        27,
+        15,
+        15
+      ],
+      "no_truncation": true
+    },
+    {
+      "id": "history-93212",
+      "tokens": 211,
+      "option_tokens": [
+        34,
+        13,
+        14
+      ],
+      "no_truncation": true
+    },
+    {
+      "id": "history-99733",
+      "tokens": 218,
+      "option_tokens": [
+        28,
+        15,
+        18
+      ],
+      "no_truncation": true
+    },
+    {
+      "id": "history-100690",
+      "tokens": 156,
+      "option_tokens": [
+        34,
+        18,
+        19
+      ],
+      "no_truncation": true
+    },
+    {
+      "id": "history-100853",
+      "tokens": 132,
+      "option_tokens": [
+        27,
+        15,
+        15
+      ],
+      "no_truncation": true
+    },
+    {
+      "id": "history-100999",
+      "tokens": 211,
+      "option_tokens": [
+        34,
+        13,
+        14
+      ],
+      "no_truncation": true
+    }
+  ]
+}

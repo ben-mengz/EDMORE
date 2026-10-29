@@ -1,0 +1,32 @@
+{
+  "source": "/Users/zhaomeng/.dsh/edmore/session-state/events.jsonl",
+  "source_sha256": "de95ad28a5941e0340de00d4ac207a695fc1855ee57524707d1001609f17429f",
+  "count": 57,
+  "unique_inputs": 23,
+  "labels": {
+    "success": 45,
+    "failure": 10,
+    "uncertain": 2
+  },
+  "tools": {
+    "play_bf": 6,
+    "wait": 15,
+    "sync_pixel_size": 5,
+    "stop_playing_detector": 5,
+    "acquire_4d_stem": 10,
+    "load_q_spec": 2,
+    "check_required_constraints": 1,
+    "recalculate_defaults": 1,
+    "update_parameters": 2,
+    "prepare_parameters": 1,
+    "UnifiedDigitalTwin_set_scan_settings": 3,
+    "UnifiedDigitalTwin_set_fov": 2,
+    "UnifiedDigitalTwin_auto_focus": 2,
+    "UnifiedDigitalTwin_acquire_scanned_image": 2
+  },
+  "excluded": [],
+  "synthetic_cases": 0,
+  "method": "Every recorded tool.result paired with its earlier tool.call; current-step acceptance included where required. No historical judge verdict is used as model input or ground truth. Step-specific question criteria vary by step role and requested parameters.",
+  "limitations": "Real event replay, not 57 independent tasks. Duplicates and successful waits are frequent. Labels are authored, not independently user-reviewed. Current Skill clarifications may differ from historical judge policy. No external hardware state is verified.",
+  "policy_notes": "The two empty-list update_parameters calls are legacy Settings-confirmation steps, not writes. Explicit confirm succeeds; a skip/declare-success reply alone is uncertain. prepare_parameters requesting scan geometry is uncertain. Missing acquisition inputs are failure."
+}

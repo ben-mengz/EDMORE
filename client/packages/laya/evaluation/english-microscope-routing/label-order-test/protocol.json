@@ -1,0 +1,67 @@
+{
+  "revision": "1c5edc17a7acd8701df6fc341c0d179f1c62c982",
+  "cases_sha256": "e95d2ef876f7aed720c6c53ec8f1cab3810b79630866dda6a5f702512969b58f",
+  "variants": {
+    "original-forward": {
+      "question": {
+        "type": "choice",
+        "instructions": "Does this query request microscope hardware control or microscope data processing? Only these tasks need plan mode. All other requests do not.",
+        "criteria": {
+          "plan": "Perform microscope hardware control or process microscope data.",
+          "direct": "Anything else, including explanations, history, conversation, or tasks unrelated to microscopes."
+        }
+      },
+      "mapping": {
+        "plan": "plan",
+        "direct": "direct"
+      }
+    },
+    "original-reverse": {
+      "question": {
+        "type": "choice",
+        "instructions": "Does this query request microscope hardware control or microscope data processing? Only these tasks need plan mode. All other requests do not.",
+        "criteria": {
+          "direct": "Anything else, including explanations, history, conversation, or tasks unrelated to microscopes.",
+          "plan": "Perform microscope hardware control or process microscope data."
+        }
+      },
+      "mapping": {
+        "plan": "plan",
+        "direct": "direct"
+      }
+    },
+    "explicit-forward": {
+      "question": {
+        "type": "choice",
+        "instructions": "Does this query request microscope hardware control or microscope data processing? Only these tasks need plan mode. All other requests do not.",
+        "criteria": {
+          "microscope_action": "Perform microscope hardware control or process microscope data.",
+          "other": "Anything else, including explanations, history, conversation, or tasks unrelated to microscopes."
+        }
+      },
+      "mapping": {
+        "microscope_action": "plan",
+        "other": "direct"
+      }
+    },
+    "explicit-reverse": {
+      "question": {
+        "type": "choice",
+        "instructions": "Does this query request microscope hardware control or microscope data processing? Only these tasks need plan mode. All other requests do not.",
+        "criteria": {
+          "other": "Anything else, including explanations, history, conversation, or tasks unrelated to microscopes.",
+          "microscope_action": "Perform microscope hardware control or process microscope data."
+        }
+      },
+      "mapping": {
+        "microscope_action": "plan",
+        "other": "direct"
+      }
+    }
+  },
+  "models": [
+    "root",
+    "typed-decisions"
+  ],
+  "note": "Instructions, criteria descriptions, queries and labels fixed. Only class names/order change. Exploratory paired test, not independent holdout. All variants declared before inference."
+}

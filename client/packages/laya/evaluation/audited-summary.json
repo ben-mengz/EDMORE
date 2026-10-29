@@ -1,0 +1,44 @@
+{
+  "plan": {
+    "count": 60,
+    "correct": 17,
+    "confusion": {
+      "plan -> uncertain": 18,
+      "plan -> plan": 12,
+      "direct -> uncertain": 18,
+      "direct -> direct": 5,
+      "direct -> plan": 7
+    },
+    "median_ms": 61.945,
+    "high_probability_at_095": 6,
+    "accepted_at_095": 0,
+    "wrong_at_095": 0,
+    "false_success": []
+  },
+  "step": {
+    "count": 60,
+    "correct": 43,
+    "confusion": {
+      "success -> success": 19,
+      "failure -> failure": 20,
+      "uncertain -> uncertain": 4,
+      "uncertain -> failure": 8,
+      "uncertain -> success": 7,
+      "failure -> uncertain": 1,
+      "success -> failure": 1
+    },
+    "median_ms": 139.975,
+    "high_probability_at_095": 0,
+    "accepted_at_095": 0,
+    "wrong_at_095": 0,
+    "false_success": [
+      "step-04-uncertain",
+      "step-05-uncertain",
+      "step-10-uncertain",
+      "step-12-uncertain",
+      "step-15-uncertain",
+      "step-17-uncertain",
+      "step-19-uncertain"
+    ]
+  }
+}

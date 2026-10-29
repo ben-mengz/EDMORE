@@ -1,0 +1,70 @@
+{
+  "original-forward": {
+    "count": 40,
+    "correct": 35,
+    "confusion": {
+      "plan -> plan": 15,
+      "direct -> direct": 20,
+      "direct -> plan": 5
+    },
+    "false_success_ids": []
+  },
+  "original-reverse": {
+    "count": 40,
+    "correct": 35,
+    "confusion": {
+      "plan -> plan": 15,
+      "direct -> plan": 5,
+      "direct -> direct": 20
+    },
+    "false_success_ids": []
+  },
+  "explicit-forward": {
+    "count": 40,
+    "correct": 34,
+    "confusion": {
+      "plan -> plan": 15,
+      "direct -> direct": 19,
+      "direct -> plan": 6
+    },
+    "false_success_ids": []
+  },
+  "explicit-reverse": {
+    "count": 40,
+    "correct": 35,
+    "confusion": {
+      "plan -> plan": 15,
+      "direct -> direct": 20,
+      "direct -> plan": 5
+    },
+    "false_success_ids": []
+  },
+  "step-specific": {
+    "count": 57,
+    "correct": 57,
+    "confusion": {
+      "success -> success": 45,
+      "failure -> failure": 10,
+      "uncertain -> uncertain": 2
+    },
+    "false_success_ids": []
+  },
+  "step-unique": {
+    "count": 23,
+    "correct": 23,
+    "confusion": {
+      "success -> success": 15,
+      "failure -> failure": 6,
+      "uncertain -> uncertain": 2
+    },
+    "false_success_ids": []
+  },
+  "returned_models": [
+    "gpt-5-mini-2025-08-07"
+  ],
+  "usage": {
+    "input_tokens": 39052,
+    "output_tokens": 16746,
+    "total_tokens": 55798
+  }
+}

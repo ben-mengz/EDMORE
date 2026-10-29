@@ -1,0 +1,20 @@
+{
+  "count": 60,
+  "correct": 37,
+  "confusion": {
+    "plan -> plan": 29,
+    "plan -> direct": 1,
+    "direct -> plan": 22,
+    "direct -> direct": 8
+  },
+  "by_language": {
+    "en": {
+      "count": 30,
+      "correct": 15
+    },
+    "zh": {
+      "count": 30,
+      "correct": 22
+    }
+  }
+}

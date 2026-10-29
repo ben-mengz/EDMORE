@@ -1,0 +1,39 @@
+{
+  "id": "domain-negative-03",
+  "variant": "original-forward",
+  "status": 429,
+  "response": {
+    "error": {
+      "message": "The upstream provider is currently experiencing high demand. Please retry shortly.",
+      "type": "rate_limit_exceeded",
+      "param": {
+        "error": "The upstream provider is currently experiencing high demand. Please retry shortly.",
+        "type": "rate_limit_exceeded",
+        "statusCode": 429,
+        "name": "RateLimitExceededError",
+        "message": "The upstream provider is currently experiencing high demand. Please retry shortly."
+      }
+    },
+    "providerMetadata": {
+      "gateway": {
+        "routing": {
+          "originalModelId": "typesafe-ai/jev",
+          "resolvedProvider": "typesafe-ai",
+          "fallbacksAvailable": [],
+          "canonicalSlug": "typesafe-ai/jev",
+          "modelAttemptCount": 1,
+          "modelAttempts": [
+            {
+              "canonicalSlug": "typesafe-ai/jev",
+              "success": false,
+              "providerAttemptCount": 0,
+              "providerAttempts": []
+            }
+          ],
+          "totalProviderAttemptCount": 0
+        },
+        "generationId": "gen_01M398VNWJPAW09P1T79G3BWW0"
+      }
+    }
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "question": {
+    "type": "choice",
+    "instructions": "Does this query request microscope hardware control or microscope data processing? Only these tasks need plan mode. All other requests do not.",
+    "criteria": {
+      "plan": "Perform microscope hardware control or process microscope data.",
+      "direct": "Anything else, including explanations, history, conversation, or tasks unrelated to microscopes."
+    }
+  },
+  "revision": "1c5edc17a7acd8701df6fc341c0d179f1c62c982",
+  "models": [
+    "root",
+    "typed-decisions"
+  ],
+  "state": "query only",
+  "note": "Exploratory retest, not a holdout. Cases and prompt frozen before inference. Simulation-only cases replaced, not used to infer simulation policy."
+}

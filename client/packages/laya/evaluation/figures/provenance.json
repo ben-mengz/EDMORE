@@ -1,0 +1,39 @@
+{
+  "source_sha256": {
+    "english-microscope-routing/cases.json": "e95d2ef876f7aed720c6c53ec8f1cab3810b79630866dda6a5f702512969b58f",
+    "gpt-5-mini/results.json": "e6cb68d872ae00803c2be2ebe3516371cbea0ba61b5e49fcd6c47acc72d1768b",
+    "english-microscope-routing/label-order-test/results.json": "55e0d359936fa595dd8cb4d48ba50baa4a09389ccc27a216c7f98dc2bf3107b0",
+    "jev-gateway/results.json": "bcb1454270f5b5a94f81dea945e1716df9f0651f452b11f66fd62ba74a7dbf78",
+    "history-step-specific/dataset.json": "f3985cac5cd3f33dcd10468677fcc1c8db3009bf58cdf63be8af311c00c36088",
+    "history-step-specific/laya-results.json": "c19a672f81072266b923473218ee24f0f1dca1b407c431d1f4de11e6f4be7065",
+    "history-step-specific/jev-results.json": "2654d92646d49c26d7fdf28aadd15c8abb15bd053050dd6e89fe7650329d6867"
+  },
+  "matplotlib": "3.11.2",
+  "plan_correct": {
+    "Laya": 27,
+    "Jev": 39,
+    "GPT-5-mini": 35
+  },
+  "plan_count": 40,
+  "step_count": 57,
+  "step_unique": 23,
+  "transformations": [
+    "original-forward only; Laya typed-decisions",
+    "accuracy = correct / cases",
+    "step deduplication by input_sha256",
+    "plan matrix shows union of errors; remainder disclosed"
+  ],
+  "uncertainty": "Descriptive finite-dataset results; no independence or population generalization assumed.",
+  "destination": "General English comparison figures, not a journal submission",
+  "raster_dpi": 180,
+  "data_alternatives": [
+    "../PLAN.md",
+    "../TOOL-SUCCESS.md"
+  ],
+  "skill": "scientific-visualization 1.2",
+  "reference": "Kassis, T., Agarwal, V., He, Y., Patel, D., & Brueckner, A. M. (2026). Scientific Agent Skills: A Library of Procedural Knowledge for Research Agents. https://doi.org/10.48550/arXiv.2609.00065",
+  "alt_text": {
+    "plan": "Jev 39/40 (97.5%), GPT-5-mini 35/40 (87.5%), Laya 27/40 (67.5%). All errors unnecessarily trigger Plan; no required Plan is missed.",
+    "tool_success": "All models score 57/57, including 45 successes, 10 failures, 2 uncertain. Deduplicated: 15 successes, 6 failures, 2 uncertain; all correct."
+  }
+}
