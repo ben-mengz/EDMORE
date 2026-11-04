@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Problems to be solved · Microscopy Hackathon 3</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body class="doc">
+<header class="bar"><nav><a class="brand" href="index.html">Microscopy Hackathon 3</a><a href="getting-started.html">Get started</a><a href="architecture.html">Architecture</a><a href="cordis-plugins.html">Plugins</a><a href="problems-to-solve.html">Problems to be solved</a></nav></header>
+<div class="layout">
+<details class="side" open><summary>Documentation</summary><h2>Use the app</h2><ul><li><a href="getting-started.html">Getting started</a></li><li><a href="digital-twin.html">Digital Twin</a></li><li><a href="devices-and-tango.html">Microscopes and Tango</a></li><li><a href="wiki.html">Wiki</a></li></ul><h2>How it works</h2><ul><li><a href="architecture.html">Architecture</a></li><li><a href="harness-design.html">Harness design</a></li><li><a href="desktop-app.html">Desktop app</a></li></ul><h2>Build on it</h2><ul><li><a href="cordis-plugins.html">Developing Cordis plugins</a></li><li><a href="development.html">Development</a></li><li><a href="open-source.html">Open-source projects</a></li></ul><h2>Get involved</h2><ul><li><a href="problems-to-solve.html" aria-current="page">Problems to be solved</a></li></ul></details>
+<main><h1>Problems to be solved</h1><p>Open problems where help is welcome.</p>
+<h2 id="digital-twin">Digital twin</h2>
+<ol>
+<li><p><strong>Faster simulation.</strong> Build the digital twin to do more realistic simulations faster.</p>
+<p>Example: changing a stigmator and acquiring an image takes about 0.13 s at 512 px in the live twin. The more realistic
+emtwin path, ray tracing through the column followed by abTEM multislice, is optional. If it ran at close to that
+speed, an automated alignment of many steps could use the realistic model at every step.</p>
+</li>
+</ol>
+<h2 id="gui-controlling">GUI controlling</h2>
+<ol>
+<li><strong>Automated alignment through the GUI.</strong></li>
+</ol>
+<h2 id="workflow-design">Workflow design</h2>
+<ol>
+<li><strong>Find an area the user describes.</strong> For example, find an MgO cube of 10 nm size, or a carbon nanotube with a
+diameter of 3 nm.</li>
+<li><strong>Find a feature and its zone axis.</strong> For example, find an MgO nanotube of 20 nm, then find its zone axis.</li>
+</ol>
+<h2 id="harness-design">Harness design</h2>
+<ol>
+<li><strong>Record a skill and reuse it robustly.</strong> Record what happens on the digital twin and turn it into a skill, with
+safety checks and a good architecture.<ul>
+<li>How do we capture the steps, parameters and checks from a run that worked?</li>
+<li>How does a skill still work when the starting state is different?</li>
+<li>How is a skill tested on the twin before it runs on a microscope?</li>
+</ul>
+</li>
+<li><strong>Use the Wiki to distill conversations and manage memory.</strong> Conversations and runs are stored in the
+<a href="wiki.html">Wiki</a> today, but nothing turns them into short, lasting memories.<ul>
+<li>How do we extract what is worth keeping from a long conversation?</li>
+<li>How do we keep memories current, and retire the ones that are out of date?</li>
+<li>How does a personal lesson get reviewed and shared with everyone?</li>
+</ul>
+</li>
+<li><strong>Manage knowledge by instrument.</strong> Wiki libraries are organised by person today, not by instrument.<ul>
+<li>How do we keep each instrument&#39;s calibration, habits and known problems together?</li>
+<li>How does the assistant pick the right memories and skills for the instrument in use?</li>
+<li>How do we keep what was learned on the twin apart from what was learned on real hardware?</li>
+</ul>
+</li>
+<li><strong>Make the harness as good to use as Claude Code, and right for a microscope lab.</strong><ul>
+<li>How does the assistant show its plan, progress and tool calls clearly while it works?</li>
+<li>How does it stay on track through a long session?</li>
+<li>Actions on an instrument cannot be undone like a code change. When should it stop and ask?</li>
+<li>How do images, spectra and live instrument state become part of the conversation?</li>
+</ul>
+</li>
+</ol>
+</main>
+</div>
+<script>if (matchMedia('(max-width: 760px)').matches) document.querySelector('.side').open = false</script>
+</body>
+</html>

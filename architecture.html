@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Architecture · Microscopy Hackathon 3</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body class="doc">
+<header class="bar"><nav><a class="brand" href="index.html">Microscopy Hackathon 3</a><a href="getting-started.html">Get started</a><a href="architecture.html">Architecture</a><a href="cordis-plugins.html">Plugins</a><a href="problems-to-solve.html">Problems to be solved</a></nav></header>
+<div class="layout">
+<details class="side" open><summary>Documentation</summary><h2>Use the app</h2><ul><li><a href="getting-started.html">Getting started</a></li><li><a href="digital-twin.html">Digital Twin</a></li><li><a href="devices-and-tango.html">Microscopes and Tango</a></li><li><a href="wiki.html">Wiki</a></li></ul><h2>How it works</h2><ul><li><a href="architecture.html" aria-current="page">Architecture</a></li><li><a href="harness-design.html">Harness design</a></li><li><a href="desktop-app.html">Desktop app</a></li></ul><h2>Build on it</h2><ul><li><a href="cordis-plugins.html">Developing Cordis plugins</a></li><li><a href="development.html">Development</a></li><li><a href="open-source.html">Open-source projects</a></li></ul><h2>Get involved</h2><ul><li><a href="problems-to-solve.html">Problems to be solved</a></li></ul></details>
+<main><h1>Architecture</h1><p>Microscopy Hackathon 3 is one desktop app with three layers: an <strong>assistant</strong> (the Harness), an <strong>instrument layer</strong>
+(Tango and the device service), and <strong>instruments</strong> (the Digital Twin or a real microscope). Everything talks through
+one interface on each boundary, so a microscope and the twin look the same from the assistant&#39;s side.</p>
+<h2 id="system-overview">System overview</h2>
+<p><a href="diagrams/architecture-overview.png"><img src="diagrams/architecture-overview.png" alt="The whole system: app, assistant, instrument layer and instruments"></a></p>
+<table>
+<thead>
+<tr>
+<th>Boundary</th>
+<th>Interface</th>
+<th>Why it is there</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Assistant to instrument layer</td>
+<td>MCP over HTTP</td>
+<td>Tools appear as <code>mcp__tem_twin__&lt;tool&gt;</code>, the same contract as the cloud gateway</td>
+</tr>
+<tr>
+<td>Gateway to device</td>
+<td>Tango</td>
+<td>Reuses the existing gateway: device list, one operation at a time, no automatic retry</td>
+</tr>
+<tr>
+<td>Proxy to device service</td>
+<td>HTTP with a per-device token</td>
+<td>The Tango device holds no instrument code</td>
+</tr>
+<tr>
+<td>Device service to instrument</td>
+<td>AutoScript</td>
+<td>The unmodified Thermo client; only the host and port differ</td>
+</tr>
+</tbody></table>
+<p>The rule that makes this simple: <strong>an instrument is an AutoScript <code>host:port</code>.</strong> The twin is <code>127.0.0.1:&lt;port&gt;</code>.
+Nothing above the device service knows which one it is talking to, apart from the <code>kind</code> it reports
+(<code>simulation</code> or <code>hardware</code>).</p>
+<h2 id="what-happens-when-you-approve-a-microscope">What happens when you approve a microscope</h2>
+<p>Registration and approval both happen on this computer. No server is involved.</p>
+<p><a href="diagrams/approve-flow.png"><img src="diagrams/approve-flow.png" alt="Registering and approving a microscope, step by step"></a></p>
+<p>Ticking a device under <strong>Instruments</strong> is a separate, per-conversation step. A tool call whose <code>device</code> argument is
+not ticked in that conversation is refused before it reaches Tango.</p>
+<h2 id="what-happens-on-a-tool-call">What happens on a tool call</h2>
+<p><a href="diagrams/tool-call.png"><img src="diagrams/tool-call.png" alt="One tool call from the agent to the instrument"></a></p>
+<p>A failed or timed-out call is never retried automatically, because a timeout does not prove the instrument stopped.</p>
+<h2 id="knowledge">Knowledge</h2>
+<p>The assistant looks things up in a local <a href="wiki.html">Wiki</a>. The Wiki is reference only and never runs instrument tools.</p>
+<h2 id="processes">Processes</h2>
+<p>Started by the app. All listen on <code>127.0.0.1</code> only, and ports are chosen automatically.</p>
+<table>
+<thead>
+<tr>
+<th>Process</th>
+<th>Started</th>
+<th>Stops with</th>
+<th>Port</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Electron app</td>
+<td>You open it</td>
+<td>Quit</td>
+<td>none</td>
+</tr>
+<tr>
+<td>Harness client</td>
+<td>App launch, after setup</td>
+<td>App</td>
+<td>7380</td>
+</tr>
+<tr>
+<td>Tango database</td>
+<td>App launch</td>
+<td>App</td>
+<td>Saved in <code>stack.json</code></td>
+</tr>
+<tr>
+<td>MCP gateway</td>
+<td>App launch</td>
+<td>App</td>
+<td>Saved in <code>stack.json</code></td>
+</tr>
+<tr>
+<td><code>TEMHTTPProxyDevice</code> server</td>
+<td>When a device is approved</td>
+<td>App</td>
+<td>Saved in <code>stack.json</code></td>
+</tr>
+<tr>
+<td>Twin 3 server</td>
+<td>First use of the twin</td>
+<td>Stop digital twin, or App</td>
+<td>Chosen per run</td>
+</tr>
+<tr>
+<td>Device service, one per device</td>
+<td>Register or Connect</td>
+<td>Disconnect, or App</td>
+<td>Saved per device</td>
+</tr>
+</tbody></table>
+<h2 id="where-data-lives">Where data lives</h2>
+<p>Under <code>Application Support/Microscopy Hackathon 3</code> on macOS (the Electron user data folder on other systems):</p>
+<table>
+<thead>
+<tr>
+<th>Path</th>
+<th>Contents</th>
+<th>Survives an update</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>runtime/&lt;id&gt;/</code></td>
+<td>Installed client, twin, Python environment</td>
+<td>No, replaced</td>
+</tr>
+<tr>
+<td><code>dsh/</code></td>
+<td>Sessions, model settings, credentials, profile</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td><code>devices/&lt;id&gt;/</code></td>
+<td>Device identity, token, service config</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td><code>devices/tango/</code></td>
+<td>Tango database, <code>stack.json</code>, <code>http-nodes.json</code>, <code>stack.log</code></td>
+<td>Yes</td>
+</tr>
+<tr>
+<td><code>plugins/</code></td>
+<td>Your plugin selection and patch</td>
+<td>Yes</td>
+</tr>
+</tbody></table>
+<p>User plugins are installed into <code>runtime/&lt;id&gt;/client/node_modules</code>, so they are reinstalled after an update.
+The app never reads or writes <code>~/.dsh</code>, which belongs to a source checkout of EDMORE.</p>
+<h2 id="trust-boundaries">Trust boundaries</h2>
+<ul>
+<li><strong>The gateway token</strong> stops other programs on this computer from driving an instrument over MCP. Other local
+processes running as you can still read the token file, so this is not protection against malware.</li>
+<li><strong>Device tokens</strong> protect each device service. They stay in private (<code>0600</code>) files and never reach a web page.</li>
+<li><strong>Approval and instrument selection</strong> decide what the assistant can reach.</li>
+<li><strong>There is no per-call confirmation.</strong> The package leaves out Plan Judge and Workflow, and no policy asks about
+instrument tools, so once a device is ticked the assistant runs them without asking. (The Harness approval plugin is
+set to <code>never</code>, which rejects anything that would ask, rather than prompting.) On a real instrument, stay with it
+and keep its own interlocks on.</li>
+<li><strong>User plugins are trusted code.</strong> They run inside the assistant process. See
+<a href="cordis-plugins.html#security">security</a>.</li>
+</ul>
+<h2 id="what-this-package-leaves-out">What this package leaves out</h2>
+<p>The desktop package is Harness and Wiki with the instrument layer. These parts of EDMORE stay in the source tree but
+are forced off in <code>desktop/main.mjs</code> and cannot be turned on from settings:</p>
+<table>
+<thead>
+<tr>
+<th>Left out</th>
+<th>Effect</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Plan Judge, also called the Workflow Engine</td>
+<td>No plans, approvals of plans, or workflow UI</td>
+</tr>
+<tr>
+<td>Jev decisions</td>
+<td>No calls to the external Jev service</td>
+</tr>
+<tr>
+<td>Computer use (<code>cua-driver</code>)</td>
+<td>The assistant cannot see or drive your desktop</td>
+</tr>
+<tr>
+<td>OpenAI provider</td>
+<td>Hidden from the model list</td>
+</tr>
+</tbody></table>
+<h2 id="read-next">Read next</h2>
+<ul>
+<li><a href="digital-twin.html">Digital Twin</a>: what the twin simulates and how the app hosts it</li>
+<li><a href="devices-and-tango.html">Microscopes and Tango</a>: registering devices and the local Tango stack</li>
+<li><a href="harness-design.html">Harness design</a>: how the assistant is composed</li>
+<li><a href="desktop-app.html">Desktop app</a>: packaging and first run</li>
+</ul>
+<a class="next" href="harness-design.html"><span>Next</span>Harness design</a></main>
+</div>
+<script>if (matchMedia('(max-width: 760px)').matches) document.querySelector('.side').open = false</script>
+</body>
+</html>

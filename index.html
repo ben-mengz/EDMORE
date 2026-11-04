@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Microscopy Hackathon 3</title>
+<meta name="description" content="An assistant for electron microscopy, in one desktop app.">
+<link rel="stylesheet" href="style.css">
+</head>
+<body class="home">
+<header class="bar"><nav><a class="brand" href="index.html">Microscopy Hackathon 3</a><a href="getting-started.html">Get started</a><a href="architecture.html">Architecture</a><a href="cordis-plugins.html">Plugins</a><a href="problems-to-solve.html">Problems to be solved</a></nav></header>
+
+<section class="hero">
+  <p class="eyebrow">Microscopy Hackathon 3</p>
+  <h1>Talk to your microscope.</h1>
+  <p class="lead">An assistant for electron microscopy, in one desktop app.</p>
+  <p class="cta"><a class="button" href="getting-started.html">Get started</a><a class="more" href="architecture.html">See how it works</a></p>
+  <div class="chat" aria-label="Example conversation">
+    <p class="you">Read the current defocus.</p>
+    <p class="tool">mcp__tem_twin__get_defocus</p>
+    <p class="them">The assistant calls the tool on the instrument you ticked, then reports the value.</p>
+  </div>
+</section>
+
+<section class="band dark">
+  <h2>Practice on a twin.<br>Then use the real thing.</h2>
+  <p>Twin 3 simulates a Talos F200X in the app. It answers the same AutoScript calls as a microscope, so the assistant takes the same path to both.</p>
+  <a href="digital-twin.html">Meet the Digital Twin</a>
+</section>
+
+<section class="band figure">
+  <h2>One path to every instrument.</h2>
+  <p>An instrument is a <code>host:port</code>. Nothing above the device service needs to know which one it is.</p>
+  <a class="shot" href="architecture.html"><img src="diagrams/system-overview.png" alt="You talk to the assistant, which goes through Tango and the device service to the Digital Twin or a microscope."></a>
+</section>
+
+<section class="grid" aria-label="Features">
+  <a class="tile" href="devices-and-tango.html"><span>🔒</span><h3>Yours to approve.</h3><p>Register and approve instruments on your own computer. No server involved.</p></a>
+  <a class="tile" href="harness-design.html"><span>🤖</span><h3>Built on a real harness.</h3><p>DeepSeek Harness runs the agent loop, tools and sessions.</p></a>
+  <a class="tile" href="cordis-plugins.html"><span>🧩</span><h3>Extend it yourself.</h3><p>Write a Cordis plugin in two files and install it from a folder.</p></a>
+  <a class="tile" href="desktop-app.html"><span>📦</span><h3>One app to install.</h3><p>Tango, the twin and the assistant start for you.</p></a>
+  <a class="tile" href="wiki.html"><span>📚</span><h3>A knowledge base built in.</h3><p>The Wiki keeps skills, papers, manuals and your history searchable, with citations.</p></a>
+  <a class="tile" href="problems-to-solve.html"><span>🧭</span><h3>Help us build it.</h3><p>Open problems in the twin, GUI control, workflows and the harness.</p></a>
+</section>
+
+<section class="band note">
+  <h2>Where it stands.</h2>
+  <p>Tested on macOS on Apple Silicon. Windows and Linux are configured but not tested, and it has not yet been used with a real microscope.</p>
+  <a href="desktop-app.html#not-yet-done">What is not done yet</a>
+</section>
+
+<footer>
+  <p>Built on EDMORE by Meng Zhao, Anton Gladyshev, Sherjeel Shabih and Christoph T. Koch.</p>
+  <p><a href="getting-started.html">Documentation</a> · <a href="open-source.html">Open source</a> · <a href="https://github.com/ben-mengz/EDMORE">GitHub</a></p>
+</footer>
+</body>
+</html>

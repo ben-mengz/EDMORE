@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Developing Cordis plugins · Microscopy Hackathon 3</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body class="doc">
+<header class="bar"><nav><a class="brand" href="index.html">Microscopy Hackathon 3</a><a href="getting-started.html">Get started</a><a href="architecture.html">Architecture</a><a href="cordis-plugins.html">Plugins</a><a href="problems-to-solve.html">Problems to be solved</a></nav></header>
+<div class="layout">
+<details class="side" open><summary>Documentation</summary><h2>Use the app</h2><ul><li><a href="getting-started.html">Getting started</a></li><li><a href="digital-twin.html">Digital Twin</a></li><li><a href="devices-and-tango.html">Microscopes and Tango</a></li><li><a href="wiki.html">Wiki</a></li></ul><h2>How it works</h2><ul><li><a href="architecture.html">Architecture</a></li><li><a href="harness-design.html">Harness design</a></li><li><a href="desktop-app.html">Desktop app</a></li></ul><h2>Build on it</h2><ul><li><a href="cordis-plugins.html" aria-current="page">Developing Cordis plugins</a></li><li><a href="development.html">Development</a></li><li><a href="open-source.html">Open-source projects</a></li></ul><h2>Get involved</h2><ul><li><a href="problems-to-solve.html">Problems to be solved</a></li></ul></details>
+<main><h1>Developing Cordis plugins</h1><p>A Cordis plugin adds code to the assistant: a tool, an event listener or a policy. This guide takes you from an empty
+folder to a tool the assistant can call. Read <a href="harness-design.html">Harness design</a> first if Cordis is new to you, and
+check <a href="harness-design.html#choosing-an-extension-point">choosing an extension point</a>: a skill or an MCP server may do the
+job with less risk.</p>
+<p>You need the app installed and a text editor. You do not need access to any private repository, because the packages a
+tool plugin uses are public on npm.</p>
+<h2 id="your-first-plugin">Your first plugin</h2>
+<p>The complete example is in <a href="https://github.com/ben-mengz/EDMORE/blob/microscopy-hackathon-3/docs/plugin-examples/hello-tool"><code>docs/plugin-examples/hello-tool</code></a>.</p>
+<p><strong><code>package.json</code></strong></p>
+<pre><code class="language-json">{
+  &quot;name&quot;: &quot;hackathon-hello-tool&quot;,
+  &quot;version&quot;: &quot;0.1.0&quot;,
+  &quot;type&quot;: &quot;module&quot;,
+  &quot;main&quot;: &quot;index.js&quot;,
+  &quot;exports&quot;: { &quot;.&quot;: &quot;./index.js&quot; },
+  &quot;peerDependencies&quot;: { &quot;@deepseek-ai/dsh-tools&quot;: &quot;0.2.1-rc.5&quot; }
+}
+</code></pre>
+<p><strong><code>index.js</code></strong></p>
+<pre><code class="language-js">import { defineTool } from &#39;@deepseek-ai/dsh-tools&#39;
+
+export const name = &#39;hello-tool&#39;
+export const inject = [&#39;tools&#39;]
+
+export function apply(ctx, config = {}) {
+  ctx.tools.register(defineTool({
+    name: &#39;hello_microscope&#39;,
+    description: &#39;Say hello from a user-written Cordis plugin.&#39;,
+    parameters: { who: { type: &#39;string&#39;, description: &#39;Who to greet.&#39; } },
+    output: {
+      schema: { type: &#39;json&#39; },
+      render: (_args, value) =&gt; [{ type: &#39;text&#39;, text: JSON.stringify(value) }],
+    },
+    async execute(args) {
+      return { greeting: `${config.greeting ?? &#39;Hello&#39;}, ${args.who ?? &#39;microscopist&#39;}` }
+    },
+  }))
+}
+</code></pre>
+<p>The three exports are the whole contract:</p>
+<table>
+<thead>
+<tr>
+<th>Export</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>name</code></td>
+<td>The plugin&#39;s name</td>
+</tr>
+<tr>
+<td><code>inject</code></td>
+<td>Services needed before <code>apply</code> runs</td>
+</tr>
+<tr>
+<td><code>apply(ctx, config)</code></td>
+<td>Runs when the plugin starts</td>
+</tr>
+</tbody></table>
+<p>Peer dependency versions must match the installed Harness. A mismatch is refused at install time.</p>
+<h2 id="install-it">Install it</h2>
+<ol>
+<li>Open the control panel (<code>Cmd+,</code>), then <strong>Overview</strong>, and select <strong>Stop</strong>. Plugins can only be installed while the
+assistant is stopped.</li>
+<li>Open <strong>Plugins</strong> → <strong>Install Plugin</strong>.</li>
+<li>Select <strong>Choose folder or .tgz</strong> and pick your plugin folder. You can also type an npm package name.</li>
+<li>Add configuration as JSON if your plugin takes any, for example <code>{&quot;greeting&quot;: &quot;Guten Tag&quot;}</code>.</li>
+<li>Select <strong>Install Plugin</strong> and confirm the warning.</li>
+<li>On <strong>Overview</strong>, select <strong>Start</strong>.</li>
+</ol>
+<p>A folder is copied at install time. After changing your code, remove the plugin and install it again.</p>
+<h2 id="what-a-plugin-can-use">What a plugin can use</h2>
+<p>Ask for services by name in <code>inject</code>, then use them on <code>ctx</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Service</th>
+<th>Package</th>
+<th>Use</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>tools</code></td>
+<td><code>dsh-tools</code></td>
+<td>Register tools, restrict, guard</td>
+</tr>
+<tr>
+<td><code>agents</code>, <code>sessions</code></td>
+<td><code>dsh-agent</code>, <code>dsh-session</code></td>
+<td>Agents and persisted sessions</td>
+</tr>
+<tr>
+<td><code>skills</code></td>
+<td><code>dsh-skill</code></td>
+<td>The skill catalog</td>
+</tr>
+<tr>
+<td><code>settings</code>, <code>credentials</code></td>
+<td><code>dsh-settings</code>, <code>dsh-credentials</code></td>
+<td>Configuration and secrets</td>
+</tr>
+<tr>
+<td><code>logger</code></td>
+<td><code>cordis</code></td>
+<td>Logging, through <code>ctx.logger</code></td>
+</tr>
+<tr>
+<td><code>edmoreEvents</code></td>
+<td>EDMORE core</td>
+<td>The EDMORE event hub</td>
+</tr>
+<tr>
+<td><code>edmoreConversationExtensions</code></td>
+<td>EDMORE core</td>
+<td>Workspace panels</td>
+</tr>
+<tr>
+<td><code>edmoreCapabilities</code></td>
+<td>EDMORE core</td>
+<td>Feature status</td>
+</tr>
+</tbody></table>
+<p>Harness services are documented in <code>client/node_modules/@deepseek-ai/&lt;package&gt;/README.md</code>. EDMORE packages are private
+and not on npm, so you can use their services at run time but cannot import their types. <strong>EDMORE services are internal
+and may change between versions.</strong></p>
+<h2 id="common-patterns">Common patterns</h2>
+<h3 id="tool-parameters">Tool parameters</h3>
+<p><code>defineTool</code> validates arguments before <code>execute</code> runs. Types are <code>string</code>, <code>number</code>, <code>integer</code>, <code>boolean</code>, <code>null</code>,
+<code>array</code>, <code>object</code>, <code>json</code> and <code>oneOf</code>. Mark needed fields with <code>required: true</code>.</p>
+<pre><code class="language-js">parameters: {
+  path: { type: &#39;string&#39;, required: true, description: &#39;Absolute file path&#39; },
+  limit: { type: &#39;number&#39; },
+},
+</code></pre>
+<p><code>execute(args, exec)</code> receives <code>exec.signal</code>. Pass it to long operations so cancellation works. Throwing is fine: the
+model sees <code>Error: &lt;message&gt;</code> and the turn continues.</p>
+<h3 id="reacting-to-events">Reacting to events</h3>
+<p>Listeners are removed automatically when the plugin stops.</p>
+<pre><code class="language-js">export const inject = [&#39;tools&#39;]
+
+export function apply(ctx) {
+  ctx.on(&#39;tools/pre-execute&#39;, async (exec, next) =&gt; {
+    ctx.logger.info(&#39;tool %s&#39;, exec.name)
+    return next()
+  })
+}
+</code></pre>
+<h3 id="enforcing-a-rule">Enforcing a rule</h3>
+<p>A guard is final: nothing later can reverse its denial. It runs synchronously, and is removed when the plugin stops.
+Return a reason to deny, and nothing to allow. The model receives <code>Error: &lt;reason&gt;</code>. This one blocks stage moves:</p>
+<pre><code class="language-js">export function apply(ctx) {
+  ctx.tools.guard(exec =&gt;
+    exec.name === &#39;mcp__tem_twin__move_stage&#39; ? &#39;Stage moves are disabled on this computer.&#39; : undefined)
+}
+</code></pre>
+<h3 id="cleaning-up">Cleaning up</h3>
+<p>Listeners and services are cleaned up for you. For anything else, return a disposer from <code>ctx.effect</code>:</p>
+<pre><code class="language-js">ctx.effect(() =&gt; {
+  const timer = setInterval(poll, 5000)
+  return () =&gt; clearInterval(timer)
+})
+</code></pre>
+<h3 id="adding-a-workspace-panel">Adding a workspace panel</h3>
+<p>Register with <code>edmoreConversationExtensions</code>. The plugin serves the panel&#39;s script, here held in <code>panelSource</code>, and the
+workspace loads it from <code>/api/edmore/extensions/&lt;id&gt;/panel.js</code>. The <code>id</code> must be lowercase letters, digits and hyphens.
+Follow
+<a href="https://github.com/ben-mengz/EDMORE/blob/microscopy-hackathon-3/client/packages/plugin-tango/src/conversation.mjs"><code>plugin-tango/src/conversation.mjs</code></a> and
+<a href="https://github.com/ben-mengz/EDMORE/blob/microscopy-hackathon-3/client/packages/plugin-tango/static/panel.js"><code>static/panel.js</code></a>.</p>
+<pre><code class="language-js">export const inject = [&#39;edmoreConversationExtensions&#39;]
+
+export function apply(ctx) {
+  ctx.effect(() =&gt; ctx.edmoreConversationExtensions.register({
+    id: &#39;my-panel&#39;,
+    title: &#39;My panel&#39;,
+    state: async session =&gt; ({ note: &#39;hello&#39; }),
+    update: async (session, input) =&gt; ({ note: input.note }),
+    asset: async file =&gt; file === &#39;panel.js&#39; ? { body: panelSource, type: &#39;text/javascript; charset=utf-8&#39; } : undefined,
+  }))
+}
+</code></pre>
+<h2 id="publish-it">Publish it</h2>
+<p>Your plugin is an ordinary npm package. Either publish it to npm, or pack it and share the file:</p>
+<pre><code class="language-bash">npm pack
+</code></pre>
+<p>Others install the <code>.tgz</code> the same way, under <strong>Choose folder or .tgz</strong>.</p>
+<h2 id="tools-and-workflows">Tools and Workflows</h2>
+<p>Plan Judge and Workflow are not in the desktop package, so a plugin tool is available to the assistant directly. In a
+source checkout with the Workflow Engine on, workflow steps refer to MCP tools, so a tool registered only with
+<code>ctx.tools</code> may not appear in the Workflow editor.</p>
+<h2 id="debugging">Debugging</h2>
+<table>
+<thead>
+<tr>
+<th>Symptom</th>
+<th>Check</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>The tool never appears</td>
+<td>A service in <code>inject</code> may be missing. The plugin stays pending; read <strong>Overview → Process Logs</strong></td>
+</tr>
+<tr>
+<td>Install fails with a version error</td>
+<td>Match <code>peerDependencies</code> to the installed Harness version</td>
+</tr>
+<tr>
+<td>Your change has no effect</td>
+<td>Remove and reinstall: folders are copied at install</td>
+</tr>
+<tr>
+<td>The plugin is gone after an app update</td>
+<td>The app reinstalls plugins after updates. If a folder has moved, the Plugins page names what failed</td>
+</tr>
+</tbody></table>
+<p>To exercise a plugin without the app, load it into a Cordis context with a stand-in service. Run this where
+<code>@deepseek-ai/cordis</code> and <code>@deepseek-ai/dsh-tools</code> can be resolved:</p>
+<pre><code class="language-js">import { Context, Service } from &#39;@deepseek-ai/cordis&#39;
+import * as plugin from &#39;./index.js&#39;
+
+class Tools extends Service {
+  registered = []
+  constructor(ctx) { super(ctx, &#39;tools&#39;) }
+  register(tool) { this.registered.push(tool); return () =&gt; {} }
+}
+
+const ctx = new Context()
+await ctx.plugin(Tools)
+await ctx.plugin(plugin, { greeting: &#39;Guten Tag&#39; })
+</code></pre>
+<h2 id="security">Security</h2>
+<p><strong>A plugin is trusted code.</strong> It runs inside the assistant process, where it can read saved credentials, use connected
+instruments, and act without any approval. The app shows a warning before installing one.</p>
+<ul>
+<li>Install only code you have read or trust.</li>
+<li>Plugins can be installed in local mode only, not on a shared cloud server.</li>
+<li>A plugin can bypass the Instruments selection, so be especially careful on a computer connected to a real microscope.</li>
+</ul>
+<h2 id="reference">Reference</h2>
+<ul>
+<li><a href="https://www.npmjs.com/package/@deepseek-ai/dsh-tools"><code>dsh-tools</code></a>: tools in full</li>
+<li><a href="https://www.npmjs.com/package/@deepseek-ai/cordis">Cordis</a></li>
+<li><a href="https://www.npmjs.com/package/@deepseek-ai/dsh-plugin-manager">Plugin manager</a></li>
+<li><a href="https://github.com/ben-mengz/EDMORE/blob/microscopy-hackathon-3/client/docs/feature-plugins.md">Feature packages</a>: built-in EDMORE plugins, a different mechanism</li>
+</ul>
+<a class="next" href="development.html"><span>Next</span>Development</a></main>
+</div>
+<script>if (matchMedia('(max-width: 760px)').matches) document.querySelector('.side').open = false</script>
+</body>
+</html>

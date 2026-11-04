@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Desktop app · Microscopy Hackathon 3</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body class="doc">
+<header class="bar"><nav><a class="brand" href="index.html">Microscopy Hackathon 3</a><a href="getting-started.html">Get started</a><a href="architecture.html">Architecture</a><a href="cordis-plugins.html">Plugins</a><a href="problems-to-solve.html">Problems to be solved</a></nav></header>
+<div class="layout">
+<details class="side" open><summary>Documentation</summary><h2>Use the app</h2><ul><li><a href="getting-started.html">Getting started</a></li><li><a href="digital-twin.html">Digital Twin</a></li><li><a href="devices-and-tango.html">Microscopes and Tango</a></li><li><a href="wiki.html">Wiki</a></li></ul><h2>How it works</h2><ul><li><a href="architecture.html">Architecture</a></li><li><a href="harness-design.html">Harness design</a></li><li><a href="desktop-app.html" aria-current="page">Desktop app</a></li></ul><h2>Build on it</h2><ul><li><a href="cordis-plugins.html">Developing Cordis plugins</a></li><li><a href="development.html">Development</a></li><li><a href="open-source.html">Open-source projects</a></li></ul><h2>Get involved</h2><ul><li><a href="problems-to-solve.html">Problems to be solved</a></li></ul></details>
+<main><h1>Desktop app</h1><p>How the app is packaged, what first run does, and how it behaves when updated. The code is in <a href="https://github.com/ben-mengz/EDMORE/blob/microscopy-hackathon-3/desktop"><code>desktop/</code></a>.</p>
+<h2 id="what-is-in-the-installer">What is in the installer</h2>
+<p><a href="diagrams/installer-contents.png"><img src="diagrams/installer-contents.png" alt="What the installer holds and what downloads on first run"></a></p>
+<p>Private code ships in the installer, so users need no access to private repositories. Public dependencies download on
+first launch, pinned by <code>client/package-lock.json</code> and <code>desktop/runtime/requirements.lock</code> with hashes.</p>
+<table>
+<thead>
+<tr>
+<th>Choice</th>
+<th>Reason</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Bundled official Node 24, not Electron&#39;s Node</td>
+<td>The Harness loader accepts only specific Electron builds, so sharing would tie Electron updates to it</td>
+</tr>
+<tr>
+<td><code>npm ci --ignore-scripts</code></td>
+<td>Third-party install scripts do not run on user machines; the one needed effect, a <code>node-pty</code> permission, is applied directly</td>
+</tr>
+<tr>
+<td>Install into the final folder, <code>ready.json</code> last</td>
+<td>Python environments cannot be moved. A folder without the marker is wiped on the next try</td>
+</tr>
+<tr>
+<td>Runtime <code>&lt;id&gt;</code> hashes all content</td>
+<td>A code-only change must also replace the runtime</td>
+</tr>
+</tbody></table>
+<h2 id="first-run">First run</h2>
+<p><a href="diagrams/first-run.png"><img src="diagrams/first-run.png" alt="What happens at launch"></a></p>
+<p>The installer is <a href="https://github.com/ben-mengz/EDMORE/blob/microscopy-hackathon-3/desktop/runtime-install.mjs"><code>desktop/runtime-install.mjs</code></a>, and the setup window is
+<a href="https://github.com/ben-mengz/EDMORE/blob/microscopy-hackathon-3/desktop/setup.mjs"><code>desktop/setup.mjs</code></a>.</p>
+<h2 id="updates">Updates</h2>
+<p>Any content change gives a new runtime, so opening a new version repeats the download. On that launch the app also:</p>
+<ul>
+<li>points the profile at the new runtime, which the client otherwise refuses</li>
+<li>reinstalls your plugins, and lists any that failed on the Plugins page</li>
+<li>keeps sessions, settings, devices and credentials</li>
+</ul>
+<h2 id="windows">Windows</h2>
+<table>
+<thead>
+<tr>
+<th>Window</th>
+<th>Role</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Workspace</td>
+<td>Conversation, opened at launch</td>
+</tr>
+<tr>
+<td>Control panel</td>
+<td>Microscopes, Digital twin, Plugins, Skills, Settings; <code>Cmd+,</code> or the menu bar icon</td>
+</tr>
+<tr>
+<td>Digital twin</td>
+<td>Hidden engine, shown on request</td>
+</tr>
+</tbody></table>
+<p>The app keeps running in the menu bar after its windows close. Use <strong>Quit Completely</strong> to stop everything.</p>
+<h2 id="design-system">Design system</h2>
+<p>Colours and fonts are defined once, in <code>client/packages/webui/static/tokens.css</code>, and <code>desktop/renderer/tokens.css</code> is
+an identical copy, which a test enforces. Components use tokens only, so dark mode follows the system.</p>
+<p>Interface text is English by default. The control panel uses <code>desktop/locale.mjs</code>. The workspace translates by exact
+source text in <code>client/packages/webui/static/i18n.js</code>, and never translates user content, model output or logs.</p>
+<h2 id="build">Build</h2>
+<pre><code class="language-bash">cd desktop &amp;&amp; npm ci &amp;&amp; npm run package:mac -- --arm64
+</code></pre>
+<p><code>prepackage</code> assembles <code>desktop/payload</code> from tracked and unignored files, checks for private files, and verifies each
+tool download by SHA-256. See <a href="development.html">Development</a>.</p>
+<h2 id="not-yet-done">Not yet done</h2>
+<ul>
+<li><strong>Signing:</strong> macOS builds are ad-hoc signed and not notarized, so Gatekeeper may block them on other computers.</li>
+<li><strong>Windows and Linux:</strong> targets are configured but not built or tested.</li>
+<li><strong>AutoScript wheels</strong> are bundled. Confirm the licence before distributing outside the group.</li>
+<li><strong>Auto-update</strong> is not implemented.</li>
+</ul>
+<a class="next" href="cordis-plugins.html"><span>Next</span>Developing Cordis plugins</a></main>
+</div>
+<script>if (matchMedia('(max-width: 760px)').matches) document.querySelector('.side').open = false</script>
+</body>
+</html>

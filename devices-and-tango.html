@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Microscopes and Tango · Microscopy Hackathon 3</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body class="doc">
+<header class="bar"><nav><a class="brand" href="index.html">Microscopy Hackathon 3</a><a href="getting-started.html">Get started</a><a href="architecture.html">Architecture</a><a href="cordis-plugins.html">Plugins</a><a href="problems-to-solve.html">Problems to be solved</a></nav></header>
+<div class="layout">
+<details class="side" open><summary>Documentation</summary><h2>Use the app</h2><ul><li><a href="getting-started.html">Getting started</a></li><li><a href="digital-twin.html">Digital Twin</a></li><li><a href="devices-and-tango.html" aria-current="page">Microscopes and Tango</a></li><li><a href="wiki.html">Wiki</a></li></ul><h2>How it works</h2><ul><li><a href="architecture.html">Architecture</a></li><li><a href="harness-design.html">Harness design</a></li><li><a href="desktop-app.html">Desktop app</a></li></ul><h2>Build on it</h2><ul><li><a href="cordis-plugins.html">Developing Cordis plugins</a></li><li><a href="development.html">Development</a></li><li><a href="open-source.html">Open-source projects</a></li></ul><h2>Get involved</h2><ul><li><a href="problems-to-solve.html">Problems to be solved</a></li></ul></details>
+<main><h1>Microscopes and Tango</h1><p>This page explains how a microscope becomes available to the assistant. An instrument is an AutoScript <code>host:port</code>, and
+you register and approve it on this computer. The twin and a real microscope take the same path.</p>
+<h2 id="register-a-microscope">Register a microscope</h2>
+<p>Open the control panel (<code>Cmd+,</code>) and choose <strong>Microscopes</strong>.</p>
+<p><strong>The Digital Twin</strong> is already listed. Select <strong>Register</strong>. The app starts the twin if it is not running.</p>
+<p><strong>Any other microscope:</strong></p>
+<ol>
+<li>Select <strong>Add microscope</strong>.</li>
+<li>Enter a name using Latin letters or numbers, its AutoScript address, and the port (7521 by default).</li>
+<li>Select <strong>Add microscope</strong>. The app checks it can reach that address.</li>
+<li>Select <strong>Register</strong>.</li>
+</ol>
+<p>Then, for either one:</p>
+<ol>
+<li>Wait for <strong>Waiting for your approval</strong>.</li>
+<li>Select <strong>Approve</strong>. A real instrument asks you to confirm first.</li>
+<li>The assistant restarts and the workspace reopens, which interrupts any reply in progress.</li>
+<li>In the workspace, tick the device under <strong>Instruments</strong>. Ticking is per conversation.</li>
+</ol>
+<table>
+<thead>
+<tr>
+<th>Status</th>
+<th>Meaning</th>
+<th>You can</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Not registered</td>
+<td>Known, not running</td>
+<td>Register</td>
+</tr>
+<tr>
+<td>Connecting…</td>
+<td>The device service is starting</td>
+<td>Wait</td>
+</tr>
+<tr>
+<td>Waiting for your approval</td>
+<td>Running, but not offered to the assistant</td>
+<td>Approve, Reject</td>
+</tr>
+<tr>
+<td>Online</td>
+<td>Available to the assistant</td>
+<td>Disconnect, Unregister</td>
+</tr>
+<tr>
+<td>Registered, offline</td>
+<td>Approved, service not running</td>
+<td>Connect, Unregister</td>
+</tr>
+<tr>
+<td>Needs attention</td>
+<td>Something failed; the reason is shown</td>
+<td>Register or Connect again</td>
+</tr>
+</tbody></table>
+<p>Approved devices are remembered. After restarting the app, select <strong>Connect</strong>; no new approval is needed.</p>
+<h2 id="how-it-is-built">How it is built</h2>
+<p><a href="diagrams/device-map.png"><img src="diagrams/device-map.png" alt="Each instrument gets its own Tango device and device service"></a></p>
+<table>
+<thead>
+<tr>
+<th>Part</th>
+<th>Source</th>
+<th>Job</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Device manager</td>
+<td><a href="https://github.com/ben-mengz/EDMORE/blob/microscopy-hackathon-3/desktop/devices.mjs"><code>desktop/devices.mjs</code></a></td>
+<td>Devices, approval state, starting everything below</td>
+</tr>
+<tr>
+<td>Stack launcher</td>
+<td><a href="https://github.com/ben-mengz/EDMORE/blob/microscopy-hackathon-3/desktop/runtime/local_tango.py"><code>desktop/runtime/local_tango.py</code></a></td>
+<td>Starts the database, proxy devices and gateway in order</td>
+</tr>
+<tr>
+<td>Gateway</td>
+<td><a href="https://github.com/ben-mengz/EDMORE/blob/microscopy-hackathon-3/desktop/runtime/local_gateway.py"><code>desktop/runtime/local_gateway.py</code></a></td>
+<td>The Tango MCP gateway plus a bearer token</td>
+</tr>
+<tr>
+<td>Tango modules</td>
+<td><code>vendor/edmore_windows_node/source/tem_twin_autoscript</code></td>
+<td><code>tango_mcp</code>, <code>tango_stack</code>, <code>http_tango_device</code>, unchanged in design from the cloud stack</td>
+</tr>
+<tr>
+<td>Device service</td>
+<td>Same repository, <code>edmore_tem_node</code> and <code>remote_monitor</code></td>
+<td>Exposes 40 tools over an authenticated local HTTP API</td>
+</tr>
+</tbody></table>
+<p>Tango runs from the moment the app starts, with no devices if none are approved. In that state the gateway offers only
+<code>list_devices</code>. Approving or unregistering writes <code>devices/tango/http-nodes.json</code> and restarts the stack, which is the
+same mechanism the cloud deployment calls a reload. The device list is fixed for each start of the stack, so the
+assistant restarts to pick up the new tools.</p>
+<p>If the stack stops unexpectedly, the app restarts it. A failed start is retried once.</p>
+<h2 id="tools-the-assistant-gets">Tools the assistant gets</h2>
+<p>Tools are named <code>mcp__tem_twin__&lt;tool&gt;</code> and take a <code>device</code> argument. The server name stays <code>tem_twin</code> because the
+built-in <code>tem-twin-*</code> skills refer to it.</p>
+<table>
+<thead>
+<tr>
+<th>Group</th>
+<th>Examples</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Discovery</td>
+<td><code>list_devices</code>, <code>select_device</code>, <code>microscope_status</code></td>
+</tr>
+<tr>
+<td>Optics</td>
+<td><code>get_defocus</code>, <code>set_defocus</code>, <code>set_objective_stigmator</code>, <code>set_beam_tilt</code></td>
+</tr>
+<tr>
+<td>Stage and beam</td>
+<td><code>get_stage</code>, <code>move_stage</code>, <code>blank_beam</code>, <code>unblank_beam</code></td>
+</tr>
+<tr>
+<td>Acquisition</td>
+<td><code>acquire_camera_image</code>, <code>get_image_data_cached</code></td>
+</tr>
+<tr>
+<td>Alignment</td>
+<td><code>align_beam_and_c2</code>, <code>align_gun_tilt</code>, <code>align_objective_stigmation</code></td>
+</tr>
+<tr>
+<td>Measurement</td>
+<td><code>measure_beam</code>, <code>measure_objective_astigmatism</code></td>
+</tr>
+</tbody></table>
+<p>Each device reports a <code>kind</code>: <code>simulation</code> for the twin and <code>hardware</code> for everything else. While a device is offline it
+reports <code>remote</code>.</p>
+<h2 id="rules-the-stack-keeps">Rules the stack keeps</h2>
+<ul>
+<li>Each device runs one operation at a time. A second call is refused, not queued.</li>
+<li>Nothing is retried automatically. A timeout does not prove the instrument stopped, so check its state first.</li>
+<li>A result must carry the identity of the device that was asked.</li>
+<li>The name <code>edmore/tem/twin</code> is reserved by the cloud service, so the local twin is <code>edmore/tem/twin_&lt;hostname&gt;</code>.</li>
+</ul>
+<h2 id="troubleshooting">Troubleshooting</h2>
+<table>
+<thead>
+<tr>
+<th>Message</th>
+<th>What to do</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>The local Tango service didn&#39;t start</td>
+<td>Read <code>devices/tango/stack.log</code> in the app data folder, or quit and reopen the app</td>
+</tr>
+<tr>
+<td>Couldn&#39;t reach AutoScript at that address</td>
+<td>Check that AutoScript is running on that computer, and the network or VPN</td>
+</tr>
+<tr>
+<td>The device service took too long to start</td>
+<td>Select Register or Connect again</td>
+</tr>
+<tr>
+<td>The device service stopped unexpectedly</td>
+<td>Select Connect, and check the twin or instrument is running</td>
+</tr>
+<tr>
+<td>A tool says the device is unavailable</td>
+<td>Tick the device under Instruments, or select Connect</td>
+</tr>
+</tbody></table>
+<h2 id="known-limits">Known limits</h2>
+<ul>
+<li><code>list_devices</code> reports <code>available: true</code> for an approved device that is offline. A tool call on it fails with a clear
+error and does nothing.</li>
+<li>Approving or unregistering restarts the assistant.</li>
+<li>Approved devices need <strong>Connect</strong> after each app start.</li>
+<li>Only the twin has been exercised end to end. A real microscope has not been connected through this path, and a
+different AutoScript version than the bundled 1.17 client may not work.</li>
+<li>Tested on macOS only. Starting and stopping the stack on Windows is unverified.</li>
+</ul>
+<h2 id="the-cloud-path">The cloud path</h2>
+<p><code>edmore_windows_node</code> can also register a device with a shared EDMORE server, with pairing codes and administrator
+approval. This app does not use that path. See <code>DEVICE_ACCESS.md</code> in that repository.</p>
+<a class="next" href="wiki.html"><span>Next</span>Wiki</a></main>
+</div>
+<script>if (matchMedia('(max-width: 760px)').matches) document.querySelector('.side').open = false</script>
+</body>
+</html>

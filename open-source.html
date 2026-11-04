@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Open-source projects · Microscopy Hackathon 3</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body class="doc">
+<header class="bar"><nav><a class="brand" href="index.html">Microscopy Hackathon 3</a><a href="getting-started.html">Get started</a><a href="architecture.html">Architecture</a><a href="cordis-plugins.html">Plugins</a><a href="problems-to-solve.html">Problems to be solved</a></nav></header>
+<div class="layout">
+<details class="side" open><summary>Documentation</summary><h2>Use the app</h2><ul><li><a href="getting-started.html">Getting started</a></li><li><a href="digital-twin.html">Digital Twin</a></li><li><a href="devices-and-tango.html">Microscopes and Tango</a></li><li><a href="wiki.html">Wiki</a></li></ul><h2>How it works</h2><ul><li><a href="architecture.html">Architecture</a></li><li><a href="harness-design.html">Harness design</a></li><li><a href="desktop-app.html">Desktop app</a></li></ul><h2>Build on it</h2><ul><li><a href="cordis-plugins.html">Developing Cordis plugins</a></li><li><a href="development.html">Development</a></li><li><a href="open-source.html" aria-current="page">Open-source projects</a></li></ul><h2>Get involved</h2><ul><li><a href="problems-to-solve.html">Problems to be solved</a></li></ul></details>
+<main><h1>Open-source projects</h1><p>The public projects this app is built on. Exact versions are pinned in
+<a href="https://github.com/ben-mengz/EDMORE/blob/microscopy-hackathon-3/client/package-lock.json"><code>client/package-lock.json</code></a>, <a href="https://github.com/ben-mengz/EDMORE/blob/microscopy-hackathon-3/desktop/runtime/tools.json"><code>desktop/runtime/tools.json</code></a>
+and <a href="https://github.com/ben-mengz/EDMORE/blob/microscopy-hackathon-3/desktop/runtime/requirements.lock"><code>desktop/runtime/requirements.lock</code></a>.</p>
+<h2 id="this-project">This project</h2>
+<table>
+<thead>
+<tr>
+<th>Project</th>
+<th>Role</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><a href="https://github.com/ben-mengz/EDMORE">EDMORE</a></td>
+<td>The assistant, desktop app and this documentation</td>
+</tr>
+</tbody></table>
+<h2 id="assistant">Assistant</h2>
+<table>
+<thead>
+<tr>
+<th>Project</th>
+<th>Role</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><a href="https://github.com/deepseek-ai/deepseek-harness">DeepSeek Harness</a></td>
+<td>Agent runtime: loop, tools, sessions, web server</td>
+</tr>
+<tr>
+<td><a href="https://github.com/cordiverse/cordis">Cordis</a></td>
+<td>Plugin framework; the Harness ships its own build</td>
+</tr>
+<tr>
+<td><a href="https://github.com/modelcontextprotocol/modelcontextprotocol">Model Context Protocol</a></td>
+<td>How the assistant reaches instrument tools</td>
+</tr>
+<tr>
+<td><a href="https://github.com/Tencent/WeKnora">WeKnora</a></td>
+<td>Wiki knowledge base</td>
+</tr>
+<tr>
+<td><a href="https://github.com/privatenumber/tsx">tsx</a></td>
+<td>Runs the TypeScript client</td>
+</tr>
+<tr>
+<td><a href="https://github.com/eemeli/yaml">yaml</a></td>
+<td>Reads profile patches</td>
+</tr>
+<tr>
+<td><a href="https://github.com/microsoft/node-pty">node-pty</a></td>
+<td>Terminal support in the Harness</td>
+</tr>
+</tbody></table>
+<h2 id="desktop-app">Desktop app</h2>
+<table>
+<thead>
+<tr>
+<th>Project</th>
+<th>Role</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><a href="https://github.com/electron/electron">Electron</a></td>
+<td>Application shell</td>
+</tr>
+<tr>
+<td><a href="https://github.com/electron-userland/electron-builder">electron-builder</a></td>
+<td>Builds the installer</td>
+</tr>
+<tr>
+<td><a href="https://github.com/nodejs/node">Node.js</a></td>
+<td>Bundled runtime for the assistant</td>
+</tr>
+<tr>
+<td><a href="https://github.com/astral-sh/uv">uv</a></td>
+<td>Installs Python and its packages on first run</td>
+</tr>
+<tr>
+<td><a href="https://github.com/pnpm/pnpm">pnpm</a></td>
+<td>Installs Cordis plugins</td>
+</tr>
+</tbody></table>
+<h2 id="instrument-layer">Instrument layer</h2>
+<table>
+<thead>
+<tr>
+<th>Project</th>
+<th>Role</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><a href="https://gitlab.com/tango-controls/pytango">PyTango</a></td>
+<td>Tango device server and database; hosted on GitLab</td>
+</tr>
+<tr>
+<td><a href="https://github.com/PrefectHQ/fastmcp">FastMCP</a></td>
+<td>The MCP gateway</td>
+</tr>
+<tr>
+<td><a href="https://github.com/modelcontextprotocol/python-sdk">MCP Python SDK</a></td>
+<td>MCP protocol support in Python</td>
+</tr>
+<tr>
+<td><a href="https://github.com/aio-libs/aiohttp">aiohttp</a></td>
+<td>HTTP in the device service</td>
+</tr>
+<tr>
+<td><a href="https://github.com/python-websockets/websockets">websockets</a></td>
+<td>Link between Twin 3 and its engine window</td>
+</tr>
+<tr>
+<td><a href="https://github.com/pycroscopy/asyncroscopy">asyncroscopy</a></td>
+<td>The TEM tool interface is adapted from it</td>
+</tr>
+<tr>
+<td><a href="https://github.com/python-jsonschema/jsonschema">jsonschema</a></td>
+<td>Checks tool arguments</td>
+</tr>
+</tbody></table>
+<h2 id="python-libraries">Python libraries</h2>
+<table>
+<thead>
+<tr>
+<th>Project</th>
+<th>Role</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><a href="https://github.com/numpy/numpy">NumPy</a>, <a href="https://github.com/scipy/scipy">SciPy</a></td>
+<td>Numerics</td>
+</tr>
+<tr>
+<td><a href="https://github.com/python-pillow/Pillow">Pillow</a>, <a href="https://github.com/opencv/opencv-python">opencv-python</a></td>
+<td>Images</td>
+</tr>
+<tr>
+<td><a href="https://github.com/h5py/h5py">h5py</a></td>
+<td>HDF5 files</td>
+</tr>
+<tr>
+<td><a href="https://github.com/lxml/lxml">lxml</a>, <a href="https://github.com/yaml/pyyaml">PyYAML</a></td>
+<td>XML and YAML files</td>
+</tr>
+<tr>
+<td><a href="https://github.com/pyca/cryptography">cryptography</a></td>
+<td>Cryptography</td>
+</tr>
+</tbody></table>
+<h2 id="related-projects">Related projects</h2>
+<p>These work with EDMORE but are not part of the desktop app.</p>
+<table>
+<thead>
+<tr>
+<th>Project</th>
+<th>Role</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><a href="https://github.com/nion-software/nionswift">Nion Swift</a></td>
+<td>Microscopy interface that can start the source client</td>
+</tr>
+<tr>
+<td><a href="https://github.com/trycua/cua">Cua</a></td>
+<td>Computer use driver; turned off in this app</td>
+</tr>
+</tbody></table>
+<h2 id="documentation">Documentation</h2>
+<table>
+<thead>
+<tr>
+<th>Project</th>
+<th>Role</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><a href="https://github.com/excalidraw/excalidraw">Excalidraw</a></td>
+<td>The diagrams</td>
+</tr>
+<tr>
+<td><a href="https://github.com/markedjs/marked">Marked</a></td>
+<td>Builds this site from Markdown</td>
+</tr>
+</tbody></table>
+<a class="next" href="problems-to-solve.html"><span>Next</span>Problems to be solved</a></main>
+</div>
+<script>if (matchMedia('(max-width: 760px)').matches) document.querySelector('.side').open = false</script>
+</body>
+</html>

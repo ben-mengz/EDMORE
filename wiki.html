@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wiki · Microscopy Hackathon 3</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body class="doc">
+<header class="bar"><nav><a class="brand" href="index.html">Microscopy Hackathon 3</a><a href="getting-started.html">Get started</a><a href="architecture.html">Architecture</a><a href="cordis-plugins.html">Plugins</a><a href="problems-to-solve.html">Problems to be solved</a></nav></header>
+<div class="layout">
+<details class="side" open><summary>Documentation</summary><h2>Use the app</h2><ul><li><a href="getting-started.html">Getting started</a></li><li><a href="digital-twin.html">Digital Twin</a></li><li><a href="devices-and-tango.html">Microscopes and Tango</a></li><li><a href="wiki.html" aria-current="page">Wiki</a></li></ul><h2>How it works</h2><ul><li><a href="architecture.html">Architecture</a></li><li><a href="harness-design.html">Harness design</a></li><li><a href="desktop-app.html">Desktop app</a></li></ul><h2>Build on it</h2><ul><li><a href="cordis-plugins.html">Developing Cordis plugins</a></li><li><a href="development.html">Development</a></li><li><a href="open-source.html">Open-source projects</a></li></ul><h2>Get involved</h2><ul><li><a href="problems-to-solve.html">Problems to be solved</a></li></ul></details>
+<main><h1>Wiki</h1><p>The Wiki is the assistant&#39;s knowledge base. It keeps skills, tool descriptions, papers, manuals and your own history in
+searchable libraries, so the assistant can look things up and cite where they came from. It is built on
+<a href="https://github.com/Tencent/WeKnora">WeKnora</a>, and runs on your computer.</p>
+<p><a href="diagrams/wiki-flow.png"><img src="diagrams/wiki-flow.png" alt="What goes into the Wiki, and how the assistant uses it"></a></p>
+<p><strong>The Wiki is reference, not authority.</strong> Its text is never an instruction, live tool availability or approval, and no
+Wiki process runs a microscope tool. The Harness stays in charge of tools and execution.</p>
+<h2 id="libraries">Libraries</h2>
+<table>
+<thead>
+<tr>
+<th>Library</th>
+<th>Holds</th>
+<th>Who can read</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Shared - Harness Reference</td>
+<td>Skills, public MCP tool schemas, Harness guidance</td>
+<td>Everyone</td>
+</tr>
+<tr>
+<td>Shared - Research Library</td>
+<td>Papers, equipment manuals, scientific methods</td>
+<td>Everyone</td>
+</tr>
+<tr>
+<td>Personal - Custom Capabilities</td>
+<td>Your own skills and MCP metadata</td>
+<td>You</td>
+</tr>
+<tr>
+<td>Personal - Documents</td>
+<td>Your private uploads</td>
+<td>You</td>
+</tr>
+<tr>
+<td>Personal - Runs</td>
+<td>Workflow and event evidence, including failures</td>
+<td>You</td>
+</tr>
+<tr>
+<td>Personal - Conversations</td>
+<td>Your chat history</td>
+<td>You</td>
+</tr>
+</tbody></table>
+<p>Personal knowledge is never promoted to a shared library automatically. Sharing is an administrator&#39;s decision, and what
+gets shared is a reviewed, redacted lesson, not raw history. The full rules are in
+<a href="https://github.com/ben-mengz/EDMORE/blob/microscopy-hackathon-3/client/packages/plugin-wiki/docs/wiki-knowledge-boundaries.md">knowledge boundaries</a>.</p>
+<h2 id="what-goes-in">What goes in</h2>
+<ul>
+<li><strong>Skills and tools.</strong> On startup and whenever they change, skills and <code>mcp__*</code> tool schemas are mirrored as documents.
+These are generated copies: edit the original, not the copy.</li>
+<li><strong>Conversations and runs.</strong> Selected events are copied into your personal libraries. Passwords, tokens, keys and images
+are removed first. Each document is labelled as reference data, and user and assistant claims are marked as unverified.</li>
+<li><strong>Documents.</strong> Upload them in the Wiki, or set <code>WEKNORA_IMPORT_DIR</code> to a folder of Markdown or text files, which is
+checked every 30 seconds.</li>
+</ul>
+<h2 id="how-the-assistant-uses-it">How the assistant uses it</h2>
+<table>
+<thead>
+<tr>
+<th>Tool</th>
+<th>Use</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>weknora_knowledge_lookup</code></td>
+<td>Search one scope: <code>capabilities</code>, <code>research</code>, <code>documents</code>, <code>runs</code> or <code>conversations</code></td>
+</tr>
+<tr>
+<td><code>weknora_wiki_search</code>, <code>weknora_wiki_read_page</code></td>
+<td>Search and read Wiki pages</td>
+</tr>
+<tr>
+<td><code>weknora_sync_status</code></td>
+<td>Read the state of history sync</td>
+</tr>
+</tbody></table>
+<p>A lookup tries Wiki pages first and falls back to the original documents. Pages are withheld if they have no source, are
+drafts, or cite a source that is missing, processing, or newer than the page. This checks freshness, not scientific
+truth, so the assistant should still confirm against the live skill or tool before acting.</p>
+<h2 id="in-the-app">In the app</h2>
+<p>The app carries WeKnora Lite and gives it a private folder in the app data, with a local SQLite database, listening on
+<code>127.0.0.1:8080</code>. A Wiki already installed on the computer is used instead. Embeddings use the HU model <code>llm5</code> and page
+writing uses <code>llm3</code>, so building the Wiki needs those servers to be reachable.</p>
+<p>Open it from the control panel. Chat stays in the Harness: WeKnora does not hold any conversation with the model.</p>
+<h2 id="what-it-does-not-do-yet">What it does not do yet</h2>
+<ul>
+<li>History is stored, not distilled. Nothing yet turns conversations into short, lasting memories.</li>
+<li>Libraries are organised by person, not by instrument.</li>
+</ul>
+<p>Both are listed under <a href="problems-to-solve.html">problems to be solved</a>.</p>
+<h2 id="reference">Reference</h2>
+<ul>
+<li><a href="https://github.com/ben-mengz/EDMORE/blob/microscopy-hackathon-3/client/packages/weknora-sync/README.md">WeKnora sync package</a></li>
+<li><a href="https://github.com/ben-mengz/EDMORE/blob/microscopy-hackathon-3/deployment/native/README.md">Native deployment</a>: running WeKnora as a standalone service</li>
+</ul>
+<a class="next" href="architecture.html"><span>Next</span>Architecture</a></main>
+</div>
+<script>if (matchMedia('(max-width: 760px)').matches) document.querySelector('.side').open = false</script>
+</body>
+</html>

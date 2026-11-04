@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Harness design · Microscopy Hackathon 3</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body class="doc">
+<header class="bar"><nav><a class="brand" href="index.html">Microscopy Hackathon 3</a><a href="getting-started.html">Get started</a><a href="architecture.html">Architecture</a><a href="cordis-plugins.html">Plugins</a><a href="problems-to-solve.html">Problems to be solved</a></nav></header>
+<div class="layout">
+<details class="side" open><summary>Documentation</summary><h2>Use the app</h2><ul><li><a href="getting-started.html">Getting started</a></li><li><a href="digital-twin.html">Digital Twin</a></li><li><a href="devices-and-tango.html">Microscopes and Tango</a></li><li><a href="wiki.html">Wiki</a></li></ul><h2>How it works</h2><ul><li><a href="architecture.html">Architecture</a></li><li><a href="harness-design.html" aria-current="page">Harness design</a></li><li><a href="desktop-app.html">Desktop app</a></li></ul><h2>Build on it</h2><ul><li><a href="cordis-plugins.html">Developing Cordis plugins</a></li><li><a href="development.html">Development</a></li><li><a href="open-source.html">Open-source projects</a></li></ul><h2>Get involved</h2><ul><li><a href="problems-to-solve.html">Problems to be solved</a></li></ul></details>
+<main><h1>Harness design</h1><p>This document explains the assistant side of the app: what DeepSeek Harness is, how EDMORE is built on it, and how the
+pieces fit. It is for people changing or extending the assistant.</p>
+<p>Versions described here: <code>@deepseek-ai/dsh</code> 0.2.1-rc.5 and <code>@deepseek-ai/cordis</code> 4.0.5, pinned in
+<a href="https://github.com/ben-mengz/EDMORE/blob/microscopy-hackathon-3/client/package-lock.json"><code>client/package-lock.json</code></a>. Each Harness package has its own README under
+<code>client/node_modules/@deepseek-ai/&lt;package&gt;/README.md</code>, and those are the authority for package behaviour.</p>
+<h2 id="what-deepseek-harness-is">What DeepSeek Harness is</h2>
+<p><a href="https://github.com/deepseek-ai/deepseek-harness">DeepSeek Harness</a> (<code>dsh</code>, MIT licensed) is an agent runtime made of
+plugins. It has no fixed application: the agent loop, tools, sessions, model providers, the web server and the UI are
+all separate packages, and a <strong>profile</strong> chooses which ones run. Terminal, web, headless and SDK apps are different
+profiles of the same launcher.</p>
+<p>Three ideas cover most of it:</p>
+<table>
+<thead>
+<tr>
+<th>Idea</th>
+<th>What it is</th>
+<th>Where</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Plugin</strong></td>
+<td>A Cordis module that uses and provides services</td>
+<td><code>name</code>, <code>inject</code>, <code>apply</code></td>
+</tr>
+<tr>
+<td><strong>Bundle</strong></td>
+<td>A package holding a <code>cordis.patch.yml</code>: a list of plugins with their configuration</td>
+<td><code>dsh.bundle</code> in <code>package.json</code></td>
+</tr>
+<tr>
+<td><strong>Profile</strong></td>
+<td>An ordered list of bundles plus your overrides</td>
+<td><code>$DSH_HOME/profiles/&lt;name&gt;/</code></td>
+</tr>
+</tbody></table>
+<p>EDMORE is a Harness application: one bundle, several plugin packages, and the profile <code>edmore-client</code>. It does not fork
+the Harness or run a second agent runtime.</p>
+<h2 id="cordis-in-one-page">Cordis in one page</h2>
+<p><a href="https://github.com/cordiverse/cordis">Cordis</a> is the plugin framework underneath. The Harness uses a build published
+as <code>@deepseek-ai/cordis</code>.</p>
+<ul>
+<li><strong>Context (<code>ctx</code>)</strong> is what a plugin receives. It reaches services and registers things.</li>
+<li><strong>Services</strong> are shared objects on the context, such as <code>ctx.tools</code> or <code>ctx.agents</code>. A plugin provides one with
+<code>ctx.provide(&#39;name&#39;, value)</code>.</li>
+<li><strong><code>inject</code></strong> lists the services a plugin needs. Cordis holds the plugin as <em>pending</em> until they all exist, which gives
+start-up ordering without anyone writing an order.</li>
+<li><strong>Fibers</strong> own lifecycle. Everything a plugin registers is cleaned up when its fiber is disposed, so plugins can be
+reloaded or turned off.</li>
+<li><strong>Events</strong> go through <code>ctx.on</code>, <code>ctx.emit</code>, <code>ctx.serial</code> and similar.</li>
+</ul>
+<p><a href="diagrams/cordis-services.png"><img src="diagrams/cordis-services.png" alt="Plugins meet through a shared service"></a></p>
+<h2 id="how-a-profile-is-composed">How a profile is composed</h2>
+<p>Boot builds one plugin tree by layering patches over an empty root, in this order. Later layers win.</p>
+<p><a href="diagrams/profile-layers.png"><img src="diagrams/profile-layers.png" alt="The four patch layers that compose a profile"></a></p>
+<p>A patch is a YAML list. Each row either inserts plugins or changes an existing row by <code>id</code>:</p>
+<pre><code class="language-yaml">- insert:
+    - id: my-plugin
+      name: my-plugin-package
+      config: { greeting: Hello }
+- id: computer-use
+  disabled: true
+</code></pre>
+<p>Values may be computed at boot with <code>!!js</code>, for example <code>!!js dshHomePath(&#39;edmore/events.jsonl&#39;)</code>.</p>
+<p>Useful commands, run from <code>client/</code> with <code>DSH_HOME</code> set:</p>
+<pre><code class="language-sh">npx dsh --profile edmore-client --dump-config         # the composed tree
+npx dsh --profile edmore-client --dump-config-schema  # accepted configuration
+</code></pre>
+<h2 id="how-a-turn-runs">How a turn runs</h2>
+<p><a href="diagrams/agent-turn.png"><img src="diagrams/agent-turn.png" alt="How one conversation turn runs"></a></p>
+<p>The orchestrator is the agent role you talk to. <code>maxParallelToolCalls</code> is 1 in this profile, so tools run one at a time.
+A failed tool call becomes a normal <code>Error: &lt;message&gt;</code> result for the model and does not end the turn.</p>
+<h2 id="the-tool-pipeline">The tool pipeline</h2>
+<p><code>dsh-tools</code> provides <code>ctx.tools</code>. Registering a tool is enough for it to reach the model.</p>
+<p><a href="diagrams/tool-pipeline.png"><img src="diagrams/tool-pipeline.png" alt="The stages of a tool call"></a></p>
+<table>
+<thead>
+<tr>
+<th>Hook</th>
+<th>Use it for</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>ctx.tools.restrict({ allow })</code></td>
+<td>Hide tools from one agent; hidden tools cost no prompt tokens</td>
+</tr>
+<tr>
+<td><code>tools/pre-execute</code> event</td>
+<td>Decide allow, deny or ask</td>
+</tr>
+<tr>
+<td><code>ctx.tools.guard(fn)</code></td>
+<td>Owner policy that later listeners cannot override</td>
+</tr>
+<tr>
+<td><code>tools/execute</code> event</td>
+<td>Wrap dispatch for timeouts or metrics</td>
+</tr>
+</tbody></table>
+<p>EDMORE uses these directly. The Instruments panel denies calls on devices you did not tick through a guard, and role
+allowlists use <code>restrict</code>.</p>
+<h2 id="mcp">MCP</h2>
+<p><code>dsh-mcp-client</code> connects to external MCP servers. Tools appear as <code>mcp__&lt;server&gt;__&lt;tool&gt;</code>. In this app the local Tango
+gateway is server <code>tem_twin</code>, configured by <code>@edmore/plugin-tango</code> from environment variables the desktop app sets:</p>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>EDMORE_TANGO_MCP_URL</code></td>
+<td><code>http://127.0.0.1:&lt;port&gt;/mcp</code></td>
+</tr>
+<tr>
+<td><code>EDMORE_TANGO_MCP_TOKEN</code></td>
+<td>Gateway bearer token</td>
+</tr>
+<tr>
+<td><code>EDMORE_TANGO_SERVER_NAME</code></td>
+<td><code>tem_twin</code></td>
+</tr>
+</tbody></table>
+<h2 id="skills">Skills</h2>
+<p><code>dsh-skill</code> keeps one catalog of task instructions, and <code>dsh-skill-filesystem</code> reads <code>SKILL.md</code> files from
+<code>client/skills/</code> and custom folders. A skill is guidance for the model, not code. Skills that declare a
+<code>references/workflow.yaml</code> also carry an EDMORE workflow contract, which only applies when the Workflow Engine is on.
+In this package they act as ordinary skills. See <a href="https://github.com/ben-mengz/EDMORE/blob/microscopy-hackathon-3/docs/skill-format-migration.md"><code>docs/skill-format-migration.md</code></a>.</p>
+<h2 id="models-and-credentials">Models and credentials</h2>
+<p><code>@deepseek-ai/dsh-edmore-runtime</code> manages provider profiles and stores them in <code>$DSH_HOME/edmore/llm-providers.json</code>.
+Keys are held by <code>dsh-credentials-local</code> in <code>$DSH_HOME/edmore/.credentials.yaml</code>, by reference name, and never in
+profile files.</p>
+<table>
+<thead>
+<tr>
+<th>Provider</th>
+<th>Source</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>HU LLM (<code>llm3-hu</code>, model <code>llm3</code>)</td>
+<td>Built in</td>
+<td><strong>Default in the app.</strong> Needs no personal key</td>
+</tr>
+<tr>
+<td>Claude</td>
+<td><code>@edmore/plugin-claude</code></td>
+<td>Needs <code>ANTHROPIC_API_KEY</code> in Settings</td>
+</tr>
+<tr>
+<td>Bonsai, Strata</td>
+<td>Feature plugins</td>
+<td>Deployment dependent</td>
+</tr>
+<tr>
+<td>OpenAI</td>
+<td>Built in</td>
+<td>Hidden in the app with <code>EDMORE_HIDDEN_PROVIDERS</code></td>
+</tr>
+</tbody></table>
+<p><code>EDMORE_DEFAULT_PROVIDER</code> and <code>EDMORE_HIDDEN_PROVIDERS</code> are set by the desktop app. A source client without them keeps
+its previous behaviour.</p>
+<h2 id="edmore-on-the-harness">EDMORE on the Harness</h2>
+<p>Everything below lives in <a href="https://github.com/ben-mengz/EDMORE/blob/microscopy-hackathon-3/client/packages"><code>client/packages/</code></a>.</p>
+<p><a href="diagrams/edmore-packages.png"><img src="diagrams/edmore-packages.png" alt="EDMORE packages on top of DeepSeek Harness"></a></p>
+<table>
+<thead>
+<tr>
+<th>Package</th>
+<th>Responsibility</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>backend-profile</code></td>
+<td>The EDMORE bundle: its <code>cordis.patch.yml</code> is the plugin list</td>
+</tr>
+<tr>
+<td><code>core</code></td>
+<td>Required. Provides <code>edmoreEvents</code>, <code>edmoreActions</code>, <code>edmoreToolPolicy</code>, <code>edmoreTasks</code>, <code>edmoreCapabilities</code>, <code>edmoreConversationExtensions</code></td>
+</tr>
+<tr>
+<td><code>runtime</code></td>
+<td>Model providers and agent roles; runs agents on the native loop</td>
+</tr>
+<tr>
+<td><code>backend</code></td>
+<td>HTTP API under <code>/api/edmore</code></td>
+</tr>
+<tr>
+<td><code>webui</code></td>
+<td>The workspace page</td>
+</tr>
+<tr>
+<td><code>optional-feature</code></td>
+<td>Loads a feature, and reports its status instead of stopping the app if it fails</td>
+</tr>
+<tr>
+<td><code>workspace</code>, <code>session-state</code></td>
+<td>Projects, conversations and persisted evidence</td>
+</tr>
+<tr>
+<td><code>mcp-bridge</code></td>
+<td>Connects MCP tools to EDMORE events and policy</td>
+</tr>
+<tr>
+<td><code>plugin-*</code></td>
+<td>Feature packages with a <code>plugin.json</code> manifest; see <a href="https://github.com/ben-mengz/EDMORE/blob/microscopy-hackathon-3/client/docs/feature-plugins.md">feature plugins</a></td>
+</tr>
+</tbody></table>
+<h3 id="agent-roles">Agent roles</h3>
+<table>
+<thead>
+<tr>
+<th>Role</th>
+<th>Tools</th>
+<th>Used in the app</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>orchestrator</code></td>
+<td>All</td>
+<td>Yes, this is the assistant</td>
+</tr>
+<tr>
+<td><code>title_generator</code></td>
+<td>None</td>
+<td>Yes, names conversations</td>
+</tr>
+<tr>
+<td><code>planner</code>, <code>judge</code>, <code>executor:*</code></td>
+<td>Restricted by <code>allowedToolNamesForRole</code></td>
+<td>No, Workflow Engine only</td>
+</tr>
+</tbody></table>
+<h3 id="capabilities">Capabilities</h3>
+<p><code>GET /api/edmore/capabilities</code> reports each feature&#39;s status: <code>ready</code>, <code>unavailable</code>, or for optional features also
+<code>loading</code>, <code>blocked</code> and <code>failed</code>. The workspace uses this to adapt: with <code>edmore-plan-judge</code> unavailable it adds the <code>no-workflow</code> class and hides all Workflow UI. A capability
+showing <code>unavailable</code> can be normal. <code>edmore-tango</code> reports that even while its tools work.</p>
+<h3 id="conversation-extensions">Conversation extensions</h3>
+<p><code>edmoreConversationExtensions</code> lets a plugin add a panel to the workspace sidebar, keep per-conversation state, add to
+the prompt, and deny tool calls. Instruments, in
+<a href="https://github.com/ben-mengz/EDMORE/blob/microscopy-hackathon-3/client/packages/plugin-tango/src/conversation.mjs"><code>plugin-tango/src/conversation.mjs</code></a>, is the reference
+implementation.</p>
+<h2 id="choosing-an-extension-point">Choosing an extension point</h2>
+<table>
+<thead>
+<tr>
+<th>You want to</th>
+<th>Use</th>
+<th>Code?</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Teach the assistant a procedure</td>
+<td><a href="https://github.com/ben-mengz/EDMORE/blob/microscopy-hackathon-3/client/skills">Skill</a></td>
+<td>No</td>
+</tr>
+<tr>
+<td>Connect an existing tool server</td>
+<td>MCP server in the control panel Settings</td>
+<td>No</td>
+</tr>
+<tr>
+<td>Add a function to the twin</td>
+<td>Twin plugin, in the twin&#39;s <code>plugins/</code> folder</td>
+<td>Python</td>
+</tr>
+<tr>
+<td>Add a tool, event listener or policy</td>
+<td><a href="cordis-plugins.html">Cordis plugin</a></td>
+<td>JavaScript</td>
+</tr>
+<tr>
+<td>Add a model provider or desktop feature</td>
+<td><a href="https://github.com/ben-mengz/EDMORE/blob/microscopy-hackathon-3/client/docs/feature-plugins.md">Feature package</a></td>
+<td>Built into the app</td>
+</tr>
+</tbody></table>
+<h2 id="design-rules">Design rules</h2>
+<p>These are decisions, so check them before changing the design:</p>
+<ul>
+<li><strong>One control path.</strong> Instruments are reached through the device service and Tango, not by a second route.</li>
+<li><strong>The Harness owns execution.</strong> EDMORE extends the native loop and does not run its own.</li>
+<li><strong>Optional means optional.</strong> A feature can fail or be turned off without stopping the assistant.</li>
+<li><strong>State has one owner</strong>, and credentials stay out of browsers and shared files.</li>
+<li><strong>Tools report what happened.</strong> A result never claims more than was verified, and instrument calls are not retried.</li>
+</ul>
+<h2 id="known-limits">Known limits</h2>
+<ul>
+<li>At boot the log reports <code>tool-fs</code>, <code>tool-bash</code> and <code>tool-skill</code> as waiting for the <code>workingDirectory</code> service. The
+EDMORE profile does not mount <code>dsh-working-directory</code>, so these tools do not activate. Reading and writing local
+files, shell access and the <code>skill</code> tool may therefore be missing for the assistant.</li>
+<li><code>client/runtime/</code> is a retired snapshot and is not used at run time.</li>
+</ul>
+<a class="next" href="desktop-app.html"><span>Next</span>Desktop app</a></main>
+</div>
+<script>if (matchMedia('(max-width: 760px)').matches) document.querySelector('.side').open = false</script>
+</body>
+</html>

@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Getting started · Microscopy Hackathon 3</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body class="doc">
+<header class="bar"><nav><a class="brand" href="index.html">Microscopy Hackathon 3</a><a href="getting-started.html">Get started</a><a href="architecture.html">Architecture</a><a href="cordis-plugins.html">Plugins</a><a href="problems-to-solve.html">Problems to be solved</a></nav></header>
+<div class="layout">
+<details class="side" open><summary>Documentation</summary><h2>Use the app</h2><ul><li><a href="getting-started.html" aria-current="page">Getting started</a></li><li><a href="digital-twin.html">Digital Twin</a></li><li><a href="devices-and-tango.html">Microscopes and Tango</a></li><li><a href="wiki.html">Wiki</a></li></ul><h2>How it works</h2><ul><li><a href="architecture.html">Architecture</a></li><li><a href="harness-design.html">Harness design</a></li><li><a href="desktop-app.html">Desktop app</a></li></ul><h2>Build on it</h2><ul><li><a href="cordis-plugins.html">Developing Cordis plugins</a></li><li><a href="development.html">Development</a></li><li><a href="open-source.html">Open-source projects</a></li></ul><h2>Get involved</h2><ul><li><a href="problems-to-solve.html">Problems to be solved</a></li></ul></details>
+<main><h1>Getting started</h1><p>This guide takes you from the installer to asking the assistant about the Digital Twin.</p>
+<h2 id="install">Install</h2>
+<ol>
+<li>Open <code>Microscopy Hackathon 3-&lt;version&gt;-arm64.dmg</code> and drag the app to <strong>Applications</strong>.</li>
+<li>Open the app. The first launch downloads the assistant and Python packages, so it needs internet access and can take
+a few minutes. Later launches take seconds.</li>
+</ol>
+<p>The workspace opens when setup finishes. The default model is <strong>HU LLM</strong>, which needs no personal key.</p>
+<h2 id="connect-the-digital-twin">Connect the Digital Twin</h2>
+<ol>
+<li>Press <code>Cmd+,</code> to open the control panel, then choose <strong>Microscopes</strong>.</li>
+<li>Next to <strong>Digital twin</strong>, select <strong>Register</strong> and wait for <strong>Waiting for your approval</strong>.</li>
+<li>Select <strong>Approve</strong>. The workspace restarts.</li>
+<li>Under <strong>Instruments</strong> in the workspace sidebar, tick your twin.</li>
+</ol>
+<p>The twin stays registered. After restarting the app it shows <strong>Registered, offline</strong>: select <strong>Connect</strong> to bring it back.</p>
+<h2 id="prepare-the-twin">Prepare the twin</h2>
+<p>Select <strong>Digital twin</strong> in the workspace header. The twin starts cold, so on its page:</p>
+<ol>
+<li>Insert the specimen holder and wait for the vacuum.</li>
+<li>Open the column valves and switch the beam on.</li>
+</ol>
+<h2 id="ask-the-assistant">Ask the assistant</h2>
+<p>Try one of these:</p>
+<ul>
+<li><code>Which microscope is selected, and what is its status?</code></li>
+<li><code>Read the current defocus.</code></li>
+<li><code>Measure the beam.</code></li>
+</ul>
+<h2 id="change-language-or-model">Change language or model</h2>
+<ul>
+<li><strong>Language:</strong> workspace <strong>Settings</strong>, at the bottom of the sidebar. English is the default.</li>
+<li><strong>Model:</strong> the selector under the message box, or <strong>Settings → Models</strong>.</li>
+</ul>
+<h2 id="next">Next</h2>
+<ul>
+<li><a href="devices-and-tango.html#register-a-microscope">Register another microscope</a></li>
+<li><a href="cordis-plugins.html">Write your own plugin</a></li>
+<li><a href="devices-and-tango.html#troubleshooting">Troubleshooting</a></li>
+</ul>
+<a class="next" href="digital-twin.html"><span>Next</span>Digital Twin</a></main>
+</div>
+<script>if (matchMedia('(max-width: 760px)').matches) document.querySelector('.side').open = false</script>
+</body>
+</html>

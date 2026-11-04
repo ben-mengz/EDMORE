@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Digital Twin · Microscopy Hackathon 3</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body class="doc">
+<header class="bar"><nav><a class="brand" href="index.html">Microscopy Hackathon 3</a><a href="getting-started.html">Get started</a><a href="architecture.html">Architecture</a><a href="cordis-plugins.html">Plugins</a><a href="problems-to-solve.html">Problems to be solved</a></nav></header>
+<div class="layout">
+<details class="side" open><summary>Documentation</summary><h2>Use the app</h2><ul><li><a href="getting-started.html">Getting started</a></li><li><a href="digital-twin.html" aria-current="page">Digital Twin</a></li><li><a href="devices-and-tango.html">Microscopes and Tango</a></li><li><a href="wiki.html">Wiki</a></li></ul><h2>How it works</h2><ul><li><a href="architecture.html">Architecture</a></li><li><a href="harness-design.html">Harness design</a></li><li><a href="desktop-app.html">Desktop app</a></li></ul><h2>Build on it</h2><ul><li><a href="cordis-plugins.html">Developing Cordis plugins</a></li><li><a href="development.html">Development</a></li><li><a href="open-source.html">Open-source projects</a></li></ul><h2>Get involved</h2><ul><li><a href="problems-to-solve.html">Problems to be solved</a></li></ul></details>
+<main><h1>Digital Twin</h1><p>The Digital Twin is a simulated Thermo Fisher Talos F200X. It speaks the real AutoScript protocol, so a script written
+for the twin runs on the microscope with a different host and port. The source is
+<code>tem-alignment-twin</code>, by Manish Kumar and Zhao Meng, pinned
+as a submodule at <code>vendor/tem-alignment-twin</code>. Its manual, <code>docs/MANUAL.md</code>, is the full
+reference; this page covers how the app uses it.</p>
+<h2 id="what-it-simulates">What it simulates</h2>
+<ul>
+<li>Hidden, random column misalignments: gun, beam, apertures, condenser and objective astigmatism, eucentric height,
+rotation centre, plus lens hysteresis and drift</li>
+<li>Imaging, diffraction, STEM detectors and EDS</li>
+<li>A BM-Ceta camera model with noise, dose and detector response</li>
+<li>Specimens from built-in samples, CIF files, and precomputed exit waves</li>
+</ul>
+<h2 id="open-it">Open it</h2>
+<p>Use any of these:</p>
+<ul>
+<li><strong>Digital twin</strong> button in the workspace header</li>
+<li>Control panel → <strong>Digital twin</strong> → <strong>Open digital twin</strong></li>
+<li>App menu → <strong>Digital twin</strong> (<code>Cmd+Shift+T</code>)</li>
+<li>Menu bar icon → <strong>Digital twin</strong></li>
+</ul>
+<p>The twin starts cold, as the real instrument would be: insert the specimen holder, wait for the column vacuum, open the
+column valves, and switch the beam on.</p>
+<h2 id="how-the-app-hosts-it">How the app hosts it</h2>
+<p>Twin 3 keeps its simulation inside its web page, not in the Python server. Two facts follow:</p>
+<ul>
+<li>A second page would be a separate simulation, not a second view of this one.</li>
+<li>Closing the page would end the simulation.</li>
+</ul>
+<p>So the app owns one window for the whole run:</p>
+<p><a href="diagrams/twin-links.png"><img src="diagrams/twin-links.png" alt="Twin 3 server with its WebSocket link port and AutoScript port"></a></p>
+<table>
+<thead>
+<tr>
+<th>Action</th>
+<th>What happens</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Close the window</td>
+<td>It hides. The simulation keeps running, with background throttling off.</td>
+</tr>
+<tr>
+<td>Open it again</td>
+<td>The same window and the same simulation</td>
+</tr>
+<tr>
+<td>Stop digital twin</td>
+<td>The server and window end, and the simulation state is lost</td>
+</tr>
+<tr>
+<td>Quit the app</td>
+<td>Same as stop</td>
+</tr>
+<tr>
+<td>The page crashes or is destroyed</td>
+<td>The server stops, an error shows on the Digital twin page, and the next open starts a new simulation</td>
+</tr>
+</tbody></table>
+<p>The controller is <a href="https://github.com/ben-mengz/EDMORE/blob/microscopy-hackathon-3/desktop/twin.mjs"><code>desktop/twin.mjs</code></a>, with behaviour pinned by
+<a href="https://github.com/ben-mengz/EDMORE/blob/microscopy-hackathon-3/desktop/tests/twin.test.mjs"><code>desktop/tests/twin.test.mjs</code></a>.</p>
+<h2 id="using-it-from-python">Using it from Python</h2>
+<p>Any AutoScript client can connect. The app chooses the port for each run, so read it from the running process or use
+the device tools through the assistant.</p>
+<pre><code class="language-python">from autoscript_tem_microscope_client import TemMicroscopeClient
+
+microscope = TemMicroscopeClient()
+microscope.connect(&quot;localhost&quot;, 7524)   # the twin; a real Talos uses its own host and port 7521
+print(microscope.service.system.name)
+</code></pre>
+<p>Twin-only calls reveal the hidden state, which is useful for benchmarks:</p>
+<pre><code class="language-python">config = microscope.service.autoscript.server.configuration
+config.get_value(&quot;twin.randomize=42&quot;)   # a new, reproducible misaligned column
+config.get_value(&quot;twin.metrics&quot;)        # the true errors, as JSON
+</code></pre>
+<p>Measured on an Apple Silicon laptop, one step of changing a stigmator and acquiring an image takes about 0.13 s at
+512 px and 0.19 s at 1024 px. The simulated exposure time does not add real waiting.</p>
+<h2 id="limits-in-this-app">Limits in this app</h2>
+<ul>
+<li><strong>Python Workbench is off.</strong> The twin runs with <code>--no-workbench</code>, because the Workbench executes arbitrary Python
+without a login. Its button on the twin page has no server, and features inside it, such as segmentation training,
+are unavailable.</li>
+<li><strong>The twin page keeps its own look.</strong> It is a dense instrument panel in English, and it is not themed with the rest
+of the app.</li>
+<li><strong>The simulation is not saved</strong> between runs of the app.</li>
+<li><strong>Twin results are not hardware results.</strong> A workflow that succeeds on the twin has not been shown to work on a
+microscope.</li>
+</ul>
+<a class="next" href="devices-and-tango.html"><span>Next</span>Microscopes and Tango</a></main>
+</div>
+<script>if (matchMedia('(max-width: 760px)').matches) document.querySelector('.side').open = false</script>
+</body>
+</html>

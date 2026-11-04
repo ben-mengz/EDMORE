@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Development · Microscopy Hackathon 3</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body class="doc">
+<header class="bar"><nav><a class="brand" href="index.html">Microscopy Hackathon 3</a><a href="getting-started.html">Get started</a><a href="architecture.html">Architecture</a><a href="cordis-plugins.html">Plugins</a><a href="problems-to-solve.html">Problems to be solved</a></nav></header>
+<div class="layout">
+<details class="side" open><summary>Documentation</summary><h2>Use the app</h2><ul><li><a href="getting-started.html">Getting started</a></li><li><a href="digital-twin.html">Digital Twin</a></li><li><a href="devices-and-tango.html">Microscopes and Tango</a></li><li><a href="wiki.html">Wiki</a></li></ul><h2>How it works</h2><ul><li><a href="architecture.html">Architecture</a></li><li><a href="harness-design.html">Harness design</a></li><li><a href="desktop-app.html">Desktop app</a></li></ul><h2>Build on it</h2><ul><li><a href="cordis-plugins.html">Developing Cordis plugins</a></li><li><a href="development.html" aria-current="page">Development</a></li><li><a href="open-source.html">Open-source projects</a></li></ul><h2>Get involved</h2><ul><li><a href="problems-to-solve.html">Problems to be solved</a></li></ul></details>
+<main><h1>Development</h1><p>How to work on this repository from source.</p>
+<h2 id="repository-layout">Repository layout</h2>
+<table>
+<thead>
+<tr>
+<th>Path</th>
+<th>Contents</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>client/</code></td>
+<td>The Harness application: packages, skills, launcher</td>
+</tr>
+<tr>
+<td><code>desktop/</code></td>
+<td>Electron app, runtime installer, device and twin management</td>
+</tr>
+<tr>
+<td><code>src/edmore_mcp/</code></td>
+<td>Python MCP server for tool registration and event forwarding</td>
+</tr>
+<tr>
+<td><code>vendor/tem-alignment-twin/</code></td>
+<td>Digital Twin, a submodule</td>
+</tr>
+<tr>
+<td><code>vendor/edmore_windows_node/</code></td>
+<td>Device service and Tango modules, a submodule</td>
+</tr>
+<tr>
+<td><code>deployment/</code></td>
+<td>Native and cloud deployment</td>
+</tr>
+<tr>
+<td><code>docs/</code></td>
+<td>This documentation; <code>docs/diagrams/</code> holds each image with its editable <code>.excalidraw</code> source</td>
+</tr>
+</tbody></table>
+<p>Two related projects live elsewhere: NionSwift&#39;s own plugin provides its UI and application-local tools, and ptycho-sem
+owns SEM hardware control and acquisition. <code>client/runtime/</code> is an inactive legacy snapshot kept for provenance and
+rollback; see <code>client/runtime/provenance.json</code>. The former Python <code>edmore_mcp.client</code> has been removed.</p>
+<pre><code class="language-bash">git submodule update --init
+</code></pre>
+<h2 id="run-the-client-from-source">Run the client from source</h2>
+<p>Requires Node.js 22.19+ (22.x) or 24+.</p>
+<pre><code class="language-sh">cd client
+npm ci
+npm start
+</code></pre>
+<p>The client listens on <code>http://127.0.0.1:7380</code> and serves its UI at <code>/edmore/</code>. It discovers the NionSwift MCP server at
+<code>http://127.0.0.1:7300</code>. NionSwift&#39;s start button launches <code>client/start.mjs</code>, and in a different directory layout you
+set <code>EDMORE_CLIENT_DIR</code> before starting NionSwift.</p>
+<p>A source client uses <code>~/.dsh</code>, unlike the packaged app. Existing data stays in <code>~/.dsh/edmore</code>, so no migration is
+needed: sessions, <code>workspace.json</code>, <code>events.jsonl</code>, <code>plan-judge-state.json</code>, provider and role settings, and credentials.
+Startup creates a separate <code>edmore-client</code> launch profile on those paths. Stop any former backend before using the same
+data directory. The old <code>EDMORE_HARNESS_URL</code> and event URL variables remain accepted as aliases.</p>
+<h3 id="login-and-multiple-users">Login and multiple users</h3>
+<p><code>EDMORE_AUTH=1</code> selects the login gateway with isolated user runtimes, and unset or <code>0</code> keeps the default user. HU LLM
+and Bonsai are shared through a protected model proxy, while OpenAI keys and supported plugin preferences belong to each
+user. Network deployments must set <code>EDMORE_PUBLIC_URL</code>. Validate with <code>npm run test:auth</code> in <code>client/</code>. See
+<a href="https://github.com/ben-mengz/EDMORE/blob/microscopy-hackathon-3/client/packages/auth/README.md">EDMORE Auth</a>.</p>
+<h2 id="run-the-desktop-app-from-source">Run the desktop app from source</h2>
+<pre><code class="language-sh">cd desktop
+npm ci
+npm start
+</code></pre>
+<p>To exercise the packaged path from source, build the payload and set <code>EDMORE_DESKTOP_PAYLOAD_ROOT</code> to <code>desktop</code>, which
+holds <code>payload/</code>:</p>
+<pre><code class="language-sh">npm run prepare:payload
+EDMORE_DESKTOP_PAYLOAD_ROOT=&quot;$PWD&quot; npm start
+</code></pre>
+<h2 id="python-mcp-server">Python MCP server</h2>
+<pre><code class="language-sh">pip install -e .
+</code></pre>
+<p><code>edmore-client</code> then launches the same Node client. Python wheels do not bundle it, so set <code>EDMORE_CLIENT_DIR</code> if it is
+installed elsewhere.</p>
+<h2 id="configuration">Configuration</h2>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>EDMORE_CLIENT_DIR</code></td>
+<td>Client installation location</td>
+</tr>
+<tr>
+<td><code>EDMORE_CLIENT_URL</code></td>
+<td>Client address used by NionSwift and event forwarding</td>
+</tr>
+<tr>
+<td><code>EDMORE_CLIENT_HOST</code>, <code>EDMORE_CLIENT_PORT</code></td>
+<td>Client bind address; default 127.0.0.1:7380</td>
+</tr>
+<tr>
+<td><code>EDMORE_NIONSWIFT_BASE_URL</code></td>
+<td>MCP server address; default <a href="http://127.0.0.1:7300">http://127.0.0.1:7300</a></td>
+</tr>
+<tr>
+<td><code>EDMORE_WORKSPACE</code></td>
+<td>Initial project directory</td>
+</tr>
+<tr>
+<td><code>DSH_HOME</code></td>
+<td>Data and configuration home; default <code>~/.dsh</code></td>
+</tr>
+<tr>
+<td><code>EDMORE_CLIENT_EVENT_URL</code></td>
+<td>Optional event ingestion URL</td>
+</tr>
+<tr>
+<td><code>EDMORE_AUTH</code></td>
+<td><code>1</code> selects the login gateway; see <a href="https://github.com/ben-mengz/EDMORE/blob/microscopy-hackathon-3/client/packages/auth/README.md">EDMORE Auth</a></td>
+</tr>
+<tr>
+<td><code>EDMORE_DEFAULT_PROVIDER</code></td>
+<td>Fallback model provider; set by the packaged app</td>
+</tr>
+<tr>
+<td><code>EDMORE_HIDDEN_PROVIDERS</code></td>
+<td>Comma-separated providers to hide; set by the packaged app</td>
+</tr>
+<tr>
+<td><code>EDMORE_TANGO_MCP_URL</code>, <code>EDMORE_TANGO_MCP_TOKEN</code>, <code>EDMORE_TANGO_SERVER_NAME</code></td>
+<td>Instrument gateway; set by the packaged app</td>
+</tr>
+</tbody></table>
+<h2 id="http-api">HTTP API</h2>
+<pre><code class="language-text">GET  /api/edmore/health
+GET  /api/edmore/capabilities
+GET  /api/edmore/ui/state
+GET  /api/edmore/ui/stream
+GET  /api/edmore/events
+POST /api/edmore/events
+POST /api/edmore/actions/trigger
+POST /api/edmore/actions/approve
+POST /api/edmore/actions/reject
+POST /api/edmore/actions/resume
+GET  /api/edmore/skills
+GET  /api/edmore/harness/tools
+GET  /api/edmore/nionswift/tools
+GET  /api/edmore-workspace/projects
+GET  /api/edmore-workspace/conversations
+</code></pre>
+<p><code>examples/demo_server.py</code> shows Python MCP tool registration, <code>examples/demo_client.py &quot;your request&quot;</code> submits a request
+to the running client, and <code>debug_agents.py</code> inspects roles and the tool registry.</p>
+<h2 id="tests">Tests</h2>
+<pre><code class="language-sh">cd desktop &amp;&amp; npm test
+</code></pre>
+<p>From <code>client/</code>:</p>
+<pre><code class="language-sh">npm test
+npm run test:smoke
+npm run test:portable
+</code></pre>
+<p>The smoke test uses temporary data and an offline instrument URL, and checks startup, skills, UI, conversation
+persistence, restart and shutdown. It does not run a model or operate hardware. The portable test copies the client
+outside the workspace, runs a fresh <code>npm ci</code>, and repeats the smoke test.</p>
+<h2 id="native-deployment">Native deployment</h2>
+<p>To run Tango and the WeKnora Wiki as standalone local services, without the desktop app:</p>
+<pre><code class="language-sh">bash deployment/native/deploy.sh up
+</code></pre>
+<p>No Slurm, Apptainer or Docker is needed, and cloud credentials and existing local databases are not copied. See
+<a href="https://github.com/ben-mengz/EDMORE/blob/microscopy-hackathon-3/deployment/native/README.md">Native Deployment</a> for dependencies, data, ports and lifecycle commands.</p>
+<a class="next" href="open-source.html"><span>Next</span>Open-source projects</a></main>
+</div>
+<script>if (matchMedia('(max-width: 760px)').matches) document.querySelector('.side').open = false</script>
+</body>
+</html>
