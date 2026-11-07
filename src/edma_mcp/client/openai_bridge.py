@@ -1,5 +1,6 @@
 import json
 import os
+import re
 from typing import Any, Dict, List, Optional, Tuple
 
 from edma_mcp.client.bridge import MCPBridgeManager
@@ -269,7 +270,8 @@ class OpenAIMCPBridge(MCPBridgeManager):
         entries = entries[:max_tools]
         tools: List[FunctionTool] = []
         for res_name, uri in entries:
-            tool_name = f"{agent_name}__read_resource__{res_name}"
+            safe_res_name = self._resource_tool_suffix(res_name, uri)
+            tool_name = f"{agent_name}__read_resource__{safe_res_name}"
 
             async def _invoke(ctx, args_json: str, _uri=uri):
                 try:
@@ -314,6 +316,18 @@ class OpenAIMCPBridge(MCPBridgeManager):
             except Exception:
                 continue
         return result
+
+    def _resource_tool_suffix(self, resource_name: str, uri: str) -> str:
+        uri_tail = str(uri or "").rstrip("/").rsplit("/", 1)[-1]
+        candidate = uri_tail or str(resource_name or "")
+        candidate = re.sub(r"[^0-9A-Za-z_]+", "_", candidate).strip("_")
+        if not candidate:
+            candidate = re.sub(r"[^0-9A-Za-z_]+", "_", str(resource_name or "")).strip("_")
+        if not candidate:
+            candidate = "resource"
+        if candidate[0].isdigit():
+            candidate = f"resource_{candidate}"
+        return candidate
 
     def _extract_resource_text(self, res: Any) -> str:
         if res is None:
@@ -461,7 +475,10 @@ class OpenAIMCPBridge(MCPBridgeManager):
             if not skill_id:
                 return "Error: skill_id is required."
             self.planner_discovery_log.append(f"read_skill_content:{skill_id}")
-            return OrchestratorUtils.read_skill_content(abs_playbooks_dir, str(skill_id))
+            try:
+                return OrchestratorUtils.read_skill_content(abs_playbooks_dir, str(skill_id))
+            except Exception as exc:
+                return json.dumps({"ok": False, "error": str(exc), "skill_id": skill_id}, ensure_ascii=False)
 
         async def get_skill_manifest_tool(ctx, args_json: str) -> str:
             args = json.loads(args_json) if args_json else {}
@@ -469,10 +486,11 @@ class OpenAIMCPBridge(MCPBridgeManager):
             if not skill_id:
                 return "Error: skill_id is required."
             self.planner_discovery_log.append(f"get_skill_manifest:{skill_id}")
-            return json.dumps(
-                OrchestratorUtils.get_skill_manifest(abs_playbooks_dir, str(skill_id)),
-                ensure_ascii=False,
-            )
+            try:
+                manifest = OrchestratorUtils.get_skill_manifest(abs_playbooks_dir, str(skill_id))
+                return json.dumps(manifest, ensure_ascii=False)
+            except Exception as exc:
+                return json.dumps({"ok": False, "error": str(exc), "skill_id": skill_id}, ensure_ascii=False)
 
         async def list_skill_resources_tool(ctx, args_json: str) -> str:
             args = json.loads(args_json) if args_json else {}
@@ -480,10 +498,11 @@ class OpenAIMCPBridge(MCPBridgeManager):
             if not skill_id:
                 return "Error: skill_id is required."
             self.planner_discovery_log.append(f"list_skill_resources:{skill_id}")
-            return json.dumps(
-                OrchestratorUtils.list_skill_resources(abs_playbooks_dir, str(skill_id)),
-                ensure_ascii=False,
-            )
+            try:
+                resources = OrchestratorUtils.list_skill_resources(abs_playbooks_dir, str(skill_id))
+                return json.dumps(resources, ensure_ascii=False)
+            except Exception as exc:
+                return json.dumps({"ok": False, "error": str(exc), "skill_id": skill_id}, ensure_ascii=False)
 
         async def read_skill_resource_tool(ctx, args_json: str) -> str:
             args = json.loads(args_json) if args_json else {}
@@ -492,7 +511,13 @@ class OpenAIMCPBridge(MCPBridgeManager):
             if not skill_id or not resource_path:
                 return "Error: skill_id and resource_path are required."
             self.planner_discovery_log.append(f"read_skill_resource:{skill_id}:{resource_path}")
-            return OrchestratorUtils.read_skill_resource(abs_playbooks_dir, str(skill_id), str(resource_path))
+            try:
+                return OrchestratorUtils.read_skill_resource(abs_playbooks_dir, str(skill_id), str(resource_path))
+            except Exception as exc:
+                return json.dumps(
+                    {"ok": False, "error": str(exc), "skill_id": skill_id, "resource_path": resource_path},
+                    ensure_ascii=False,
+                )
 
         async def list_agents_capabilities_tool(ctx, args_json: str) -> str:
             self.planner_discovery_log.append("list_agents_capabilities")
@@ -787,7 +812,10 @@ class OpenAIMCPBridge(MCPBridgeManager):
                     agent=ag,
                     tool_description_override=(
                         f"Hand off to {ag.name} for direct specialist execution/control requests, "
-                        "single-step actions, or specialist questions. Do not use this handoff to pass a full PlanReview."
+                        "single-step actions, specialist questions, or exactly one approved PlanReview step packet. "
+                        "Do not use this handoff to pass a full PlanReview. When executing an approved PlanReview, "
+                        "pass only the current step_id, tool_name, arguments, required_inputs, expected_output, "
+                        "on_success, and on_failure, then wait for the specialist result before continuing."
                     )
                 ))
             triage.handoffs = triage_handoffs
@@ -796,7 +824,11 @@ class OpenAIMCPBridge(MCPBridgeManager):
             for ag in sub_agents.values():
                 ag.handoffs = [handoff(
                     agent=triage,
-                    tool_description_override="Return control to the Triage Agent after completing a task or if input is needed."
+                    tool_description_override=(
+                        "Return control to the Triage Agent only after completing the requested specialist task, "
+                        "or when required user input is needed. Include the exact tool result, status, and any "
+                        "missing input or error message so Triage can continue the approved plan."
+                    )
                 )]
         else:
             triage.handoffs = []

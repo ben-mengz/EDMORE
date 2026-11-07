@@ -52,6 +52,38 @@ class FilesystemSkillProvider:
         match = re.search(pattern, text, flags=re.MULTILINE)
         return match.group(1).strip() if match else ""
 
+    def _markdown_contract_fields(self, skill_id: str, content: str) -> Dict[str, Any]:
+        meta: Dict[str, Any] = {}
+
+        agents_text = self._extract_section(content, "Agents Involved")
+        agents = re.findall(r"^-\s*([A-Za-z0-9_]+)\s*$", agents_text, flags=re.MULTILINE)
+        if agents:
+            meta["agents"] = agents
+
+        required_tools_text = self._extract_section(content, "Required Tools")
+        required_tools = re.findall(r"`([A-Za-z0-9_]+\.[A-Za-z0-9_]+)`", required_tools_text)
+        if required_tools:
+            meta["required_tools"] = required_tools
+
+        steps_text = self._extract_section(content, "Steps")
+        ordered_tools = re.findall(r"`([A-Za-z0-9_]+\.[A-Za-z0-9_]+)`", steps_text)
+        if ordered_tools:
+            meta["ordered_tools"] = ordered_tools
+
+        refs_text = steps_text + "\n" + self._extract_section(content, "Planning Contract")
+        refs = re.findall(r"`([A-Za-z0-9_-]+)`", refs_text)
+        references = [
+            ref for ref in refs
+            if ref != skill_id
+            and "." not in ref
+            and ref not in {"done", "stop", "ask_user"}
+            and os.path.isdir(os.path.join(self.skills_root, ref))
+        ]
+        if references:
+            meta["references"] = references
+
+        return meta
+
     def _build_fallback_manifest(self, skill_id: str) -> Dict[str, Any]:
         content = self.read_skill_content(skill_id)
         meta: Dict[str, Any] = {
@@ -78,18 +110,7 @@ class FilesystemSkillProvider:
                     if key in {"id", "name", "description", "version"}:
                         meta[key] = value
 
-        agents_text = self._extract_section(content, "Agents Involved")
-        meta["agents"] = re.findall(r"^-\\s*([A-Za-z0-9_]+)\\s*$", agents_text, flags=re.MULTILINE)
-
-        required_tools_text = self._extract_section(content, "Required Tools")
-        steps_text = self._extract_section(content, "Steps")
-        meta["required_tools"] = re.findall(r"`([A-Za-z0-9_]+\\.[A-Za-z0-9_]+)`", required_tools_text)
-        meta["ordered_tools"] = re.findall(r"`([A-Za-z0-9_]+\\.[A-Za-z0-9_]+)`", steps_text)
-        refs = re.findall(r"`([A-Za-z0-9_]+)`", steps_text + "\n" + self._extract_section(content, "Planning Contract"))
-        meta["references"] = [
-            ref for ref in refs
-            if ref != skill_id and "." not in ref and ref not in {"done", "stop", "ask_user"}
-        ]
+        meta.update(self._markdown_contract_fields(skill_id, content))
         if "compound skill" in content.lower():
             meta["kind"] = "compound_workflow"
         return meta
@@ -141,6 +162,11 @@ class FilesystemSkillProvider:
                 data = json.load(f)
             if not isinstance(data, dict):
                 raise ValueError(f"Skill manifest for '{skill_id}' must be a JSON object.")
+            content_path = self._content_path(skill_id)
+            if os.path.isfile(content_path):
+                content = self.read_skill_content(skill_id)
+                # SKILL.md is the source of truth for workflow contracts; manifest fields are metadata/cache.
+                data.update(self._markdown_contract_fields(skill_id, content))
             return data
         if os.path.isfile(self._content_path(skill_id)):
             return self._build_fallback_manifest(skill_id)

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import re
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -11,6 +12,7 @@ from edma_mcp.skills.provider import FilesystemSkillProvider
 @dataclass
 class SkillContract:
     skill_id: str
+    agents: List[str]
     required_tools: List[str]
     ordered_tools: List[str]
 
@@ -30,12 +32,16 @@ def _load_skill_contracts(playbooks_dir: str) -> Dict[str, SkillContract]:
             continue
         required_tools = manifest.get("required_tools") or []
         ordered_tools = manifest.get("ordered_tools") or []
+        agents = manifest.get("agents") or []
+        if not isinstance(agents, list):
+            agents = []
         if not isinstance(required_tools, list):
             required_tools = []
         if not isinstance(ordered_tools, list):
             ordered_tools = []
         contracts[skill_id] = SkillContract(
             skill_id=skill_id,
+            agents=[str(agent) for agent in agents],
             required_tools=[str(tool) for tool in required_tools],
             ordered_tools=[str(tool) for tool in ordered_tools],
         )
@@ -98,6 +104,10 @@ def _schema_accepts_type(schema: Dict[str, Any], value: Any) -> bool:
     return True
 
 
+def _is_placeholder_value(value: Any) -> bool:
+    return isinstance(value, str) and value.strip().startswith("{{") and value.strip().endswith("}}")
+
+
 def _is_subsequence(sequence: List[str], ordered: List[str]) -> bool:
     if not sequence:
         return False
@@ -108,6 +118,45 @@ def _is_subsequence(sequence: List[str], ordered: List[str]) -> bool:
     return idx == len(sequence)
 
 
+def _order_violation_detail(sequence: List[str], ordered: List[str]) -> str:
+    """Name the plan's tool order and the first step that breaks the declared order,
+    so the replanner (and the user) can see what to change."""
+    def short(name: str) -> str:
+        return name.split(".", 1)[-1]
+
+    pos = 0
+    bad_index = len(sequence)
+    for i, item in enumerate(sequence):
+        try:
+            pos = ordered.index(item, pos) + 1
+        except ValueError:
+            bad_index = i
+            break
+    allowed = [short(item) for item in ordered]
+    repeats = False
+    changed = True
+    while changed:                # show a group listed several times (repeatable) once
+        changed = False
+        for k in range(len(allowed) // 2, 1, -1):
+            for i in range(len(allowed) - 2 * k + 1):
+                if allowed[i:i + k] == allowed[i + k:i + 2 * k]:
+                    del allowed[i + k:i + 2 * k]
+                    changed = repeats = True
+                    break
+            if changed:
+                break
+    plan_text = " -> ".join(short(item) for item in sequence)
+    detail = f" Plan tool order: {plan_text}."
+    if bad_index < len(sequence):
+        previous = short(sequence[bad_index - 1]) if bad_index > 0 else "the start"
+        detail += (f" First out-of-order step: #{bad_index + 1} '{short(sequence[bad_index])}' "
+                   f"(not allowed after '{previous}').")
+    detail += f" Declared order: {' -> '.join(allowed)}."
+    if repeats:
+        detail += " (A group the skill lists several times may repeat; see the skill's Steps.)"
+    return detail
+
+
 def _normalize_step_tool_name(agent_name: str, tool_name: str) -> Tuple[str, str]:
     raw = str(tool_name or "").strip()
     prefix = f"{agent_name}."
@@ -115,6 +164,20 @@ def _normalize_step_tool_name(agent_name: str, tool_name: str) -> Tuple[str, str
         normalized = raw[len(prefix):]
         return normalized, f"{agent_name}.{normalized}"
     return raw, f"{agent_name}.{raw}"
+
+
+def _unique_issue_values(issues: List[PlanJudgeIssue], category: str) -> List[str]:
+    values: List[str] = []
+    seen = set()
+    for issue in issues:
+        if issue.category != category:
+            continue
+        match = re.search(r"'([^']+)'", issue.message)
+        value = match.group(1) if match else issue.message
+        if value not in seen:
+            seen.add(value)
+            values.append(value)
+    return values
 
 
 async def judge_plan_review(plan: PlanReview, bridge: Any, playbooks_dir: Optional[str] = None) -> PlanJudgeReport:
@@ -130,6 +193,11 @@ async def judge_plan_review(plan: PlanReview, bridge: Any, playbooks_dir: Option
     issues: List[PlanJudgeIssue] = []
     grounded_steps = 0
     step_sequences: Dict[str, List[str]] = {}
+    try:
+        if hasattr(bridge, "refresh"):
+            await bridge.refresh()
+    except Exception:
+        pass
     available_agents = set(await bridge.list_agents())
     tools_by_agent: Dict[str, Dict[str, Dict[str, Any]]] = {}
 
@@ -207,8 +275,12 @@ async def judge_plan_review(plan: PlanReview, bridge: Any, playbooks_dir: Option
                     skill=step.skill,
                     message=f"Missing required parameter '{key}' for tool '{full_tool_name}'.",
                 ))
+            elif _is_placeholder_value(step.arguments.get(key)):
+                continue
 
         for arg_name, arg_value in step.arguments.items():
+            if _is_placeholder_value(arg_value):
+                continue
             if properties and arg_name not in properties:
                 issues.append(PlanJudgeIssue(
                     severity="blocking",
@@ -229,6 +301,90 @@ async def judge_plan_review(plan: PlanReview, bridge: Any, playbooks_dir: Option
                     message=f"Parameter '{arg_name}' has value '{arg_value}' that does not match the MCP schema for '{full_tool_name}'.",
                 ))
 
+        if step.skill == "recommend_4d_stem_parameters" and full_tool_name == "agent_suggestion.apply_fix":
+            fix_name = step.arguments.get("fix_name")
+            required_inputs = {str(item).strip() for item in (step.required_inputs or []) if str(item).strip()}
+            if fix_name is None or _is_placeholder_value(fix_name) or "fix_name" in required_inputs:
+                issues.append(PlanJudgeIssue(
+                    severity="blocking",
+                    category="order",
+                    step_id=step.step_id,
+                    skill=step.skill,
+                    message=(
+                        "Initial recommendation plans must not include "
+                        "'agent_suggestion.apply_fix' until diagnostics fail and the user chooses "
+                        "a concrete 'fix_name'."
+                    ),
+                ))
+
+    recommend_steps = [step for step in plan.steps if step.skill == "recommend_4d_stem_parameters"]
+    for index, step in enumerate(recommend_steps):
+        _, full_tool_name = _normalize_step_tool_name(step.agent, step.tool_name)
+        if full_tool_name != "agent_suggestion.find_defocus":
+            continue
+        if index == 0:
+            issues.append(PlanJudgeIssue(
+                severity="blocking",
+                category="order",
+                step_id=step.step_id,
+                skill=step.skill,
+                message=(
+                    "Recommendation plans must include a settings-confirmation user-input gate "
+                    "before 'agent_suggestion.find_defocus'."
+                ),
+            ))
+            continue
+        previous_step = recommend_steps[index - 1]
+        previous_inputs = [str(item).strip().lower() for item in (previous_step.required_inputs or []) if str(item).strip()]
+        has_confirmation_gate = any(
+            "recommendation_settings_confirmation" in item
+            or "confirm" in item
+            or "no changes" in item
+            for item in previous_inputs
+        )
+        prev_tool_normalized, prev_full_tool_name = _normalize_step_tool_name(previous_step.agent, previous_step.tool_name)
+        if not has_confirmation_gate or prev_full_tool_name != "agent_suggestion.update_parameters":
+            issues.append(PlanJudgeIssue(
+                severity="blocking",
+                category="order",
+                step_id=step.step_id,
+                skill=step.skill,
+                message=(
+                    "Recommendation plans must stop for settings confirmation after "
+                    "'recalculate_defaults' and before 'agent_suggestion.find_defocus', using an "
+                    "'agent_suggestion.update_parameters' step with confirmation required_inputs."
+                ),
+            ))
+
+    missing_agents = _unique_issue_values(issues, "agent")
+    if missing_agents:
+        agent_list = ", ".join(missing_agents)
+        available_list = ", ".join(sorted(available_agents)) if available_agents else "none"
+        required_agents = []
+        seen_required_agents = set()
+        for step in plan.steps:
+            contract = contracts.get(step.skill)
+            candidates = list(getattr(contract, "agents", []) or []) if contract else []
+            step_agent = str(getattr(step, "agent", "") or "").strip()
+            if step_agent:
+                candidates.append(step_agent)
+            for agent in candidates:
+                if agent and agent not in seen_required_agents:
+                    seen_required_agents.add(agent)
+                    required_agents.append(agent)
+        required_list = ", ".join(required_agents or missing_agents)
+        return PlanJudgeReport(
+            grounding_status="partially_grounded" if grounded_steps > 0 else "ungrounded",
+            status="block",
+            summary=(
+                f"Required agent is not running: {agent_list}. "
+                f"Agents required by this workflow: {required_list}. "
+                f"Please start/register {agent_list} and then ask again. "
+                f"Currently available agents: {available_list}."
+            ),
+            issues=issues,
+        )
+
     for skill_id, sequence in step_sequences.items():
         contract = contracts.get(skill_id)
         if contract and contract.ordered_tools and not _is_subsequence(sequence, contract.ordered_tools):
@@ -236,7 +392,8 @@ async def judge_plan_review(plan: PlanReview, bridge: Any, playbooks_dir: Option
                 severity="blocking",
                 category="order",
                 skill=skill_id,
-                message=f"Plan steps for skill '{skill_id}' do not follow the tool order declared in the skill contract.",
+                message=(f"Plan steps for skill '{skill_id}' do not follow the tool order declared in the skill contract."
+                         + _order_violation_detail(sequence, contract.ordered_tools)),
             ))
 
     if grounded_steps == len(plan.steps) and grounded_steps > 0:

@@ -104,7 +104,11 @@ def build_plan_review_payload(
         "sections": sections,
         "queued_for_approval": bool(queued_for_approval),
         "error_message": error_message,
-        "action_hint": "Review this plan. Reply approve, go, or go ahead to execute. If a step needs input, execution will pause at that step.",
+        "action_hint": (
+            "Review this plan. Reply approve, go, or go ahead to execute. If a step needs input, execution will pause at that step."
+            if queued_for_approval
+            else "This plan was not queued for approval because the deterministic judge requested revision/blocking."
+        ),
     }
 
 
