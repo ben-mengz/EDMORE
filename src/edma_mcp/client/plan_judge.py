@@ -180,6 +180,30 @@ def _unique_issue_values(issues: List[PlanJudgeIssue], category: str) -> List[st
     return values
 
 
+def repair_step_skills(plan: PlanReview, contracts: Dict[str, Any]) -> List[Tuple[str, str, str]]:
+    """Fix a step whose `skill` is not a registered skill id when its tool decides it.
+
+    A planner sometimes writes the tool name in `skill` (skill 'prepare_parameters'
+    instead of 'ptychography'). That used to block the plan as ungrounded with no
+    auto-replan, although every tool in it was valid. When the step's agent.tool
+    belongs to exactly one registered skill, that skill is meant: set it. The tool,
+    order and parameter checks then run as usual. Returns (step_id, old, new)."""
+    owners: Dict[str, List[str]] = {}
+    for skill_id, contract in contracts.items():
+        for tool in getattr(contract, "required_tools", None) or []:
+            owners.setdefault(str(tool), []).append(skill_id)
+    repaired: List[Tuple[str, str, str]] = []
+    for step in plan.steps:
+        if step.skill in contracts:
+            continue
+        _, full_tool_name = _normalize_step_tool_name(step.agent, step.tool_name)
+        candidates = owners.get(full_tool_name, [])
+        if len(candidates) == 1:
+            repaired.append((str(step.step_id), str(step.skill), candidates[0]))
+            step.skill = candidates[0]
+    return repaired
+
+
 async def judge_plan_review(plan: PlanReview, bridge: Any, playbooks_dir: Optional[str] = None) -> PlanJudgeReport:
     playbooks_root = playbooks_dir
     if not playbooks_root:
@@ -190,6 +214,7 @@ async def judge_plan_review(plan: PlanReview, bridge: Any, playbooks_dir: Option
             playbooks_root = os.path.join(package_root, "skills", "playbooks")
 
     contracts = _load_skill_contracts(playbooks_root)
+    repair_step_skills(plan, contracts)
     issues: List[PlanJudgeIssue] = []
     grounded_steps = 0
     step_sequences: Dict[str, List[str]] = {}
@@ -343,6 +368,8 @@ async def judge_plan_review(plan: PlanReview, bridge: Any, playbooks_dir: Option
             for item in previous_inputs
         )
         prev_tool_normalized, prev_full_tool_name = _normalize_step_tool_name(previous_step.agent, previous_step.tool_name)
+        if prev_full_tool_name == "agent_suggestion.apply_fix":
+            continue  # fix loop: the user chose the fix at the diagnostics-review gate; re-run defocus directly
         if not has_confirmation_gate or prev_full_tool_name != "agent_suggestion.update_parameters":
             issues.append(PlanJudgeIssue(
                 severity="blocking",

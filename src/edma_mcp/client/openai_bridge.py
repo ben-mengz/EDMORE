@@ -7,6 +7,84 @@ from edma_mcp.client.bridge import MCPBridgeManager
 from fastmcp.client import Client as FastMCPClient
 from edma_mcp.client.orchestrator import OrchestratorUtils, get_orchestrator_instructions
 from edma_mcp.client.models import PlanReview
+from pydantic import BaseModel, Field
+
+
+class SpecialistStepPacket(BaseModel):
+    """Arguments of a Triage -> specialist handoff. They stay in the conversation as the
+    handoff call's arguments, so the specialist reads the step it has to run from them (the
+    handoff used to carry nothing, and a specialist could end its turn without knowing which
+    tool to call). All fields may be null: a direct request uses `request` only."""
+    step_id: Optional[str] = Field(None, description="step_id of the approved PlanReview step to run now; null for a direct request.")
+    tool_name: Optional[str] = Field(None, description="Exact tool_name of that step, e.g. prepare_parameters.")
+    arguments_json: Optional[str] = Field(None, description="The step's arguments as one JSON object string, copied from the PlanReview step.")
+    required_inputs: Optional[List[str]] = Field(None, description="The step's required_inputs; empty or null when none.")
+    request: Optional[str] = Field(None, description="For a direct request without a plan: what the user asked, in one sentence.")
+
+
+def _on_specialist_handoff(context: Any, packet: "SpecialistStepPacket") -> None:
+    """The packet is used by the specialist from the conversation; nothing to do here."""
+    return None
+
+
+def _specialist_directive(agent: Any, packet: dict) -> str:
+    """The instruction the specialist reads last after a handoff from Triage."""
+    name = str(getattr(agent, "name", "") or "the specialist")
+    tool_names = {str(getattr(tool, "name", "")) for tool in list(getattr(agent, "tools", []) or [])}
+    tool = str(packet.get("tool_name") or "").strip()
+    if tool:
+        short = tool.split(".")[-1].split("__")[-1]
+        tool = next((t for t in (tool, f"{name}__{short}", short) if t in tool_names), f"{name}__{short}")
+        arguments = str(packet.get("arguments_json") or "{}").strip() or "{}"
+        needed = [str(x) for x in (packet.get("required_inputs") or []) if str(x).strip()]
+        step = f"step {packet.get('step_id')} of the approved plan" if packet.get("step_id") else "this step"
+        text = (f"You are {name}, not Triage. Triage handed {step} to you. Run it now: call the tool `{tool}` "
+                f"with these arguments: {arguments}. Do not reply before calling it, and do not hand it back "
+                "unrun. After the tool returns, report its result, or the question it asks, to the user.")
+        if needed:
+            text += (" The step needs: " + ", ".join(needed) + ". If the latest user reply above gives them, put them "
+                     "into the arguments and run the tool; if not, ask the user only for them.")
+        return text
+    request = str(packet.get("request") or "").strip()
+    return (f"You are {name}, not Triage. Triage handed the current request to you"
+            + (f": {request}" if request else "") + ". If it is a step of the approved PlanReview above, call that "
+            "step's tool now with the step's arguments; otherwise do what the user asked with your tools. Do not end "
+            "your turn with an empty reply or without calling a tool, unless you must ask the user for a value.")
+
+
+def _specialist_handoff_filter(agent: Any):
+    """Handoff input filter for Triage -> agent. The handoff's tool result, the last item the
+    specialist reads, carries the instruction above. Only the specialist's input changes; the
+    session keeps the original items. Without it the specialist read Triage's own prompt
+    ("You are Triage. Execute it now by specialist handoffs") as its task: it answered as
+    Triage ("I've passed this to the specialist") or with nothing, and never ran the step."""
+    def apply(data: Any) -> Any:
+        import dataclasses
+        try:
+            items = list(data.input_items if data.input_items is not None else data.new_items)
+            index = next((i for i in range(len(items) - 1, -1, -1)
+                          if getattr(items[i], "type", "") == "handoff_output_item"), None)
+            if index is None:
+                return data
+            output = items[index]
+            raw = dict(output.raw_item) if isinstance(output.raw_item, dict) else output.raw_item.model_dump()
+            packet = {}
+            for item in reversed(items[:index]):
+                call = getattr(item, "raw_item", None)
+                if getattr(item, "type", "") == "handoff_call_item" and getattr(call, "call_id", None) == raw.get("call_id"):
+                    try:
+                        packet = json.loads(getattr(call, "arguments", "") or "{}") or {}
+                    except ValueError:
+                        packet = {}
+                    break
+            raw["output"] = json.dumps({"assistant": getattr(agent, "name", ""),
+                                        "instruction": _specialist_directive(agent, packet if isinstance(packet, dict) else {})},
+                                       ensure_ascii=False)
+            items[index] = dataclasses.replace(output, raw_item=raw)
+            return data.clone(input_items=tuple(items))
+        except Exception:
+            return data
+    return apply
 
 # Attempt to import OpenAI-specific agent framework libraries
 try:
@@ -23,7 +101,46 @@ class OpenAIMCPBridge(MCPBridgeManager):
     """
     An extension of the standard MCPBridgeManager that automatically maps
     MCP agents, tools, and resources into an OpenAI Multi-Agent system.
+
+    ``llm_backend`` chooses the model every agent runs on: "openai" (the agents' own OpenAI
+    models, default) or a Claude model id ("claude-opus-5-5", "claude-fable-5-1",
+    "claude-sonnet-5-5", "claude-haiku-5-5"), or "openai-gpt-5.6-terra" (every agent on
+    GPT-5.6 Terra; see
+    edma_mcp.client.claude_model), or "qwen38-hu-hpc" (every agent on Qwen3.8 on the HU HPC
+    cluster; see edma_mcp.client.openai_compatible_model). Default: the EDMA_LLM_BACKEND
+    environment variable.
     """
+
+    llm_backend: str = os.environ.get("EDMA_LLM_BACKEND", "openai")
+
+    def set_llm_backend(self, backend: Optional[str]) -> None:
+        from edma_mcp.client.claude_model import LLM_BACKENDS
+        backend = (backend or "openai").strip()
+        if backend not in LLM_BACKENDS:
+            raise ValueError(f"Unknown LLM backend {backend!r}; choose one of {list(LLM_BACKENDS)}")
+        self.llm_backend = backend
+        if not self._uses_openai():
+            # Traces would otherwise be exported to OpenAI.
+            try:
+                from agents import set_tracing_disabled
+                set_tracing_disabled(True)
+            except Exception:
+                pass
+
+    def _uses_claude(self) -> bool:
+        from edma_mcp.client.claude_model import CLAUDE_MODEL_IDS
+        return self.llm_backend in CLAUDE_MODEL_IDS
+
+    def _uses_openai(self) -> bool:
+        """True when the agents run on OpenAI itself: only then do OpenAI hosted tools
+        (code interpreter) and OpenAI tracing apply. False for Claude and for an
+        OpenAI-compatible server such as Qwen on the HU HPC cluster."""
+        from edma_mcp.client.openai_compatible_model import OPENAI_COMPATIBLE_BACKENDS
+        return not self._uses_claude() and self.llm_backend not in OPENAI_COMPATIBLE_BACKENDS
+
+    def _model_for(self, openai_model: Any) -> Any:
+        from edma_mcp.client.claude_model import resolve_model
+        return resolve_model(self.llm_backend, openai_model)
 
     def _build_reasoning_settings(
         self,
@@ -69,18 +186,25 @@ class OpenAIMCPBridge(MCPBridgeManager):
                 tool_name_style=tool_name_style,
             )
             
-            # Optionally add code interpreter
-            tools.append(CodeInterpreterTool(
-                tool_config={
-                    "type": "code_interpreter",
-                    "container": {"type": "auto"},
-                }
-            ))
-            
+            # Code interpreter is an OpenAI hosted tool: only on the OpenAI backend.
+            if self._uses_openai():
+                tools.append(CodeInterpreterTool(
+                    tool_config={
+                        "type": "code_interpreter",
+                        "container": {"type": "auto"},
+                    }
+                ))
+
             instructions = await self._read_agent_prompt(agent_name)
             instructions += (
-                "\nany mathematical problem you should solve with the code interpretor tool."
-                "\nIf an MCP tool returns JSON with ok=false or an error field, treat the tool call as failed. "
+                ("\nSolve mathematical problems with a calculation tool (such as run_python_code) when one is available."
+                 if not self._uses_openai() else
+                 "\nany mathematical problem you should solve with the code interpretor tool.")
+                + "\nWhen Triage hands a step to you, the arguments of its transfer_to_" + agent_name + " call are the step: "
+                "if they name a tool_name, call that tool now with arguments_json as its arguments (unless "
+                "required_inputs still need an answer from the user), then report the tool result. Never end your "
+                "turn with an empty reply."
+                + "\nIf an MCP tool returns JSON with ok=false or an error field, treat the tool call as failed. "
                 "Report the failing tool name and exact error message back to the caller. Do not claim success."
             )
             
@@ -93,7 +217,7 @@ class OpenAIMCPBridge(MCPBridgeManager):
                 "name": agent_name,
                 "instructions": instructions,
                 "tools": tools,
-                "model": await self._read_agent_model(agent_name),
+                "model": self._model_for(await self._read_agent_model(agent_name)),
                 "model_settings": ModelSettings(**settings_kwargs) if settings_kwargs else ModelSettings()
             }
 
@@ -466,7 +590,7 @@ class OpenAIMCPBridge(MCPBridgeManager):
         self.planner_discovery_log = []
 
         async def list_skills_tool(ctx, args_json: str) -> str:
-            self.planner_discovery_log = ["list_skills"]
+            self.planner_discovery_log.append("list_skills")     # the cycle start resets the log
             return OrchestratorUtils.get_skills_catalog(abs_playbooks_dir)
 
         async def read_skill_tool(ctx, args_json: str) -> str:
@@ -631,7 +755,7 @@ class OpenAIMCPBridge(MCPBridgeManager):
                 ),
             ],
             handoffs=[],
-            model=model,
+            model=self._model_for(model),
             model_settings=ModelSettings(**settings_kwargs) if settings_kwargs else ModelSettings(),
             output_type=AgentOutputSchema(PlanReview, strict_json_schema=False),
         )
@@ -696,7 +820,7 @@ class OpenAIMCPBridge(MCPBridgeManager):
             name=triage_name,
             instructions=instructions,
             handoffs=handoffs,
-            model=model,
+            model=self._model_for(model),
             model_settings=ModelSettings(**settings_kwargs) if settings_kwargs else ModelSettings()
         )
 
@@ -810,12 +934,16 @@ class OpenAIMCPBridge(MCPBridgeManager):
             for ag in sub_agents.values():
                 triage_handoffs.append(handoff(
                     agent=ag,
+                    input_type=SpecialistStepPacket,
+                    on_handoff=_on_specialist_handoff,
+                    input_filter=_specialist_handoff_filter(ag),
                     tool_description_override=(
                         f"Hand off to {ag.name} for direct specialist execution/control requests, "
                         "single-step actions, specialist questions, or exactly one approved PlanReview step packet. "
                         "Do not use this handoff to pass a full PlanReview. When executing an approved PlanReview, "
-                        "pass only the current step_id, tool_name, arguments, required_inputs, expected_output, "
-                        "on_success, and on_failure, then wait for the specialist result before continuing."
+                        "fill step_id, tool_name, arguments_json (the step's arguments as a JSON string) and "
+                        "required_inputs from the current step, then wait for the specialist result before continuing. "
+                        "For a direct request leave those null and put the request in `request`."
                     )
                 ))
             triage.handoffs = triage_handoffs

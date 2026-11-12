@@ -5,7 +5,7 @@ import re
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, Optional
 
-from agents import Runner
+from agents import MaxTurnsExceeded, Runner
 from openai.types.responses import ResponseTextDeltaEvent
 
 from edma_mcp.client.models import PlanReview
@@ -28,6 +28,12 @@ class ExecutionPlanFrame:
     pause_state: Optional[Dict[str, Any]] = None
 
 
+# Model turns one execution run may take. Every handoff and every tool call is a turn, and a
+# resumed plan runs several steps in one go (stop preview, wait, acquire, report): the SDK
+# default of 10 cut such runs off just before the reply.
+EXECUTION_MAX_TURNS = 40
+
+
 class ApprovedPlanExecutionCoordinator:
     def __init__(self) -> None:
         self.agent = None
@@ -41,6 +47,8 @@ class ApprovedPlanExecutionCoordinator:
         self.active_execution_plan: Optional[PlanReview] = None
         self.plan_stack: list[ExecutionPlanFrame] = []
         self.execution_in_progress: bool = False
+        # Tools the agents called so far for each approved plan (by id(plan)), across resumes.
+        self._plan_tool_calls: Dict[int, list] = {}
 
     def bind_runtime(self, agent: Any, session: Any, bridge: Any = None) -> None:
         self.agent = agent
@@ -56,6 +64,7 @@ class ApprovedPlanExecutionCoordinator:
         self.execution_in_progress = False
         self.active_callbacks = None
         self.pause_message_emitted = False
+        self._plan_tool_calls = {}
 
     def has_paused_execution(self) -> bool:
         return self.paused_execution_plan is not None
@@ -236,6 +245,10 @@ class ApprovedPlanExecutionCoordinator:
         )
         self.active_execution_plan = plan
         had_parent_frame = bool(self.plan_stack)
+        # The child plan's work was already done before this reply (it was waiting at its last
+        # confirmation gate) and the reply is a plain confirmation: no second question later.
+        user_confirmed_child = (had_parent_frame and self._plan_is_finished(plan)
+                                and self._is_confirmation_reply(user_message))
         child_return_text = await self._run_execution(
             plan=plan,
             prompt=(
@@ -271,6 +284,7 @@ class ApprovedPlanExecutionCoordinator:
                 trace_formatter=trace_formatter,
                 handoff_status_extractor=handoff_status_extractor,
                 execution_status_line_checker=execution_status_line_checker,
+                user_confirmed=user_confirmed_child,
             )
 
     async def _run_execution(
@@ -293,7 +307,7 @@ class ApprovedPlanExecutionCoordinator:
         self.execution_in_progress = True
         self.active_callbacks = callbacks
         self.pause_message_emitted = False
-        response = Runner.run_streamed(self.agent, prompt, session=self.session)
+        response = Runner.run_streamed(self.agent, prompt, session=self.session, max_turns=EXECUTION_MAX_TURNS)
         bot_text = []
         try:
             async for event in response.stream_events():
@@ -308,6 +322,7 @@ class ApprovedPlanExecutionCoordinator:
                     if callbacks.on_trace:
                         callbacks.on_trace(f"Agent active: {event.new_agent.name}")
                 elif event.type == "run_item_stream_event":
+                    self._record_tool_call(plan, event)
                     trace_message = trace_formatter(event)
                     if trace_message and callbacks.on_trace:
                         callbacks.on_trace(trace_message)
@@ -315,16 +330,19 @@ class ApprovedPlanExecutionCoordinator:
             if callbacks.on_delete_tool_calling_message:
                 callbacks.on_delete_tool_calling_message()
             self.execution_in_progress = False
-            if self.plan_stack:
-                self.paused_execution_plan = plan
-                self.paused_execution_reason = f"Plan execution failed: {exc}"
-                self.paused_execution_state = {
-                    "status": "failed",
-                    "message": self.paused_execution_reason,
-                }
+            # The plan is not done: keep it paused where it stopped, so "continue" goes on
+            # with it instead of the next message starting from nothing.
+            if isinstance(exc, MaxTurnsExceeded):
+                failure = (f"The agents used all {EXECUTION_MAX_TURNS} steps allowed for one turn before they "
+                           "finished. The plan is paused where it stopped; reply `continue` to go on.")
+            else:
+                failure = f"Plan execution failed: {exc}. The plan is paused; reply `continue` to try again."
+            self.paused_execution_plan = plan
+            self.paused_execution_reason = failure
+            self.paused_execution_state = None
             self.active_execution_plan = None
             if callbacks.on_error:
-                callbacks.on_error(f"Plan execution failed: {exc}")
+                callbacks.on_error(failure)
             if callbacks.on_clear_trace_later:
                 callbacks.on_clear_trace_later()
             return ""
@@ -347,8 +365,21 @@ class ApprovedPlanExecutionCoordinator:
             callbacks.on_clear_trace_later()
         return final_text
 
+    @staticmethod
+    def _plan_skills(plan: Any) -> set:
+        return {str(getattr(step, "skill", "") or "") for step in list(getattr(plan, "steps", []) or [])} - {""}
+
     def _push_paused_plan_frame_if_needed(self, *, child_plan: PlanReview) -> bool:
+        """A plan approved while another one is paused. It runs as that plan's child (and
+        returns to it afterwards) only when it does other work for it, e.g. the recommendation
+        for a paused acquisition. A plan for the same work (a skill both plans use: the user
+        planned the task again) replaces the paused plan; as a child it was told to return
+        values to a parent that no longer mattered, and answered with that instead of working."""
         parent_plan = self.paused_execution_plan
+        if parent_plan is not None and parent_plan is not child_plan and (
+                self._plan_skills(parent_plan) & self._plan_skills(child_plan)):
+            self._plan_tool_calls.pop(id(parent_plan), None)
+            parent_plan = None
         if parent_plan is None or parent_plan is child_plan:
             self.paused_execution_plan = None
             self.paused_execution_reason = None
@@ -375,7 +406,12 @@ class ApprovedPlanExecutionCoordinator:
         trace_formatter: Callable[[Any], Optional[str]],
         handoff_status_extractor: Callable[[str], Optional[str]],
         execution_status_line_checker: Callable[[str], bool],
+        user_confirmed: bool = False,
     ) -> None:
+        """The child plan's run ended: keep it paused if it is still waiting, else return to
+        the parent plan. user_confirmed: the user just confirmed the child's last gate (e.g.
+        the recommendation diagnostics), so the parent resumes at once with the child's
+        result; otherwise the result is shown first and the user confirms the return."""
         if not self.plan_stack:
             if callbacks.on_clear_trace_later:
                 callbacks.on_clear_trace_later()
@@ -398,6 +434,40 @@ class ApprovedPlanExecutionCoordinator:
         if self.paused_execution_plan is not None:
             return
         frame = self.plan_stack.pop()
+        if user_confirmed:
+            parent_plan = frame.plan
+            if callbacks.on_final and child_return_text:
+                callbacks.on_final("Confirmed. Returning to the paused workflow with this result:\n\n" + child_return_text)
+            self.active_execution_plan = parent_plan
+            self.paused_execution_plan = None
+            self.paused_execution_reason = None
+            self.paused_execution_state = None
+            parent_return_text = await self._run_execution(
+                plan=parent_plan,
+                prompt=self._format_child_return_resume_prompt(
+                    parent_plan=parent_plan,
+                    child_plan_goal=str(getattr(child_plan, "goal", "") or ""),
+                    child_return_text=child_return_text,
+                    parent_pause_reason=frame.pause_reason,
+                    parent_pause_state=dict(frame.pause_state or {}),
+                ),
+                callbacks=callbacks,
+                trace_formatter=trace_formatter,
+                handoff_status_extractor=handoff_status_extractor,
+                execution_status_line_checker=execution_status_line_checker,
+                status_label="Triage resuming previous approved plan...",
+                emit_final=not self.plan_stack,
+            )
+            if self.plan_stack:
+                await self._resume_parent_after_child_if_ready(
+                    child_plan=parent_plan,
+                    child_return_text=parent_return_text,
+                    callbacks=callbacks,
+                    trace_formatter=trace_formatter,
+                    handoff_status_extractor=handoff_status_extractor,
+                    execution_status_line_checker=execution_status_line_checker,
+                )
+            return
         self.paused_execution_plan = frame.plan
         self.paused_execution_reason = self._format_child_return_confirmation_message(child_return_text)
         self.paused_execution_state = {
@@ -414,6 +484,56 @@ class ApprovedPlanExecutionCoordinator:
         if callbacks.on_clear_trace_later:
             callbacks.on_clear_trace_later()
 
+    def _record_tool_call(self, plan: PlanReview, event: Any) -> None:
+        """Remember each tool the agents call while this plan runs (see _plan_is_finished)."""
+        try:
+            item = getattr(event, "item", None)
+            if getattr(event, "name", "") != "tool_called" and getattr(item, "type", "") != "tool_call_item":
+                return
+            raw = getattr(item, "raw_item", None)
+            name = raw.get("name") if isinstance(raw, dict) else getattr(raw, "name", None)
+            if name:
+                self._plan_tool_calls.setdefault(id(plan), []).append(str(name))
+        except Exception:
+            pass
+
+    @staticmethod
+    def _is_confirmation_gate_step(step: Any) -> bool:
+        """A step that only asks the user to confirm: update_parameters with nothing to
+        update. Agents stop there and ask in words, usually without calling the tool, so
+        such a step never counts as "the tool that still has to run"."""
+        if str(getattr(step, "tool_name", "") or "").split(".")[-1] != "update_parameters":
+            return False
+        arguments = getattr(step, "arguments", None) or {}
+        if isinstance(arguments, str):
+            try:
+                arguments = json.loads(arguments)
+            except Exception:
+                return False
+        if not isinstance(arguments, dict):
+            return False
+        return not (arguments.get("param_names") or []) and not (arguments.get("param_values") or [])
+
+    def _plan_is_finished(self, plan: PlanReview) -> bool:
+        """True once the plan's last working step has run: the tool of the last step that is
+        not a pure confirmation gate was called as often as the plan uses it. Until then the
+        plan is still waiting, however the agent worded its reply."""
+        steps = [step for step in list(getattr(plan, "steps", []) or []) if not self._is_confirmation_gate_step(step)]
+        if not steps:
+            return True
+
+        def tool_of(step: Any) -> tuple:
+            return str(getattr(step, "agent", "") or ""), str(getattr(step, "tool_name", "") or "").split(".")[-1]
+
+        last = tool_of(steps[-1])
+        if not last[1]:
+            return True
+        needed = sum(1 for step in steps if tool_of(step) == last)
+        agent, tool = last
+        called = sum(1 for name in self._plan_tool_calls.get(id(plan), [])
+                     if name in (tool, f"{agent}__{tool}", f"{agent}.{tool}", f"{agent}_{tool}"))
+        return called >= needed
+
     def _handle_completion(self, plan: PlanReview, final_text: str) -> None:
         if self.paused_execution_state and self.paused_execution_plan is plan:
             return
@@ -421,12 +541,48 @@ class ApprovedPlanExecutionCoordinator:
             self.paused_execution_plan = plan
             self.paused_execution_reason = final_text
             return
+        if not self._plan_is_finished(plan):
+            # The run ended before the plan's last step (e.g. the agent asked a question in
+            # words the phrase list above does not know): the plan is paused, not done. Without
+            # this the plan was dropped and the user's answer started a new plan.
+            self.paused_execution_plan = plan
+            self.paused_execution_reason = final_text or (
+                "The agent stopped without running the next step and without a reply (no tool was called). "
+                "The plan is paused there; reply `continue` to try the step again.")
+            return
+        self._plan_tool_calls.pop(id(plan), None)
         self.paused_execution_plan = None
         self.paused_execution_reason = None
         self.paused_execution_state = None
 
+    @staticmethod
+    def _remove_step_packets(text: str) -> str:
+        """Cut plan-step JSON packets ({"step_id": ..., "tool_name": ...}) out of a reply, also
+        when the agent glued one to the front of its sentence (the line filter below only
+        drops lines that are nothing but such a packet)."""
+        decoder = json.JSONDecoder()
+        out, i = [], 0
+        while True:
+            start = text.find("{", i)
+            if start < 0:
+                out.append(text[i:])
+                break
+            try:
+                value, end = decoder.raw_decode(text, start)
+            except ValueError:
+                out.append(text[i:start + 1])
+                i = start + 1
+                continue
+            if isinstance(value, dict) and {"step_id", "tool_name"} <= set(value):
+                out.append(text[i:start])
+            else:
+                out.append(text[i:end])
+            i = end
+        return "".join(out)
+
     def _strip_execution_status_text(self, text: str, execution_status_line_checker: Callable[[str], bool]) -> str:
         cleaned = []
+        text = self._remove_step_packets(str(text))
         for line in str(text).splitlines():
             if execution_status_line_checker(line):
                 continue
@@ -464,6 +620,19 @@ class ApprovedPlanExecutionCoordinator:
             r"\bcurrent recommended settings\b",
             r"\bcurrent recommendation settings\b",
             r"\bscan step\b.*\bmaximum recommended\b",
+            # Chinese replies (the agents answer in the user's language)
+            r"请回复",
+            r"请确认",
+            r"请提供",
+            r"请选择",
+            r"请告诉我",
+            r"回复\s*[`*'\"“]*\s*confirm",
+            r"确认后(?:我|再|会|才)",
+            r"(?:等待|等)你(?:的)?(?:确认|回复)",
+            r"需要你(?:的)?确认",
+            r"(?:还)?需要(?:你|您)(?:提供|告诉|选择|回复|输入)",
+            r"(?:收到|等你给出).{0,20}后[，,]?\s*我(?:会|再)",
+            r"以下任选一[种个项]",
         )
         return any(re.search(pattern, normalized) for pattern in pause_patterns)
 
@@ -584,10 +753,19 @@ class ApprovedPlanExecutionCoordinator:
         pause_reason: str,
         pause_state: Dict[str, Any],
     ) -> str:
+        # The recommendation is a plan of its own (child plan): never run inside another plan.
+        outside_plan = ""
+        if not any(str(getattr(step, "agent", "") or "") == "agent_suggestion" for step in list(plan.steps or [])):
+            outside_plan = (
+                "This plan has no recommendation steps: do not hand off to agent_suggestion and do not run the 4D-STEM "
+                "recommendation calculator inside it. The recommendation needs its own plan; if the reply asks for it, "
+                "do nothing else and tell the user in one sentence to reply `use the recommendation`.\n"
+            )
         return (
             "The user is replying to a paused approved PlanReview execution.\n"
             "You are Triage. Resume the same approved plan now by specialist handoffs.\n"
             "Do not call create_workflow_plan. Do not re-plan.\n"
+            f"{outside_plan}"
             "The previous execution paused because a specialist asked for a missing input.\n"
             "Use the latest user reply below as the answer to that missing-input request, then continue the same approved workflow.\n"
             "After the blocked step succeeds, continue to the next specialist step via on_success.\n"

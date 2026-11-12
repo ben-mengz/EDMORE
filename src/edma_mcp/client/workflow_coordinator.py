@@ -118,7 +118,7 @@ class WorkflowCoordinator:
 
         if route == "start_planning":
             planning_result = await self.planning.start_planning(
-                message,
+                self._recommendation_planning_message(message),
                 callbacks=planning_callbacks,
                 trace_formatter=trace_formatter,
                 plan_extractor=plan_extractor,
@@ -324,9 +324,109 @@ class WorkflowCoordinator:
             return self._fallback_message_route(message)
         if self.planning.has_pending_plan() and self._is_approval_message(message):
             return "approve_pending_plan"
+        if self._should_plan_recommendation(message):
+            return "start_planning"
         if self.execution.has_paused_execution() and self._is_paused_execution_answer(message):
             return "resume_execution"
         return route if route in self._valid_message_routes() else self._fallback_message_route(message)
+
+    def _should_plan_recommendation(self, message: str) -> bool:
+        """Asking for the recommendation while the acquisition waits for defocus / dwell /
+        scan values always starts planning: the Planner writes the recommendation plan, it
+        runs as a child plan and hands the values back to the paused acquisition plan.
+
+        Left to the LLM router, this message was sometimes taken as an answer to the paused
+        prompt and sent to Triage, which cannot create a plan: it described one, asked for
+        approval, and then had nothing to approve."""
+        if self.planning.has_pending_plan():
+            return False
+        if getattr(self.execution, "paused_execution_plan", None) is None:
+            return self._is_recommendation_request(message)
+        paused_text = self._acquisition_pause_text()
+        if paused_text is None:
+            return False
+        if self._is_recommendation_request(message):
+            return True
+        # The pause offered the recommendation or asked for its q source, and the reply is not
+        # one of the other things a user says there: it belongs to the recommendation ("I have
+        # C60", "q is 0.1", "mp-48", "the second option", ...). Sent to Triage instead, the
+        # recommendation ran without a plan: no gates, and no return to the acquisition.
+        if not re.search(r"rec+o?m+[ae]nd|calculator|q[ _-]?source|q_spec", paused_text):
+            return False
+        return not self._is_other_acquisition_pause_reply(message)
+
+    def _acquisition_pause_text(self) -> Optional[str]:
+        """The pause text (lower case) while an acquisition plan waits for defocus / dwell / scan
+        values or for the q source of the recommendation it offered; None in any other state
+        (nothing paused, inside the recommendation plan, or at the return from it)."""
+        plan = getattr(self.execution, "paused_execution_plan", None)
+        if plan is None:
+            return None
+        state = getattr(self.execution, "paused_execution_state", None) or {}
+        if state.get("resume_type") == "child_return_confirmation":
+            return None         # the recommendation is done; the reply is the confirmation to go back
+        for step in list(getattr(plan, "steps", []) or []):
+            if (str(getattr(step, "agent", "")) == "agent_suggestion"
+                    or str(getattr(step, "skill", "")) == "recommend_4d_stem_parameters"):
+                return None     # already inside the recommendation plan: an answer to its gates
+        paused_text = (str(getattr(self.execution, "paused_execution_reason", "") or "") + " "
+                       + json.dumps(state, ensure_ascii=False, default=str)).lower()
+        if re.search(r"defocus|dwell|scan[ _]?(?:step|point|number|grid)|acquire_4d_stem|4d-stem|q[ _-]?source|q_spec",
+                     paused_text):
+            return paused_text
+        return None
+
+    def _is_recommendation_request(self, message: str) -> bool:
+        normalized = " ".join(str(message or "").strip().lower().split())
+        # Spelling variants count: "recomendation", "reccomend", "recommand", "sugest".
+        return bool(re.search(r"\brec+o?m+[ae]nd\w*|\bsug+est\w*|\bcalculator\b", normalized)) or any(
+            word in normalized for word in ("推荐", "建议"))
+
+    def _is_other_acquisition_pause_reply(self, message: str) -> bool:
+        """At the acquisition's missing-parameter pause: True for a reply that is not about the
+        recommendation - a value for the missing parameter, a continue / stop word, a question,
+        or another task."""
+        normalized = self._normalize_plan_message(message)
+        raw = " ".join(str(message or "").strip().lower().split())
+        if not normalized:
+            return True
+        if re.search(r"\bq\b|\bq spec\b|\bmp \d+\b", normalized):
+            return False        # a q source ("manual q 0.1 1/A", "mp-48") is for the recommendation
+        if re.fullmatch(r"(?:use |with |take |set |it is |its )?[-+]?\d+(?: \d+)*(?: ?(?:1 a|a|nm|um|pa|us|ms|s|kv|kev|mrad|px))?",
+                        normalized) or self._is_paused_parameter_answer(normalized):
+            return True         # the value itself: "2000", "defocus 2000 A, dwell 2 ms"
+        if self._is_approval_message(message) or self.execution._is_confirmation_reply(message):
+            return True         # "continue", "ok", "go ahead"
+        if re.search(r"\b(?:done|retry|try again|again|stop|cancel|abort|wait|skip|never ?mind|no|manual|manually|myself|"
+                     r"first|option (?:1|one))\b", normalized):
+            return True
+        if "?" in raw or "？" in raw or re.match(
+                r"(?:what|why|how|which|who|when|where|can|could|is|are|does|do|should|would|explain|tell me|show me)\b",
+                normalized):
+            return True         # a question: answered in chat
+        return bool(re.search(r"\b(?:acquire|acquisition|ptychography|reconstruct\w*|connect|disconnect|preview|load|open|"
+                              r"save|plot|show|display|move|stage)\b", normalized))
+
+    def _recommendation_planning_message(self, message: str) -> str:
+        """What the Planner is asked to plan. A reply that starts the recommendation from the
+        acquisition's pause is often only a q source or a sample name ("I have C60"): the
+        Planner gets the task and the pause it answers, not that fragment alone."""
+        paused_text = self._acquisition_pause_text()
+        if paused_text is None or not self._should_plan_recommendation(message):
+            return message
+        reason = str(getattr(self.execution, "paused_execution_reason", "") or "").strip()
+        if len(reason) > 1500:
+            reason = reason[:1497] + "..."
+        return (
+            "Use the 4D-STEM recommendation calculator (registered skill `recommend_4d_stem_parameters`) to get the "
+            "acquisition parameters that the paused SEM acquisition is missing (defocus, dwell time, scan step, scan points).\n"
+            "Plan the recommendation only. It runs as a child plan and its result returns to the paused acquisition plan, "
+            "which then continues by itself: do not add acquisition or ptychography steps.\n"
+            "The recommendation is started from the SEM (check_required_constraints with from_sem=true).\n\n"
+            f"The acquisition paused with this message:\n{reason}\n\n"
+            "The user's reply to that message (use the q source, sample or values it gives; do not ask for them again):\n"
+            f"{message}"
+        )
 
     def _fallback_message_route(self, message: str) -> str:
         if self.planning.has_pending_plan() and self._is_approval_message(message):
@@ -474,6 +574,10 @@ class WorkflowCoordinator:
         }
         compact = normalized.replace(" ", "_")
         if compact in exact_fix_names:
+            return True
+        # A bare value answers the question the paused step asked: "use 0.1", "0.1", "2000 us".
+        if re.fullmatch(r"(?:use |with |take |set |it is |its )?[-+]?\d+(?: \d+)*(?: ?(?:1 a|a|nm|um|pa|us|ms|s|kv|kev|mrad|px))?",
+                        normalized):
             return True
         if len(self._extract_ordered_fix_choices(normalized)) >= 2:
             return True

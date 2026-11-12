@@ -204,6 +204,8 @@ class PlanningCoordinator:
             self.pending_plan = None
             return PlanningRunResult(error_message=final_text or "Planner did not return a valid PlanReview.")
         plan = self._normalize_recommendation_plan(plan)
+        plan = await self._expand_partly_used_compound_skill(
+            original_message, plan, callbacks=callbacks, trace_formatter=trace_formatter, plan_extractor=plan_extractor)
         agent_preflight_error = await self._preflight_required_agents(plan, callbacks)
         if agent_preflight_error:
             self.pending_plan = None
@@ -284,6 +286,97 @@ class PlanningCoordinator:
             plan=plan,
             queued_for_approval=judge_status == "pass",
         )
+
+    _EXISTING_DATA_PATTERN = re.compile(
+        r"\b(?:selected|current|existing|this|that|loaded|opened?|already|acquired|previous|same)\b"
+        r"[^.;]{0,40}\b(?:data ?set|data|4d(?:-?stem)?|scan|item|acquisition)\b"
+        r"|\bskip\w* (?:the )?acqui|\bwithout acqui|\bno (?:new )?acqui|\bdo not acquire|\bdon.?t acquire",
+        re.IGNORECASE)
+
+    def _partly_used_compound_skill(self, original_message: str, plan: PlanReview):
+        """(compound skill id, its references, the references missing from the plan) when the
+        Planner read a compound skill this cycle but planned only part of it; else None.
+
+        A compound skill (manifest kind "compound_workflow", "references": [...]) tells the
+        Planner to expand every referenced skill. A plan that uses some but not all of them
+        (e.g. only `ptychography` out of `ptychography_on_sem`) still passes the judge, because
+        each of its steps is valid. Not flagged when the user points at existing data."""
+        bridge = self.bridge
+        if bridge is None or not hasattr(bridge, "_resolve_playbooks_dir"):
+            return None
+        if self._EXISTING_DATA_PATTERN.search(str(original_message or "")):
+            return None
+        read_ids = []
+        for entry in list(getattr(bridge, "planner_discovery_log", []) or []):
+            kind, _, rest = str(entry).partition(":")
+            skill_id = rest.split(":", 1)[0].strip()
+            if kind in ("read_skill_content", "get_skill_manifest") and skill_id and skill_id not in read_ids:
+                read_ids.append(skill_id)
+        plan_skills = {str(getattr(step, "skill", "") or "") for step in plan.steps}
+        try:
+            root = bridge._resolve_playbooks_dir()
+        except Exception:
+            return None
+        for skill_id in read_ids:
+            try:
+                with open(os.path.join(root, skill_id, "manifest.json"), encoding="utf-8") as f:
+                    manifest = json.load(f)
+            except Exception:
+                continue
+            references = [str(r) for r in (manifest.get("references") or [])]
+            if manifest.get("kind") != "compound_workflow" or len(references) < 2:
+                continue
+            missing = [r for r in references if r not in plan_skills]
+            if missing and len(missing) < len(references):
+                return skill_id, references, missing
+        return None
+
+    async def _expand_partly_used_compound_skill(
+        self,
+        original_message: str,
+        plan: PlanReview,
+        *,
+        callbacks: PlanningCallbacks,
+        trace_formatter: Callable[[Any], Optional[str]],
+        plan_extractor: Callable[[Any], Optional[PlanReview]],
+    ) -> PlanReview:
+        """Ask the Planner once to expand a compound skill it planned only part of. Keeps
+        the first plan if the revision is not a valid PlanReview."""
+        try:
+            found = self._partly_used_compound_skill(original_message, plan)
+        except Exception:
+            found = None
+        if not found:
+            return plan
+        skill_id, references, missing = found
+        if callbacks.on_trace:
+            callbacks.on_trace(
+                f"Compound skill '{skill_id}' was only partly planned (missing: {', '.join(missing)}): "
+                "asking the Planner to expand it.")
+        prompt = (
+            "The previous PlanReview is incomplete and must be revised. You are the Planner. "
+            "Return a revised PlanReview only. Do not execute.\n"
+            f"You read the compound skill `{skill_id}`. It requires expanding every skill it references, in this "
+            f"order: {', '.join(references)}. The previous PlanReview has no steps for: {', '.join(missing)}.\n"
+            f"Read the missing skill(s) with read_skill_content ({', '.join(missing)}) and return a PlanReview that "
+            "contains the concrete steps of every referenced skill in that order, numbered from step_id 1. "
+            "Keep the steps you already planned for the other skill(s).\n"
+            "The user's message does not say that a suitable dataset already exists or is selected, so nothing "
+            "may be skipped.\n\n"
+            f"Original user message:\n{original_message}\n\n"
+            f"Previous PlanReview:\n{plan.model_dump_json()}"
+        )
+        try:
+            final_text = await self._run_agent_to_text(
+                prompt, live_label=f"Expanding compound skill {skill_id}...",
+                trace_formatter=trace_formatter, callbacks=callbacks)
+        except AgentsException as exc:
+            revised = self._recover_planreview_from_text(str(exc))
+        else:
+            revised = plan_extractor(final_text) or self._recover_planreview_from_text(final_text)
+        if not revised:
+            return plan
+        return self._normalize_recommendation_plan(revised)
 
     async def _run_agent_to_text(
         self,
@@ -520,7 +613,75 @@ class PlanningCoordinator:
 
     def _normalize_recommendation_plan(self, plan: PlanReview) -> PlanReview:
         plan = self._normalize_recommendation_apply_fix_steps(plan)
-        return self._normalize_recommendation_confirmation_gate(plan)
+        plan = self._normalize_recommendation_confirmation_gate(plan)
+        return self._normalize_recommendation_diagnostics_gate(plan)
+
+    _DIAGNOSTICS_GATE_INPUTS = [
+        "recommendation_diagnostics_review",
+        "confirm to use the written-back defocus and diagnostics for acquisition; "
+        "otherwise reply with a fix name or specific parameter changes",
+    ]
+
+    def _normalize_recommendation_diagnostics_gate(self, plan: PlanReview) -> PlanReview:
+        """Every recommendation find_defocus is followed by a paused update_parameters gate where the
+        user reviews the written-back defocus and diagnostics and confirms or chooses a fix."""
+        steps = list(plan.steps or [])
+
+        def full_tool(step: PlanStep) -> str:
+            tool_name = str(step.tool_name or "").strip()
+            return tool_name if "." in tool_name else f"{step.agent}.{tool_name}"
+
+        def is_recommend(step: PlanStep, tool: str) -> bool:
+            return step.skill == "recommend_4d_stem_parameters" and full_tool(step).endswith(tool)
+
+        used = {str(step.step_id) for step in steps}
+        changed = False
+        index = 0
+        while index < len(steps):
+            step = steps[index]
+            if not is_recommend(step, "find_defocus"):
+                index += 1
+                continue
+            following = steps[index + 1] if index + 1 < len(steps) else None
+            if following is not None and is_recommend(following, "apply_fix") and following.arguments.get("fix_name"):
+                index += 1  # the user already chose a concrete fix
+                continue
+            if following is not None and is_recommend(following, "update_parameters"):
+                inputs = list(following.required_inputs or [])
+                if not any("confirm" in str(item).lower() for item in inputs):
+                    arguments = {"param_names": [], "param_values": [], **dict(following.arguments or {})}
+                    steps[index + 1] = following.model_copy(
+                        update={"arguments": arguments, "required_inputs": inputs + list(self._DIAGNOSTICS_GATE_INPUTS)}
+                    )
+                    changed = True
+                index += 2
+                continue
+            gate_id, counter = "recommendation_diagnostics_review", 1
+            while gate_id in used:
+                counter += 1
+                gate_id = f"recommendation_diagnostics_review_{counter}"
+            used.add(gate_id)
+            gate = PlanStep(
+                step_id=gate_id,
+                agent="agent_suggestion",
+                goal=(
+                    "Pause after find_defocus: show the user the written-back defocus, overlap and every "
+                    "diagnostic (PASS/FAIL), and ask the user to confirm or choose a fix before the values "
+                    "return to acquisition."
+                ),
+                skill="recommend_4d_stem_parameters",
+                tool_name="update_parameters",
+                arguments={"param_names": [], "param_values": []},
+                required_inputs=list(self._DIAGNOSTICS_GATE_INPUTS),
+                expected_output="The user confirms the diagnostics, chooses a fix name, or gives specific parameter changes.",
+                on_success=step.on_success,
+                on_failure="ask_user",
+            )
+            steps[index] = step.model_copy(update={"on_success": gate_id})
+            steps.insert(index + 1, gate)
+            changed = True
+            index += 2
+        return plan.model_copy(update={"steps": steps}) if changed else plan
 
     def _normalize_terminal_ref(self, ref: Any) -> str:
         value = str(ref or "").strip()
@@ -646,6 +807,13 @@ class PlanningCoordinator:
             )
             if previous_is_gate and has_confirmation_inputs(previous_step):
                 index += 1
+                continue
+            if (
+                previous_step is not None
+                and previous_step.skill == "recommend_4d_stem_parameters"
+                and normalize_tool(previous_step) == "agent_suggestion.apply_fix"
+            ):
+                index += 1  # fix loop: apply_fix -> find_defocus, the user already chose at the diagnostics gate
                 continue
 
             if previous_is_gate:
@@ -854,7 +1022,7 @@ class PlanningCoordinator:
               "- Treat the latest user message below as the authoritative planning goal.\n"
               "- Previous conversation may contain an approved plan, a blocked execution step, or missing-input request. Do not continue that prior step unless the latest user message explicitly answers that step, says continue/resume, or asks to execute/acquire/reconstruct now.\n"
               "- If the latest message asks to run ptychography on the selected/current dataset, expand it with the registered skill id `ptychography`. Do not invent per-step skill ids such as `ptychography_prepare_parameters`, `ptychography_append_exp_params`, `ptychography_save_params`, or `ptychography_start_server`.\n"
-              "- If the latest message asks to use recommendations after a previous SEM/acquisition missing-input prompt listed recommendation inputs, preserve those listed handoff inputs exactly in the recommendation plan. For recommend_4d_stem_parameters, pass q-source/sample values such as use_manual_q, manual_q_1_per_A, and fov_A to load_q_spec when they are already resolved (the q source has no default and is never a SEM-provided value: if the user has not given a q source - mp-id, formula, elements, manual q in 1/A, or the existing q_spec - the load_q_spec step must list q_source in required_inputs and ask the user); for SEM-started recommendation runs, call check_required_constraints with from_sem=true so the tool reads SEM UI context for SEM-provided values such as max_ht_kV and fov_A, and also pass required constraints such as max_ht_kV, abbe_limit_A, ultimate_resolution_A, and max_dose_e_per_A2 when they were already resolved; pass current_pA to recalculate_defaults when it was listed or returned by sem_ui_context. Do not add pre-step user questions for SEM-provided values when the recommendation was started from SEM acquisition; first try the SEM UI/context path and only ask the user for a value if it remains unresolved after that attempt. After recalculate_defaults, the recommendation plan must include a paused settings-confirmation gate before find_defocus, represented as an agent_suggestion.update_parameters step with required_inputs asking for confirmation or specific setting changes.\n"
+              "- If the latest message asks to use recommendations after a previous SEM/acquisition missing-input prompt listed recommendation inputs, preserve those listed handoff inputs exactly in the recommendation plan. For recommend_4d_stem_parameters, pass q-source/sample values such as use_manual_q, manual_q_1_per_A, and fov_A to load_q_spec when they are already resolved (the q source has no default and is never a SEM-provided value: if the user has not given a q source - mp-id, formula, elements, manual q in 1/A, or the existing q_spec - the load_q_spec step must list q_source in required_inputs and ask the user; saying the sample is C60 counts as giving the q source: pass sample=\"C60\" to load_q_spec, which sets manual q 0.1 1/A and returns the reason to tell the user); for SEM-started recommendation runs, call check_required_constraints with from_sem=true so the tool reads SEM UI context for SEM-provided values such as max_ht_kV and fov_A, and also pass required constraints such as max_ht_kV, abbe_limit_A, ultimate_resolution_A, and max_dose_e_per_A2 when they were already resolved; pass current_pA to recalculate_defaults when it was listed or returned by sem_ui_context. Do not add pre-step user questions for SEM-provided values when the recommendation was started from SEM acquisition; first try the SEM UI/context path and only ask the user for a value if it remains unresolved after that attempt. After recalculate_defaults, the recommendation plan must include a paused settings-confirmation gate before find_defocus, represented as an agent_suggestion.update_parameters step with required_inputs asking for confirmation or specific setting changes. After find_defocus, the recommendation plan must also include a paused diagnostics-review gate, again an agent_suggestion.update_parameters step with param_names=[] and param_values=[] and required_inputs asking the user to confirm the diagnostics or choose a fix, before the values return to acquisition.\n"
               "- If the latest user message asks a separate tool/skill task, create a fresh PlanReview from step_id 1 and choose skills only from that latest request.\n\n"
             f"Recent conversation messages, oldest to newest, excluding the current user message if not yet stored:\n{recent_messages}\n\n"
             f"Latest user message:\n{message}"
